@@ -12,7 +12,7 @@ patch -p1 < ../nuttx-apps-patch-12.8.0.patch
 1. config nuttx
 cd -
 ./tools/configure.sh rv-virt:nsh
-cp config-nuttx-12.8.0 ../nuttx/.config
+cp ../config-nuttx-12.8.0 ../nuttx/.config
 make
 
 2. wait until the following error
