@@ -1,0 +1,18 @@
+[submodule "test/sim/riscv-compliance/riscv-arch-test"]
+	path = test/sim/riscv-compliance/riscv-arch-test
+	url = https://github.com/wren6991/riscv-arch-test.git
+[submodule "scripts"]
+	path = scripts
+	url = https://github.com/Wren6991/fpgascripts
+[submodule "test/formal/riscv-formal"]
+	path = test/formal/riscv-formal/riscv-formal
+	url = https://github.com/Wren6991/riscv-formal.git
+[submodule "example_soc/libfpga"]
+	path = example_soc/libfpga
+	url = https://github.com/Wren6991/libfpga.git
+[submodule "test/sim/riscv-tests/riscv-tests"]
+	path = test/sim/riscv-tests/riscv-tests
+	url = https://github.com/Wren6991/riscv-tests.git
+[submodule "test/sim/embench/embench-iot"]
+	path = test/sim/embench/embench-iot
+	url = https://github.com/Wren6991/embench-iot.git
