@@ -1,0 +1,34 @@
+Hazard3 verilator simulation using nuttx
+
+coremark-nuttx.tgz  hazard3  initmem_gen2  LICENSE  nuttx-apps-patch-12.8.0.patch  nuttx-patch-12.8.0.patch
+
+0.
+download nuttx 12.8.0 os and apps from https://nuttx.apache.org/download
+extract archives
+cd nuttx
+patch -p1 <../nuttx-patch-12.8.0.patch
+cd ../apps
+patch -p1 < ../nuttx-apps-patch-12.8.0.patch
+
+1. config nuttx
+./tools/configure.sh rv-virt:nsh
+cp config-nuttx-12.8.0 ../nuttx/.config
+make
+
+2. wait until the following error
+LD: nuttx
+riscv-none-elf-ld: /home/laur/lucru/cn/riscv/tmp/nuttx/staging/libapps.a(smp_main.c.home.laur.lucru.cn.riscv.tmp.apps.testing.smp_1.o): in function `smp_main':
+/home/laur/lucru/cn/riscv/tmp/apps/testing/smp/smp_main.c:513:(.text.smp_main+0x614): undefined reference to `core_main'
+
+3. work around this error
+cd ../apps/benchmarks/coremark
+rm -rf coremark
+tar -xf ../../../coremark-nuttx.tgz
+cd -
+make clean
+make
+
+4. simulate in verilator
+cd ../hazard3
+./run-nuttx2.sh
+
