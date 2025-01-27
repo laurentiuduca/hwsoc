@@ -1,9 +1,6 @@
 /* Modified by Laurentiu-Cristian Duca 
  * WITHOUT_DISK and SEARCH_CHECKSUM options 
  */
-/******************************************************************************************/
-/**** SimCore/RISC-V since 2018-07-05                               ArchLab. TokyoTech ****/
-/******************************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
