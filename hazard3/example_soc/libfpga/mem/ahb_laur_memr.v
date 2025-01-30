@@ -63,19 +63,11 @@ task check_new_req;
 					state <= 12;
 				end
                                 r_mask <= wmask;
-				if(state != 0) begin
-					//$display("check_new_req state=%d read aphase", state);
-					//$finish;
-				end
 			end else if(ahb_write_aphase) begin
 				r_ahbls_haddr <= ahbls_haddr;
                                 state <= 22;
                                 r_mask <= wmask;
 				r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
-                                if(state != 0) begin
-                                        //$display("check_new_req state=%d write aphase", state);
-                                        //$finish;
-                                end
 				r_dram_le <= 0;
 			end else begin
 				r_dram_le <= 0;
@@ -104,10 +96,6 @@ always @ (posedge clk or negedge rst_n) begin
 		r_dram_wr <= 0;
 		r_ahbls_hrdata <= 0;
 		r_ahbls_hwdata <= 0;
-		//if(state == 0)
-		//	check_new_req;
-		//if(ahbls_hready && !r_ahbls_hready_resp)
-		//	$display("ahbls_hready=1 && !r_ahbls_hready_resp");
 	end else begin
 		if(state == 0) begin
 			if(ahb_read_aphase) begin
@@ -138,12 +126,6 @@ always @ (posedge clk or negedge rst_n) begin
 				//state <= 0;
 				// do we have new address phase on this data phase?
                                 check_new_req;
-                                if(j < 20 || (d_pc >= pc_trace_start && d_pc <= pc_trace_stop && lj < 20)) begin
-                                        j <= j+1;
-                                        if(d_pc >= pc_trace_start && d_pc <= pc_trace_stop)
-                                                lj <= lj+1;
-                                        $display("  mem fast read addr %x data %x d_pc %x time %8d", r_ahbls_haddr, w_dram_odata, d_pc, $time);
-                                end
 			end
 		end else if(state == 11) begin
 			if(!w_dram_busy) begin
@@ -152,12 +134,6 @@ always @ (posedge clk or negedge rst_n) begin
 				r_ahbls_hready_resp <= 1;
 				//state <= 0;
 				check_new_req;
-				if(j < 20 || (d_pc >= pc_trace_start && d_pc <= pc_trace_stop && lj < 20)) begin
-					j <= j+1;
-					if(d_pc >= pc_trace_start && d_pc <= pc_trace_stop)
-						lj <= lj+1;
-					$display("  mem read addr %x data %x d_pc %x time %8d", r_ahbls_haddr, w_dram_odata, d_pc, $time);
-				end
 			end
 		end else if(state == 12) begin
 			r_ahbls_hready_resp <= 0;
@@ -172,27 +148,12 @@ always @ (posedge clk or negedge rst_n) begin
 			if(!w_dram_busy) begin
 				r_ahbls_hready_resp <= 1;
                                 check_new_req;
-				//state <= 0;
-				if(j < 20 || (d_pc >= pc_trace_start && d_pc <= pc_trace_stop && lj < 20)) begin
-                                        j <= j+1;
-                                        if(d_pc >= pc_trace_start && d_pc <= pc_trace_stop)
-                                                lj <= lj+1;
-					$display("  mem write addr %x data %x d_pc=%x time %8d", r_ahbls_haddr, r_ahbls_hwdata, d_pc, $time);
-                                end
 			end
 		end else if (state == 22) begin
 			r_ahbls_hready_resp <= 0;
 			r_ahbls_hwdata <= ahbls_hwdata;
-			//if(r_ahbls_hwdata != ahbls_hwdata) begin
-			//	$display("r_ahbls_hwdata %x ahbls_hwdata %x", r_ahbls_hwdata, ahbls_hwdata);
-			//end
 			r_dram_wr <= 1;
 			state <= 20;
-			if(i < 10) begin
-                		i <= i+1;
-                		$display("state=%d write %x time %8d", state, ahbls_hwdata, $time);
-		        end
-
 		end
 
 
@@ -200,25 +161,8 @@ always @ (posedge clk or negedge rst_n) begin
 			$display("ahbls_htrans=%x not supported", ahbls_htrans);
 			$finish;
 		end
-
-		if(ahbls_hready && !r_ahbls_hready_resp && m < 10) begin
-	                m <= m+1;
-        	        $display("ahbls_hready=1 && !r_ahbls_hready_resp");
-	        end
-
 	end
 	
-	if((ahb_read_aphase || ahb_write_aphase) && k < 10) begin
-		$display("ahb_read_aphase=%x || ahb_write_aphase=%x state=%d ahbls_haddr=%x time %8d", 
-			ahb_read_aphase, ahb_write_aphase, state, ahbls_haddr, $time);
-		k <= k+1;
-	end
-
-	if(l < 40 && ostate != state) begin
-		ostate <= state;
-		l <= l+1;
-		$display("\t\tstate=%d time %8d", state, $time);
-	end
 end
 // ----------------------------------------------------------------------------
 // AHBL hookup

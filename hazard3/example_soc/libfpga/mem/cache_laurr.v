@@ -81,10 +81,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
 	if(!rst_x) begin
 		r_cache_state <= 0;
 	end else begin
-	if(r_cache_state == 2'b00) begin
-	    if(i_rd_en && c_oe)
-		$fwrite(f, "mem read addr %8x data %8x\n", i_addr, o_data);
-	end
 
         if(r_cache_state == 2'b01 && !c_oe) begin
             r_cache_state <= 2'b10;
@@ -93,10 +89,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
                 || (r_cache_state == 2'b10 && !w_dram_stall)) begin
             r_cache_state <= 2'b00;
             r_o_data <= (r_cache_state == 2'b01) ? c_odata : w_dram_odata;
-	    if(r_cache_state == 2'b10)
- 	        $fwrite(f, "mem read addr %8x data %8x\n", i_addr, w_dram_odata);
-	    else if(r_cache_state == 2'b11)
-		$fwrite(f, "mem write addr %8x data %8x mask %1x\n", i_addr, i_data, i_mask);    
         end
         else if(i_wr_en) begin
             r_cache_state <= 2'b11;
@@ -164,26 +156,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
                                `endif
                                );
-
-integer f;
-reg opened=0, closed=0;
-reg [31:0] timecnt=0;
-always @(posedge clk) begin
-    if(!opened) begin
-            opened = 1;
-            f = $fopen("cr", "w");
-            if (f == 0) begin
-                $display ("ERROR: cr not opened");
-                $finish;
-            end
-    end
-    timecnt <= timecnt + 1;
-    if(timecnt > 50000000) begin
-                        closed <= 1;
-                        $fclose(f);
-                        //$finish();
-    end
-end
        
 endmodule
 

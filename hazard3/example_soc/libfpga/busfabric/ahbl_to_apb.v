@@ -66,19 +66,6 @@ always @ (posedge clk or negedge rst_n) begin
 	endcase
 end
 
-// laur
-integer j=0, k=0;
-always @(posedge clk) begin
-	if(ahbls_hwrite && ahbls_htrans && ahbls_hready && j < 10) begin
-		j <= j+1;
-                $display("ahb-to-apb write ahbls_haddr=%x ahbls_hwdata=%x time=%d", ahbls_haddr, ahbls_hwdata, $time);
-	end
-	if(apbm_pwrite && k < 10) begin
-                k <= k+1;
-                $display("ahb-to-apb write apbm_pwdata=%x apbm_paddr=%x time=%d", apbm_pwdata, apbm_paddr, $time);
-	end
-end
-
 // Downstream request
 
 always @ (*) begin

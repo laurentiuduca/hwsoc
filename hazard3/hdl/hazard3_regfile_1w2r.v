@@ -62,8 +62,6 @@ end else begin: real_dualport_noreset
 	always @ (posedge clk) begin
 		if (wen) begin
 			mem[waddr] <= wdata;
-			//if(waddr == 14)
-				//$display("a4<=%x %8d", wdata, $time);
 		end
 		rdata1 <= mem[raddr1];
 		rdata2 <= mem[raddr2];

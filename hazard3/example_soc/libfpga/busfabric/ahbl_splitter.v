@@ -130,9 +130,6 @@ always @ (posedge clk or negedge rst_n) begin
 		if (src_hready) begin
 			slave_sel_d <= slave_sel_a;
 			decode_err_d <= decode_err_a;
-			if(decode_err_a) begin
-		                $display("  decode_err_a for src_haddr=%x", src_haddr);
-			end
 		end
 		if (decode_err_d) begin
 			err_ph1 <= !err_ph1;
@@ -164,49 +161,5 @@ onehot_mux #(
 assign src_hready_resp = (!slave_sel_d && (err_ph1 || !decode_err_d)) ||
 	|(slave_sel_d & dst_hready_resp);
 assign src_hresp = decode_err_d || |(slave_sel_d & dst_hresp);
-
-reg [31:0] j=0, li=0;
-reg [31:0] osrc_haddr=0, odst_hrdata=0;
-reg osrc_hready=0, osrc_hwrite=0;
-always @(posedge clk) begin
-        if(/*j < 20 &&*/ src_hready && 
-        (osrc_haddr!= src_haddr || odst_hrdata[W_DATA-1:0] != dst_hrdata[W_DATA-1:0] || 
-		osrc_hready != src_hready || osrc_hwrite != src_hwrite)) begin
-                j <= j + 1;
-		if(d_pc >= pc_trace_start && d_pc <= pc_trace_stop)
-			li <= li + 1; 
-		osrc_hwrite <= src_hwrite;
-		osrc_hready <= src_hready;
-                osrc_haddr <= src_haddr;
-                odst_hrdata[W_DATA-1:0] <= dst_hrdata[W_DATA-1:0];
-		if(j < 20 || (d_pc >= pc_trace_start && d_pc <= pc_trace_stop && li < 25))
-                $display("d_pc=%x src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x %08d", 
-			d_pc, src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp, $time);
-		if(!closed && src_haddr > 0)
-			$fwrite(f, "src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x\n",
-                        src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp);
-        end
-		if(timecnt > 40000000) begin
-                        closed <= 1;
-                        $fclose(f);
-                        //$finish();
-                end
-                timecnt <= timecnt+1;
-end
-
-integer f;
-reg opened=0, closed=0;
-reg [31:0] timecnt=0;
-always @(posedge clk) begin
-    if(!opened) begin
-            opened = 1;
-            f = $fopen("fout", "w");
-            if (f == 0) begin
-                $display ("ERROR: f not opened");
-                $finish;
-            end
-    end
-end
-
 
 endmodule

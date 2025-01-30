@@ -87,7 +87,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 			    if(i_rd_en) begin
 				rw <= 0;
 				if(c_oe) begin
-					$fwrite(f, "mem read addr %8x data %8x\n", i_addr, o_data);
 				end else begin
 					r_busy <= 1;
 					if(c_dirtyo) begin
@@ -99,27 +98,16 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 						r_wr_en <= 1;
 						state <= 1;
 						state_next <= 3;
-						if(j == 0) begin
-							$display("\tfirst i_rd_en && !c_oe and dirty time=%0d", $time);
-						end
-						j <= j + 1;
 					end else begin // !c_dirtyo and !c_oe
 						// load data from ram
                         	                // write ram data in cache
 						r_c_dirtyi <= 0;
 						state <= 3;
-						if(k == 0) begin
-                                                	$display("\tfirst i_rd_en && !c_oe and not dirty time=%0d", $time);
-	                                        end
-						k <= k + 1;
 					end
 				end
 			    end else if(i_wr_en) begin
 				r_busy <= 1;
 				rw <= 1;
-				$fwrite(f, "mem write addr %8x data %8x mask %1x\n", i_addr, i_data, i_mask);
-				//if(i_addr == 32'h64) 
-                        	//	$display("\tcache we w_addr = 64, data=%x mask=%b c_oe=%x odata=%x", i_data, i_mask, c_oe, c_odata);
 				nw <= nw + 1;
 				if(c_oe) begin
 					// write new data in cache and set dirty
@@ -128,10 +116,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                         r_c_dirtyi <= 1;
                                         r_c_we <= 1;
                                         state <= 7;
-                                        if(m == 0) begin
-                                            $display("\tfirst i_wr_en m simple time=%0d", $time);
-                                        end
-                                        m <= m + 1;
 				end else begin
 					if(c_dirtyo) begin
 						// save old data to ram
@@ -144,10 +128,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 	                                        state_next <= 8;
         	                                r_odata <= i_data;
                 	                        r_c_dirtyi <= 1;
-                        	                if(l == 0) begin
-                                	                $display("\tfirst i_wr_en c_dirtyo && !c_oe time=%0d", $time);
-                                        	end
-	                                        l <= l+1;
 					end else begin
 						// write from ram to cache
                                                 // and then write new data to cache
@@ -163,10 +143,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                                 	r_dram_addr <= i_addr;
                                                 	state <= 14;
 						end
-						if(n == 0) begin
-                                                        $display("\tfirst i_wr_en n simple time=%0d", $time);
-                                                end
-                                                n <= n + 1;
 					end
 				end
 			end
@@ -196,11 +172,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 				r_mask <= 4'b1111;
 			end
 		    end else if(state == 6) begin
-			if(rw == 0)
-			    $fwrite(f, "mem read addr %8x data %8x\n", i_addr, r_odata);
 			// write data to cache
-			if(i_addr >= pc_trace_start && i_addr <= pc_trace_stop)
-				$display("\t write to cache i_addr=%x data=%x time=%0d", i_addr, r_odata, $time);
 			r_c_idata <= r_odata;
 			r_c_dirtyi <= 0;
 			r_c_we <= 1;
@@ -212,8 +184,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 			r_busy <= 0;
 		    end else if(state == 8) begin
                         // write data to cache
-                        if(i_addr >= pc_trace_start && i_addr <= pc_trace_stop)
-                                $display("\t write to cache i_addr=%x data=%x", i_addr, r_odata);
                         r_c_idata <= r_odata;
                         r_c_dirtyi <= 1;
                         r_c_we <= 1;
@@ -231,14 +201,11 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                         end
                     end else if(state == 16) begin
                         // write data to cache
-                        if(i_addr >= pc_trace_start && i_addr <= pc_trace_stop)
-                                $display("\t write to cache i_addr=%x data=%x time=%0d", i_addr, r_odata, $time);
                         r_c_idata <= r_odata;
                         r_c_dirtyi <= 0;
                         r_c_we <= 1;
                         state <= 17;
                     end else if(state == 17) begin
-			//$display("state 17 r c dirtyi");
 			r_c_idata <= i_data;
 			r_c_dirtyi <= 1;
 			r_c_we <= 1;
@@ -252,18 +219,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 		    end
 	    end
 
-	    if(state != ostate && i < 20) begin
-		ostate <= state;
-		i <= i+1;
-	    	$display("\t state=%x i_addr=%x i_rd_en=%x i_wr_en=%x c_oe=%x o_busy=%x o_data=%x", 
-		    state, i_addr, i_rd_en, i_wr_en, c_oe, o_busy, o_data);
-	    end
-
-	    cnt <= cnt + 1;
-	    if(cnt > 3000000000) begin
-		    //$display("%0d: nr=%0d nh=%0d nw=%0d j=%0d k=%0d l=%0d m=%0d n=%0d", $time, nr, nh, nw, j, k, l, m, n);
-		    //$finish;
-	    end
     end
 
     wire w_dram_busy;
@@ -314,26 +269,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                `endif
                                );
 
-integer f;
-reg opened=0, closed=0;
-reg [31:0] timecnt=0;
-always @(posedge clk) begin
-    if(!opened) begin
-            opened = 1;
-            f = $fopen("cl", "w");
-            if (f == 0) begin
-                $display ("ERROR: fl not opened");
-                $finish;
-            end
-    end
-    timecnt <= timecnt + 1;
-    if(timecnt > 50000000) begin
-                        closed <= 1;
-                        $fclose(f);
-                        //$finish();
-    end
-end
-
 endmodule
 
 /**************************************************************************************************/
@@ -355,24 +290,14 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, i_mask
   integer i;
   initial for (i=0;i<ENTRY;i=i+1) begin 
 	  mem[i]=0;
-	  //r_dirty[i]=0;
   end
 
   always  @(posedge  CLK)  begin
 	if (w_we) begin
-		//r_dirty[w_addr] <= w_dirtyi;
-		`ifdef laur0
-		if(w_dirtyi) begin
-			$display("w_addr=%x w_dirtyi=1", w_addr);
-			$finish;
-		end
-		`endif
 		mem[w_addr] <= w_idata;
 	end
-    //r_odata <= mem[w_addr];
   end
   assign w_odata = mem[w_addr];
-  //assign w_dirtyo=r_dirty[w_addr];
 endmodule
 
 /**************************************************************************************************/

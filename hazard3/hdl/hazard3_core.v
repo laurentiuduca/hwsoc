@@ -187,16 +187,11 @@ reg [W_ADDR-1:0] obus_haddr_i=0, obus_haddr_d=0;
 always @(posedge clk) begin
         if(orst_n != rst_n) begin
                 orst_n <= rst_n;
-                //$display("%8d: hazard_core rst_n=%x", $time, rst_n);
-		$display("hazard_core rst_n=%x", rst_n);
         end
 	if(j < 10 && (obus_haddr_i != bus_haddr_i || obus_haddr_d != bus_haddr_d) || (j < 20 && (x_except == 7 ||x_except==2))) begin
 		j <= j+1;
 		obus_haddr_i <= bus_haddr_i;
 	        obus_haddr_d <= bus_haddr_d;
-		//$display("%8d: bus_haddr_i=%x bus_haddr_d=%x", $time, bus_haddr_i, bus_haddr_d);
-		//$display("%d bus_haddr_i=%x bus_haddr_d=%x x_except=%x fd_cir=%x", $time, bus_haddr_i, bus_haddr_d, x_except, fd_cir);
-		$display("bus_haddr_i=%x bus_haddr_d=%x x_except=%x fd_cir=%x", bus_haddr_i, bus_haddr_d, x_except, fd_cir);
 	end
 end
 

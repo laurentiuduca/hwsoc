@@ -54,19 +54,4 @@ onehot_mux #(
 	.out(apbs_prdata)
 );
 
-//`ifdef laur0
-// laur
-integer j=0, k=0;
-always @(posedge clk) begin
-        if(apbs_pwrite && j < 10) begin
-                j = j+1;
-                $display("apb_splitter write apbs_pwdata=%x", apbs_pwdata);
-        end
-        if(apbm_pwrite && k < 10) begin
-                k = k+1;
-                $display("apb_splitter write apbm_hwdata=%x apbm_paddr=%x", apbm_pwdata, apbm_paddr);
-        end
-end
-//`endif
-
 endmodule

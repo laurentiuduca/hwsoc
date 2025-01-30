@@ -101,7 +101,6 @@ wire [W_BYTES-1:0] wmask_noshift = ~({W_BYTES{1'b1}} << (1 << ahbls_hsize));
 wire [W_BYTES-1:0] wmask = wmask_noshift << ahbls_haddr[W_BYTEADDR-1:0];
 
 // AHBL state machine (mainly controlling write buffer)
-integer j=0;
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		r_wmask_saved <= {W_BYTES{1'b0}};
@@ -109,10 +108,6 @@ always @ (posedge clk or negedge rst_n) begin
 		r_wdata_saved <= {W_DATA{1'b0}};
 		r_wbuf_vld <= 1'b0;
 		r_read_delay_state <= 1'b0;
-		if(j == 0) begin
-			$display("W_SRAM_ADDR=%d W_BYTEADDR=%d W_BYTES=%d", W_SRAM_ADDR, W_BYTEADDR, W_BYTES);
-			j <= 1;
-		end
 	end else begin
 		if (ahb_write_aphase) begin
 			r_wmask_saved <= wmask;

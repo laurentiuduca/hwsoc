@@ -35,26 +35,6 @@ module sram_sync #(
 	output reg [WIDTH-1:0]                         rdata
 );
 
-integer f;
-reg opened=0, closed=0;
-reg [31:0] timecnt=0;
-always @(posedge clk) begin
-    if(!opened) begin
-            opened = 1;
-            f = $fopen("ch", "w");
-            if (f == 0) begin
-                $display ("ERROR: fh not opened");
-                $finish;
-            end
-    end
-    timecnt <= timecnt + 1;
-    if(timecnt > 500000) begin
-                        closed <= 1;
-                        $fclose(f);
-                        //$finish();
-    end
-end
-
 `ifdef FPGA_ICE40
 localparam FPGA_ICE40_DEFINED = 1;
 `else
@@ -161,36 +141,6 @@ if (BYTE_ENABLE) begin: has_byte_enable
 			if (ren)
 				rdata[8 * i +: 8] <= mem[addr][8 * i +: 8];
 		end
-	end
-	reg [31:0] j=0, lj=0;
-	always @ (posedge clk) begin
-		if(ren) begin
-                                if(j < 20 || (d_pc >= pc_trace_start && d_pc <= pc_trace_stop && lj < 10)) begin
-                                        j <= j+1;
-                                        if(d_pc >= pc_trace_start && d_pc <= pc_trace_stop && lj < 10)
-                                                lj <= lj+1;
-                                        $display("mem read addr %x data %x d_pc %x time %8d", {addr,2'b00},
-                                                mem[addr], d_pc, $time);
-                                end
-				$fwrite(f, "mem read addr %8x data %8x\n", {addr,2'b00}, mem[addr]);
-		end 
-		if(wen) begin
-                                if(j < 20 || (d_pc >= pc_trace_start && d_pc <= pc_trace_stop && lj < 20)) begin
-                                        j <= j+1;
-                                        if(d_pc >= pc_trace_start && d_pc <= pc_trace_stop && lj < 20)
-                                                lj <= lj+1;
-                                        $display("mem write addr %x data %x mask %x d_pc %x time %8d", {addr,2'b00},
-                                                wdata, wen, d_pc, $time);
-                                end
-				$fwrite(f, "mem write addr %8x data %8x mask %1x\n", {addr,2'b00}, wdata, wen);
-		end
-		`ifdef laur0
-		if((ren || wen) && addr[1:0]) begin
-			$display("sram sync addr=%x ren=%x wen=%x", addr, ren, wen);
-			$finish();
-		end
-		`endif
-
 	end
 
 end else begin: no_byte_enable

@@ -440,7 +440,6 @@ always @(posedge clk) begin
 		orst_n <= rst_n;
 		orst_n_dmi <= rst_n_dmi;
 		orst_n_cpu <= rst_n_cpu;
-		$display("%8d: rst_n=%x rst_n_dmi=%x rst_n_cpu=%x", $time, rst_n, rst_n_dmi, rst_n_cpu);
 	end
 end
 `endif

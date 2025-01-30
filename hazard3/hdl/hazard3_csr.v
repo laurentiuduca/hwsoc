@@ -325,10 +325,6 @@ always @ (posedge clk or negedge rst_n) begin
 		if (trapreg_update_enter) begin
 			mcause_irq <= mcause_irq_next;
 			mcause_code <= mcause_code_next;
-	                if((mcause_code_next || mcause_irq_next) && j < 10) begin
-	                        j <= j+1;
-                        	$display("%0d: except=%x wen_soon=%x ren_soon=%x decode_match=%x addr=%x pc=%x", $time, except, wen_soon, ren_soon, decode_match, addr, d_pc);
-			end
 		end else if (wen_m_mode && addr == MCAUSE) begin
 			{mcause_irq, mcause_code} <= {wdata_update[31], wdata_update[3:0]};
 		end
@@ -437,8 +433,6 @@ always @ (posedge clk or negedge rst_n) begin
 	end else begin
 		if (!(mcountinhibit_cy || debug_mode))
 			{mcycleh, mcycle} <= ({mcycleh, mcycle} + 1'b1) & {2*XLEN{|CSR_COUNTER}};
-		//else
-		//	$display("mcountinhibit_cy %x debug_mode %x", mcountinhibit_cy, debug_mode);
 		if (!(mcountinhibit_ir || debug_mode) && instr_ret)
 			{minstreth, minstret} <= ({minstreth, minstret} + 1'b1) & {2*XLEN{|CSR_COUNTER}};
 		if (wen_m_mode) begin
@@ -452,7 +446,6 @@ always @ (posedge clk or negedge rst_n) begin
 				minstret <= wdata_update & {XLEN{|CSR_COUNTER}};
 			if (addr == MCOUNTINHIBIT) begin
 				{mcountinhibit_ir, mcountinhibit_cy} <= {wdata_update[2], wdata_update[0]} | {2{~|CSR_COUNTER}};
-				$display("wrote mcountinhibit_cy with %x ----", {wdata_update[2], wdata_update[0]} | {2{~|CSR_COUNTER}});
 			end
 		end
 	end

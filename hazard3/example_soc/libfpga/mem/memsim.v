@@ -652,7 +652,6 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                         if(w_addr[1:0])
                                 $display("unaligned write: w_addr=%x", w_addr);
                 end else if(w_refresh) begin
-                        //$display("mem refresh");
                         state <= 3;
                         r_stall <= 1;
                         r_refresh_cnt <= 0;
@@ -660,12 +659,6 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
 	end
         8'd1: begin // mem read
 		r_odata <= {mem[r_maddr+3], mem[r_maddr+2], mem[r_maddr+1], mem[r_maddr+0]};
-                `ifdef RAM_DEBUG
-                //if(w_mtime < `mtsm)
-                        //$display ("%08d: read mem[%x]=>%x", w_mtime, r_maddr, {mem[r_maddr+3], mem[r_maddr+2], mem[r_maddr+1], mem[r_maddr+0]});
-                `endif
-		//state <= 11; // 10
-		//r_cnt <= 0;
 		state <= 0;
                 r_stall <= 0;
 	end 
