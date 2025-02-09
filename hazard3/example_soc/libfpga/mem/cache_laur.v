@@ -51,17 +51,15 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 				.w_cache_addr(w_cache_addr));
 
     wire [31:0] w_cache_addr;
-    reg [31:0] r_odata=0;
-    reg [3:0] r_mask=0;
+    reg [31:0] r_odata;
+    reg [3:0] r_mask;
     wire c_dirtyo;
     wire [31:0] c_odata;
-    reg [31:0] r_c_idata=0;
-    reg r_c_dirtyi=0, r_c_we=0, r_busy=0;
-    reg [6:0] state_next=0, ostate=0;
+    reg [31:0] r_c_idata;
+    reg r_c_dirtyi, r_c_we, r_busy;
+    reg [6:0] state_next;
     assign o_busy = r_busy;
     assign o_data = state == 0 && i_rd_en && c_oe ? c_odata : r_odata;
-    reg rw=0;
-    integer i=0, j=0, k=0, l=0, m=0, n=0, nr=0, nh=0, nw=0, cnt=0;
 
     always @(posedge clk or negedge rst_x) begin
 	    if(!rst_x) begin
@@ -80,12 +78,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 	    end else begin
 		    if(state == 0) begin
 			    if(i_rd_en) begin
-				if(c_oe)
-				    nh <= nh + 1;
-			    	nr <= nr + 1;
-			    end
-			    if(i_rd_en) begin
-				rw <= 0;
 				if(c_oe) begin
 				end else begin
 					r_busy <= 1;
@@ -107,8 +99,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 				end
 			    end else if(i_wr_en) begin
 				r_busy <= 1;
-				rw <= 1;
-				nw <= nw + 1;
 				if(c_oe) begin
 					// write new data in cache and set dirty
                                         r_c_idata <= i_data;
@@ -131,18 +121,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 					end else begin
 						// write from ram to cache
                                                 // and then write new data to cache
-						if(i_mask == 4'b1111) begin
-							// directly write to cache
-							r_c_idata <= i_data;
-				                        r_c_dirtyi <= 1;
-				                        r_c_we <= 1;
-				                        r_mask <= i_mask;
-				                        state <= 18;
-						end else begin
-                                                	r_rd_en <= 1;
-                                                	r_dram_addr <= i_addr;
-                                                	state <= 14;
-						end
+                                               	r_rd_en <= 1;
+                                               	r_dram_addr <= i_addr;
+                                               	state <= 14;
 					end
 				end
 			end
