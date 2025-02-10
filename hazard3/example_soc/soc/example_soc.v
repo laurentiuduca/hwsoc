@@ -433,17 +433,6 @@ ahbl_splitter #(
 	.dst_hrdata      ({bridge_hrdata      , sram0_hrdata     })
 );
 
-`ifdef laur0
-reg orst_n=1, orst_n_dmi=1, orst_n_cpu=1;
-always @(posedge clk) begin
-	if(orst_n != rst_n || orst_n_dmi != rst_n_dmi || orst_n_cpu != rst_n_cpu) begin
-		orst_n <= rst_n;
-		orst_n_dmi <= rst_n_dmi;
-		orst_n_cpu <= rst_n_cpu;
-	end
-end
-`endif
-
 // APB layer
 
 wire        bridge_psel;
