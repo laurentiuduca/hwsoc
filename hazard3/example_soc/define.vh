@@ -9,5 +9,12 @@
 
 `define CACHE_SIZE (32*1024)
 
+`ifdef SIM_MODE
+`define SERIAL_WCNT 2
+`else
+`define SERIAL_WCNT (`FREQ / 115200)
+`endif
+
 `define XLEN    32
 `define LATENCY 0
+
