@@ -11,12 +11,32 @@
 
 `ifndef SIM_MODE
 module m_maintn(
-    input wire CLK,
-    input  wire        w_rxd,
+    
+    //input  wire        w_rxd,
+    `ifndef LAUR_ON_HAZARD3
     output wire        w_txd,
+    `endif
     output wire [5:0] w_led,
 	input wire w_btnl,
 	input wire w_btnr,
+
+     // these come from cache
+     input wire pll_clk,
+     input wire rst_x,
+     input wire clk_sdram,
+     output wire o_init_calib_complete,
+     output wire sdram_fail,
+       // user interface ports
+     input  wire                         i_rd_en,
+     input  wire                         i_wr_en,
+     input  wire [31:0]                  i_addr,
+     input  wire [31:0]                  i_data,
+     output wire [31:0]                  o_data,
+     output wire                         o_busy,
+     input  wire [3:0]                   i_ctrl,
+     input  wire [2:0]                   sys_state,
+     input  wire [3:0]                   w_bus_cpustate,
+     output wire [7:0]                   mem_state,
 
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
@@ -48,121 +68,26 @@ module m_maintn(
     /**********************************************************************************************/
     // bus interface
     wire w_init_done;
-    wire [31:0] bus_core_ir_0, bus_core_ir_1;
-    wire [3:0] bus_cpustate0, bus_cpustate1;
-    wire [3:0] w_bus_cpustate = w_grant == 0 ? bus_cpustate0 : bus_cpustate1;
-    wire [31:0] w_mem_paddr, bus_mem_paddr0, bus_mem_paddr1;
-    wire w_data_we, bus_data_we0, bus_data_we1;
-    wire w_data_le, bus_data_le0, bus_data_le1;
-    wire [3:0] bus_data_busy0, bus_data_busy1;
-    wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
-    wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
-    wire [63:0] w_mtimecmp0, w_mtimecmp1, w_wmtimecmp0, w_wmtimecmp1;
-    wire w_clint_we0, w_clint_we1;
-    wire [1:0]  w_tlb_req, bus_tlb_req0, bus_tlb_req1;
-    wire        w_tlb_busy, bus_tlb_busy0, bus_tlb_busy1;
-    wire [31:0] w_mip, bus_mip0, bus_mip1;
-    wire [31:0] w_dram_addr, bus_dram_addr0, bus_dram_addr1;
-    wire [31:0] w_dram_wdata, bus_dram_wdata0, bus_dram_wdata1;
-    wire [31:0] w_dram_odata, bus_dram_odata0, bus_dram_odata1;
-    wire w_dram_we_t, bus_dram_we_t0, bus_dram_we_t1;
-    wire w_dram_busy, bus_dram_busy0, bus_dram_busy1;
+    wire [31:0] w_mem_paddr;
+    wire w_data_we;
+    wire w_data_le;
+    wire [31:0] w_data_wdata;
+    wire [31:0] w_data_data;
+    wire [31:0] w_dram_addr;
+    wire [31:0] w_dram_wdata;
+    wire [31:0] w_dram_odata;
+    wire w_dram_we_t;
+    wire w_dram_busy;
     wire [3:0]   w_dram_ctrl;
-    wire w_dram_le, bus_dram_le0, bus_dram_le1;
-    wire [31:0] w_pc0, w_pc1, w_ir0, w_ir1;
-    wire  [31:0] w_load_res0, w_load_res1;            // For aomic LR/SC
-    wire  w_reserved0, w_reserved1;            // For aomic LR/SC
-    wire w_hart_sc0, w_hart_sc1;
+    wire w_dram_le;
 
-    wire [31:0] w_grant;
-    wire [31:0] bus_ipi;
-    wire w_ipi_taken0, w_ipi_taken1;
-    wire w_extint_taken0, w_extint_taken1;
-
-    reg [63:0] mtime=0;
-    wire [63:0] w_mtime=mtime;
-
-    wire w_tx_ready;
-	 wire w_plic_aces;
-	 reg         r_plic_aces_t   = 0;
-    reg  [31:0] r_plic_odata        = 0;
-    reg  [31:0] r_clint_odata       = 0;
-
-	 reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
-	 reg [7:0] r_char_value=0;
 	 
-	 reg         r_uart_we = 0;
-    reg   [7:0] r_uart_data = 0;
-    wire        w_key_we;
-    wire  [7:0] w_key_data;
-
-    wire [31:0] w_a00, w_a01;
-
-//`ifdef laur0
-    m_cpummu core0(
-        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
-        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0), .w_data_busy(bus_data_busy0),
-        .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0),
-        .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
-        .w_mip(bus_mip0), .w_plic_we(r_plic_we0),
-        .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
-        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0),
-        .w_reserved(w_reserved0), .w_hart_sc(w_hart_sc0), .w_load_res(w_load_res0),
-        .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1), .w_oh_pc(w_pc1), 
-        .w_ipi_taken(w_ipi_taken0), .w_extint_taken(w_extint_taken0), .w_a0(w_a00)
-    );
-//`endif
-
-`ifndef USE_SINGLE_CORE
-     m_cpummu core1(
-        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
-        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1), .w_data_busy(bus_data_busy1),
-        .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1),
-        .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
-        .w_mip(bus_mip1), .w_plic_we(r_plic_we1),
-        .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
-        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1),
-        .w_reserved(w_reserved1), .w_hart_sc(w_hart_sc1), .w_load_res(w_load_res1),
-        .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0), .w_oh_pc(w_pc0), 
-        .w_ipi_taken(w_ipi_taken1), .w_extint_taken(w_extint_taken1), .w_a0(w_a01)
-    );
-`endif
-
-
-    busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
-        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le), 
-        .w_data_busy(r_data_busy), .bus_data_busy0(bus_data_busy0), .bus_data_busy1(bus_data_busy1), 
-        .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
-        .w_mtime(w_mtime),
-        .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
-        .w_mip(w_mip),
-        .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
-        .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
-
-        .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
-        .bus_mem_paddr0(bus_mem_paddr0), .bus_data_we0(bus_data_we0), .bus_data_le0(bus_data_le0),
-        .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
-        .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
-        .bus_mip0(bus_mip0),
-        .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
-        .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
-
-        .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
-        .bus_mem_paddr1(bus_mem_paddr1), .bus_data_we1(bus_data_we1), .bus_data_le1(bus_data_le1),
-        .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
-        .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
-        .bus_mip1(bus_mip1),
-        .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
-        .bus_dram_busy1(bus_dram_busy1), .bus_dram_ctrl1(bus_dram_ctrl1), .bus_dram_le1(bus_dram_le1)
-    );
-
-
     /**********************************************************************************************/
+`ifdef LAUR_ON_HAZARD3
+    reg         r_uart_we = 0;
+    reg   [7:0] r_uart_data = 0;
+    wire w_tx_ready=0;
+`else
     // OUTPUT CHAR
     UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
 
@@ -197,7 +122,7 @@ module m_maintn(
             r_uart_data <= 0;
         end
     end
-
+`endif
 
     /**********************************************************************************************/
     reg r_sd_init_we=0;
@@ -325,6 +250,8 @@ module m_maintn(
 `ifdef LAUR_MEM_RB
 `ifdef LAUR_MEM_RB_ONLY_CHECK
         reg [31:0] r_rb_delay=0;
+`else
+	error, you must also define only check
 `endif
 	reg [7:0] r_rb_state=0, r_rb_cnt=0;
 	reg [31:0] r_rb_data=0, r_verify_checksum=0;
@@ -408,13 +335,12 @@ module m_maintn(
 `endif
 
     // Zero init
-    wire calib_done;
     always@(posedge pll_clk) begin
 `ifdef SIM_MAIN
 	    r_zero_we <= 0;
 	    r_zero_done <= 1;
 `else
-        if(!w_dram_busy && !r_zero_done && calib_done) 
+        if(!w_dram_busy && !r_zero_done && o_init_calib_complete) 
 				r_zero_we <= 1;
 		  else if(w_dram_busy && r_zero_we) begin
             r_zero_we    <= 0;
@@ -464,7 +390,6 @@ module m_maintn(
 `endif
 `endif
 
-    wire sdram_fail;
     wire w_late_refresh;
     wire [7:0] w_mem_state;
     DRAM_conRV dram_con (
@@ -487,7 +412,7 @@ module m_maintn(
                                .clk(pll_clk),
                                .rst_x(RST_X),
                                .clk_sdram(clk_sdram),
-                               .o_init_calib_complete(calib_done),
+                               .o_init_calib_complete(o_init_calib_complete),
                                .sdram_fail(sdram_fail),
                                `ifdef TN_DRAM_REFRESH
                                .r_late_refresh(w_late_refresh),
@@ -533,7 +458,7 @@ module m_maintn(
 
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} :
+                        r_extint1_done, r_zero_done, o_init_calib_complete & !sdram_fail & !w_late_refresh} :
                         sd_led_status;
 `endif
     /**********************************************************************************************/
