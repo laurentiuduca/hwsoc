@@ -71,4 +71,6 @@ vivado:
 	xelab $(TOPMODULE) -timescale 1ns/100ps
 	xsim $(TOPMODULE) -R
 
+gwsynth:
+	time gw_sh run.tcl
 

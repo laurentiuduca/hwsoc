@@ -30,8 +30,8 @@ module uart_mini (
 
 reg [7:0] state;
 reg r_tx_ready, r_was_write;
-always @(posedge clk or negedge rst_n_sync) begin
-	if(!rst_n_sync) begin
+always @(posedge clk or negedge rst_n) begin
+	if(!rst_n) begin
 		r_uart_we <= 0;
 		r_uart_data <= 0;
 		state <= 0;
@@ -67,20 +67,10 @@ end
 assign irq=0;
 assign apbs_pready = r_tx_ready;
 
-wire rst_n_sync;
-
-reset_sync #(
-	.N_CYCLES (2)
-) inst_reset_sync (
-	.clk       (clk),
-	.rst_n_in  (rst_n),
-	.rst_n_out (rst_n_sync)
-);
-
 wire w_tx_ready;
 reg         r_uart_we;
 reg   [7:0] r_uart_data;
-UartTx UartTx0(clk, rst_n_sync, r_uart_data, r_uart_we, tx, w_tx_ready);
+UartTx UartTx0(clk, rst_n, r_uart_data, r_uart_we, tx, w_tx_ready);
 
 
 endmodule
