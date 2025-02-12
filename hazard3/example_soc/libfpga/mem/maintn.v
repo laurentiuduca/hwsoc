@@ -9,17 +9,10 @@
 
 /**************************************************************************************************/
 
-`ifndef SIM_MODE
-module m_maintn(
+module m_maintn #(parameter PRELOAD_FILE = "") (
     
-    	input  wire        w_rxd,
-    	output wire        w_txd,
-    	output wire [5:0] w_led,
-	input wire w_btnl,
-	input wire w_btnr,
-
      // these come from cache
-     input wire pll_clk,
+     input wire clk,
      input wire rst_x,
      input wire clk_sdram,
      output wire o_init_calib_complete,
@@ -89,7 +82,7 @@ module m_maintn(
 `ifdef LAUR_ON_HAZARD3
 `else
     // OUTPUT CHAR
-    UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
+    UartTx UartTx0(clk, rst_x, r_uart_data, r_uart_we, w_txd, w_tx_ready);
 
 `ifdef LAUR_MEM_RB
     // xsim requires declaration before use
@@ -98,21 +91,20 @@ module m_maintn(
 `endif
     reg r_wait_ready=1;
     reg          r_finish=0;
-    always@(posedge pll_clk) begin
-    input wire w_init_done;
+    always@(posedge clk) begin
         if(w_tx_ready)
             r_wait_ready <= 1;
         else
             r_wait_ready <= 0;
 `ifdef LAUR_MEM_RB
-	    if(r_rb_uart_we) begin
+	if(r_rb_uart_we) begin
 		    r_uart_we <= 1;
 		    r_uart_data <= r_rb_uart_data;
-`endif
     	end else begin 
             r_uart_we   <= 0;
             r_uart_data <= 0;
         end
+`endif
     end
 `endif
 
@@ -125,14 +117,14 @@ module m_maintn(
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
     `ifdef FAT32_SD
-    sd_file_loader sd_file_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
+    sd_file_loader sd_file_loader(.clk27mhz(clk), .resetn(rst_x), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state), 
         .tangled(sd_led_status),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
     `else
-    sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
+    sd_loader sd_loader(.clk27mhz(clk), .resetn(rst_x), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
@@ -143,7 +135,7 @@ module m_maintn(
     // sd state machine for copying sd to dram
     reg [7:0] r_sd_state=0;
 
-    always @ (posedge pll_clk) begin
+    always @ (posedge clk) begin
             if(r_sd_state == 0) begin
                 if(w_sd_init_we && !w_dram_busy) begin
                     r_sd_init_we <= 1;
@@ -176,8 +168,8 @@ module m_maintn(
     reg  [31:0]  r_initaddr   = 0;
     reg  [31:0]  r_initaddr3  = 0;
     reg  [31:0]  r_checksum = 0, r_sd_checksum=0;
-    always@(posedge pll_clk) begin
-	    r_checksum <= (!RST_X)                      ? 0                             :
+    always@(posedge clk) begin
+	    r_checksum <= (!rst_x)                      ? 0                             :
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
 		               r_checksum;
     end
@@ -205,8 +197,8 @@ module m_maintn(
     reg r_mem_rb_done=0;
 `endif
 `ifndef SIM_MODE
-    always@(posedge pll_clk) begin
-        r_init_state <= (!RST_X) ? 1 :
+    always@(posedge clk) begin
+        r_init_state <= (!rst_x) ? 1 :
                       (r_init_state == 0)                ? 1 :
                       (r_init_state == 1 & r_zero_done)  ? 3 : // sd instead of pl
                       (r_init_state == 2 & r_bbl_done)   ? 4 :
@@ -225,7 +217,7 @@ module m_maintn(
 
     assign w_init_done = (r_init_state == 5);
         
-    always@(posedge pll_clk) begin	
+    always@(posedge clk) begin	
 `ifdef SIM_MODE
 	    if(r_init_state < 1)
 		    $display("r_init_state=%d", r_init_state);
@@ -252,7 +244,7 @@ module m_maintn(
 	wire [31:0] w_verify_checksum = r_verify_checksum;
 	wire w_checksum_match = (r_verify_checksum == r_checksum);
     wire w_sd_checksum_match = (r_verify_checksum == r_sd_checksum);
-    	always@(posedge pll_clk) begin
+    	always@(posedge clk) begin
 		if(r_init_state != 6) begin
 			r_rb_state <= 0;
 			r_set_dram_le <= 0;
@@ -329,7 +321,7 @@ module m_maintn(
 `endif
 
     // Zero init
-    always@(posedge pll_clk) begin
+    always@(posedge clk) begin
 `ifdef SIM_MAIN
 	    r_zero_we <= 0;
 	    r_zero_done <= 1;
@@ -386,7 +378,8 @@ module m_maintn(
 
     wire w_late_refresh;
     wire [7:0] w_mem_state;
-    DRAM_conRV dram_con (
+    DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
+    dram_con (
                                // user interface ports
 `ifdef LAUR_MEM_RB
                                .i_rd_en(w_dram_le | r_set_dram_le),
@@ -403,8 +396,8 @@ module m_maintn(
                                .w_bus_cpustate(w_bus_cpustate),
                                .mem_state(w_mem_state),
 
-                               .clk(pll_clk),
-                               .rst_x(RST_X),
+                               .clk(clk),
+                               .rst_x(rst_x),
                                .clk_sdram(clk_sdram),
                                .o_init_calib_complete(o_init_calib_complete),
                                .sdram_fail(sdram_fail),
@@ -413,7 +406,7 @@ module m_maintn(
                                `endif
 
                                 `ifdef SIM_MODE
-                                .w_mtime(w_mtime)
+                                .w_mtime()
                                 `else
                                 .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
@@ -429,31 +422,24 @@ module m_maintn(
                                );
     /**********************************************************************************************/
 
-`ifndef SIM_MODE
     // debug on display
-    max7219 max7219(.clk(pll_clk), .clkdiv(clkdiv), .reset_n(RST_X), .data_vector(data_vector),
+    max7219 max7219(.clk(clk), .clkdiv(clkdiv), .reset_n(rst_x), .data_vector(data_vector),
             .clk_out(MAX7219_CLK),
             .data_out(MAX7219_DATA),
             .load_out(MAX7219_LOAD)
         );
     wire clkdiv;
     wire [31:0] data_vector;
-    clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
+    clkdivider cd(.clk(clk), .reset_n(rst_x), .n(100), .clkdiv(clkdiv));
 
     assign data_vector = w_sd_checksum; //(w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? w_pc1 : w_sd_checksum;
 
-    reg r_extint1_done=0;
-    reg [31:0] r_dbg_data=0;
-    always @(posedge pll_clk)
-        if(r_extint1_ack && !r_extint1_done) begin
-            r_dbg_data <= {31'h0, r_extint1_ack};
-            r_extint1_done <= 1;
-        end
-
+    `ifndef SIM_MODE
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                        r_extint1_done, r_zero_done, o_init_calib_complete & !sdram_fail & !w_late_refresh} :
+                        1'b0, r_zero_done, o_init_calib_complete & !sdram_fail & !w_late_refresh} :
                         sd_led_status;
-`endif
+    `endif
+endmodule
     /**********************************************************************************************/
 

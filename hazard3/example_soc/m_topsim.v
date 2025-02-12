@@ -14,7 +14,7 @@ module m_topsim (
     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
-    output wire [3:0] O_sdram_dqm       // 32/4
+    output wire [3:0] O_sdram_dqm,       // 32/4
 
 	input wire i_rx,
     	output wire o_tx,
@@ -78,11 +78,11 @@ example_soc es (
     .IO_sdram_dq(IO_sdram_dq),       // 32 bit bidirectional data bus
     .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
     .O_sdram_ba(O_sdram_ba),        // two banks
-    .O_sdram_dqm(O_sdram_dqm)       // 32/4
+    .O_sdram_dqm(O_sdram_dqm),       // 32/4
 
                                 .w_rxd(w_rxd),
                                 .w_txd(w_txd),
-                                .w_ledi(w_led),
+                                .w_led(w_led),
                                 .w_btnl(w_btnl),
                                 .w_btnr(w_btnr),
                                 // when sdcard_pwr_n = 0, SDcard power on

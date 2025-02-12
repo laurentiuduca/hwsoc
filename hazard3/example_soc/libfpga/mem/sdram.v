@@ -71,7 +71,7 @@ module sdram
     input wire      [31:0] din,          // data input
     input wire      [3:0] mask,
     output wire     [31:0] dout,         // data output
-    output wire [DATA_WIDTH-1:0] dout32, // 32-bit data output
+    //output wire [DATA_WIDTH-1:0] dout32, // 32-bit data output
     output reg        data_ready,   // available 6 cycles after wr is set
     output reg        busy          // 0: ready for next command
 );

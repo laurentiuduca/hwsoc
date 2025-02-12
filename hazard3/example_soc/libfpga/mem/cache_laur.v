@@ -42,7 +42,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
-    output wire [3:0] O_sdram_dqm        // 32/4
+    output wire [3:0] O_sdram_dqm,        // 32/4
 
      input  wire        w_rxd,
      output wire        w_txd,
@@ -232,8 +232,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
     reg r_rd_en=0, r_wr_en=0;
     wire [31:0] w_dram_odata;
     wire w_init_done;
-    DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
-    dram_con (
+    //DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
+    m_maintn #(.PRELOAD_FILE(PRELOAD_FILE))
+    boot (
                                // user interface ports
                                .i_rd_en(r_rd_en),
                                .i_wr_en(r_wr_en),
@@ -252,13 +253,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                .clk_sdram(clk_sdram),
                                .o_init_calib_complete(calib_done),
                                .sdram_fail(sdram_fail),
-                               `ifdef TN_DRAM_REFRESH
-                               .r_late_refresh(w_late_refresh),
-                               `endif
 
-                                `ifdef SIM_MODE
-                                .w_mtime(0) // not used
-                                `else
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
                                .O_sdram_cs_n(O_sdram_cs_n),            // chip select
@@ -268,12 +263,11 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                .IO_sdram_dq(IO_sdram_dq),       // 32 bit bidirectional data bus
                                .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
                                .O_sdram_ba(O_sdram_ba),        // two banks
-                               .O_sdram_dqm(O_sdram_dqm)       // 32/4
-                               `endif
+                               .O_sdram_dqm(O_sdram_dqm),       // 32/4
 
 			       	.w_rxd(w_rxd),
      				.w_txd(w_txd),
-     				.w_ledi(w_led),
+     				.w_led(w_led),
      				.w_btnl(w_btnl),
      				.w_btnr(w_btnr),
      				// when sdcard_pwr_n = 0, SDcard power on
