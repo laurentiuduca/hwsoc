@@ -38,6 +38,8 @@ module m_maintn(
      input  wire [3:0]                   w_bus_cpustate,
      output wire [7:0]                   mem_state,
 
+     output wire w_init_done,
+
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -67,26 +69,22 @@ module m_maintn(
 
     /**********************************************************************************************/
     // bus interface
-    wire w_init_done;
-    wire [31:0] w_mem_paddr;
-    wire w_data_we;
-    wire w_data_le;
-    wire [31:0] w_data_wdata;
-    wire [31:0] w_data_data;
-    wire [31:0] w_dram_addr;
-    wire [31:0] w_dram_wdata;
+    wire [31:0] w_dram_addr=i_addr;
+    wire [31:0] w_dram_wdata = i_data;
     wire [31:0] w_dram_odata;
-    wire w_dram_we_t;
+    assign o_data = w_dram_odata;
+    wire w_dram_we_t = w_init_done ? i_wr_en : 0;
     wire w_dram_busy;
-    wire [3:0]   w_dram_ctrl;
-    wire w_dram_le;
+    assign o_busy = w_init_done ? w_dram_busy : 1;
+    wire [3:0]   w_dram_ctrl = w_init_done ? i_ctrl : 4'b1111;
+    wire w_dram_le = w_init_done ? i_rd_en : r_set_dram_le;
 
 	 
     /**********************************************************************************************/
-`ifdef LAUR_ON_HAZARD3
     reg         r_uart_we = 0;
     reg   [7:0] r_uart_data = 0;
     wire w_tx_ready=0;
+`ifdef LAUR_ON_HAZARD3
 `else
     // OUTPUT CHAR
     UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
@@ -99,19 +97,11 @@ module m_maintn(
     reg r_wait_ready=1;
     reg          r_finish=0;
     always@(posedge pll_clk) begin
+    input wire w_init_done;
         if(w_tx_ready)
             r_wait_ready <= 1;
         else
             r_wait_ready <= 0;
-        // optimisation instead of w_mem_wdata put w_data_wdata
-        `ifdef NUTTX_FLAT
-        if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && w_tx_ready && r_wait_ready) begin
-        `else
-        if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready && r_wait_ready) begin
-        `endif
-            r_uart_we   <= 1;
-            r_uart_data <= w_data_wdata[7:0];
-            //$display("tohost data wr %x", w_data_wdata);
 `ifdef LAUR_MEM_RB
 	    if(r_rb_uart_we) begin
 		    r_uart_we <= 1;
@@ -189,6 +179,8 @@ module m_maintn(
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
 		               r_checksum;
     end
+    wire w_pl_init_we=0;
+    wire [31:0] w_pl_init_data=0;
     wire [31:0] w_checksum = r_checksum;
     wire [31:0] w_sd_checksum = r_sd_checksum;
     /**************************************************************************************************/
@@ -251,7 +243,7 @@ module m_maintn(
 `ifdef LAUR_MEM_RB_ONLY_CHECK
         reg [31:0] r_rb_delay=0;
 `else
-	error, you must also define only check
+	//error, you must also define only check
 `endif
 	reg [7:0] r_rb_state=0, r_rb_cnt=0;
 	reg [31:0] r_rb_data=0, r_verify_checksum=0;
@@ -376,7 +368,7 @@ module m_maintn(
                                     (r_init_state == 5) ? w_dram_wdata : 
                                     (r_init_state == 3) ? r_sd_init_data : w_pl_init_data;
 
-    wire [3:0]   w_dram_ctrl_t  = (!w_init_done) ? 4'b1111 `FUNCT3_SW____ : w_dram_ctrl;
+    wire [3:0]   w_dram_ctrl_t  = (!w_init_done) ? 4'b1111 : w_dram_ctrl;
     /**********************************************************************************************/
 
 `ifdef LAUR_MEM_RB
@@ -446,7 +438,7 @@ module m_maintn(
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl == 0 ? w_pc1 : w_sd_checksum;
+    assign data_vector = w_sd_checksum; //(w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? w_pc1 : w_sd_checksum;
 
     reg r_extint1_done=0;
     reg [31:0] r_dbg_data=0;

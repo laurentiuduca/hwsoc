@@ -93,8 +93,10 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 					end else begin // !c_dirtyo and !c_oe
 						// load data from ram
                         	                // write ram data in cache
-						r_c_dirtyi <= 0;
-						state <= 3;
+						if(w_init_done) begin
+							r_c_dirtyi <= 0;
+							state <= 3;
+						end
 					end
 				end
 			    end else if(i_wr_en) begin
@@ -211,6 +213,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
     reg [31:0] r_dram_idata=0;
     reg r_rd_en=0, r_wr_en=0;
     wire [31:0] w_dram_odata;
+    wire w_init_done;
     DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
     dram_con (
                                // user interface ports
@@ -224,6 +227,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                .sys_state(0), // not used
                                .w_bus_cpustate(0), // not used
                                .mem_state(w_mem_state), // not used
+			       .w_init_done(w_init_done),
 
                                .clk(clk),
                                .rst_x(rst_x),

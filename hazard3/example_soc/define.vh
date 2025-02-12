@@ -18,3 +18,12 @@
 `define XLEN    32
 `define LATENCY 0
 
+`ifndef SIM_MODE
+	`define LAUR_MEM_RB // mem read-back after writing it with BBL
+	`define LAUR_MEM_RB_ONLY_CHECK
+`endif
+
+`define BBL_SIZE (8*1024*1024)
+`define BIN_BBL_SIZE   `BBL_SIZE
+`define BIN_DISK_SIZE 0
+
