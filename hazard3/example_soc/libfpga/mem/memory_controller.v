@@ -62,7 +62,7 @@ sdram #(
 	.addr(busy ? MemAddr : addr), .rd(busy ? MemRD : (read_a || read_b)), 
     .wr(busy ? MemWR : write), .refresh(busy ? MemRefresh : refresh),
     .mask(mask),
-	.din(busy ? MemDin : din), .dout(MemDout), .busy(MemBusy), .data_ready(MemDataReady),
+	.din(busy ? MemDin : din), .dout(MemDout), .dout32(), .busy(MemBusy), .data_ready(MemDataReady),
 
     .SDRAM_DQ(SDRAM_DQ), .SDRAM_A(SDRAM_A), .SDRAM_BA(SDRAM_BA), 
     .SDRAM_nCS(SDRAM_nCS), .SDRAM_nWE(SDRAM_nWE), .SDRAM_nRAS(SDRAM_nRAS),

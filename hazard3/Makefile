@@ -45,7 +45,7 @@ clean:
 	rm -rf synth.vg impl serialout.txt ftn.txt *out stip*.txt
 	rm -rf laur2.txt log*txt
 	rm -rf xsim*.* xelab*.* xvlog*.*
-	rm -f init_kernel.txt fh fl fout cl ch cr
+	rm -f init_kernel.txt fh fl fout cl ch cr impl
 
 veri:
 	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEM}
