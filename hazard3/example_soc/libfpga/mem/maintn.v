@@ -12,11 +12,9 @@
 `ifndef SIM_MODE
 module m_maintn(
     
-    //input  wire        w_rxd,
-    `ifndef LAUR_ON_HAZARD3
-    output wire        w_txd,
-    `endif
-    output wire [5:0] w_led,
+    	input  wire        w_rxd,
+    	output wire        w_txd,
+    	output wire [5:0] w_led,
 	input wire w_btnl,
 	input wire w_btnr,
 
@@ -52,18 +50,22 @@ module m_maintn(
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm,       // 32/4
 
-    // when sdcard_pwr_n = 0, SDcard power on
-    output wire         sdcard_pwr_n,
-    // signals connect to SD bus
-    output wire         sdclk,
-    inout  wire         sdcmd,
-    input  wire         sddat0,
-    output wire         sddat1, sddat2, sddat3,
-
-    // display
-    output wire MAX7219_CLK,
-    output wire MAX7219_DATA,
-    output wire MAX7219_LOAD
+        input  wire        w_rxd,
+        output wire        w_txd,
+        output wire [5:0] w_led,
+        input wire w_btnl,
+        input wire w_btnr,
+    	// when sdcard_pwr_n = 0, SDcard power on
+    	output wire         sdcard_pwr_n,
+    	// signals connect to SD bus
+    	output wire         sdclk,
+    	inout  wire         sdcmd,
+    	input  wire         sddat0,
+    	output wire         sddat1, sddat2, sddat3,
+    	// display
+    	output wire MAX7219_CLK,
+    	output wire MAX7219_DATA,
+    	output wire MAX7219_LOAD
     );
 
 

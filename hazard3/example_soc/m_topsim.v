@@ -15,6 +15,23 @@ module m_topsim (
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm       // 32/4
+
+	input wire i_rx,
+    	output wire o_tx,
+        output wire [5:0] w_led,
+        input wire w_btnl,
+        input wire w_btnr,
+        // when sdcard_pwr_n = 0, SDcard power on
+        output wire         sdcard_pwr_n,
+        // signals connect to SD bus
+        output wire         sdclk,
+        inout  wire         sdcmd,
+        input  wire         sddat0,
+        output wire         sddat1, sddat2, sddat3,
+        // display
+        output wire MAX7219_CLK,
+        output wire MAX7219_DATA,
+        output wire MAX7219_LOAD
 );
 
 wire pll_clk, clk_sdram;
@@ -28,6 +45,10 @@ wire pll_clk, clk_sdram;
     .clkoutp(clk_sdram)    // FREQ main clock phase shifted
     );
 `endif
+
+wire        w_rxd=1;
+wire        w_txd;
+assign o_tx=w_txd;
 
 reg RST_X=0;
 example_soc es (
@@ -58,6 +79,23 @@ example_soc es (
     .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
     .O_sdram_ba(O_sdram_ba),        // two banks
     .O_sdram_dqm(O_sdram_dqm)       // 32/4
+
+                                .w_rxd(w_rxd),
+                                .w_txd(w_txd),
+                                .w_ledi(w_led),
+                                .w_btnl(w_btnl),
+                                .w_btnr(w_btnr),
+                                // when sdcard_pwr_n = 0, SDcard power on
+                                .sdcard_pwr_n(sdcard_pwr_n),
+                                // signals connect to SD bus
+                                .sdclk(sdclk),
+                                .sdcmd(sdcmd),
+                                .sddat0(sddat0),
+                                .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+                                // display
+                                .MAX7219_CLK(MAX7219_CLK),
+                                .MAX7219_DATA(MAX7219_DATA),
+                                .MAX7219_LOAD(MAX7219_LOAD)
 );
 
 `ifdef ICARUS
