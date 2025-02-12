@@ -114,7 +114,7 @@ begin
 		    end
 			`send_digits: 
 				if (driver_state == `ds_idle) begin
-					command_reg <= {4'h0, digit_index + 1'b1, segments};
+					command_reg <= {4'h0, digit_index + 4'h1, segments};
 					start_ds <= 1;
 					if (digit_index == 0) begin
 						//next_state <= `latch_data;
