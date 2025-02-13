@@ -34,6 +34,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
 
      output reg [1:0] 			 r_cache_state,
      output wire 			 c_oe,
+
+     input wire [31:0]                   d_pc,
+
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -44,7 +47,24 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
-    output wire [3:0] O_sdram_dqm        // 32/4
+    output wire [3:0] O_sdram_dqm,       // 32/4
+
+     input  wire        w_rxd,
+     output wire        w_txd,
+     output wire [5:0] w_led,
+     input wire w_btnl,
+     input wire w_btnr,
+     // when sdcard_pwr_n = 0, SDcard power on
+     output wire         sdcard_pwr_n,
+     // signals connect to SD bus
+     output wire         sdclk,
+     inout  wire         sdcmd,
+     input  wire         sddat0,
+     output wire         sddat1, sddat2, sddat3,
+     // display
+     output wire MAX7219_CLK,
+     output wire MAX7219_DATA,
+     output wire MAX7219_LOAD
     );
 
 
@@ -118,6 +138,62 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
     wire w_late_refresh;
     wire [7:0] w_mem_state;
     wire calib_done;
+    wire w_init_done;
+
+
+    m_maintn #(.PRELOAD_FILE(PRELOAD_FILE))
+    boot (
+                               // user interface ports
+                               .i_rd_en(w_dram_le),
+                               .i_wr_en(i_wr_en),
+                               .i_addr(w_dram_addr),
+                               .i_data(i_data),
+                               .o_data(w_dram_odata),
+                               .o_busy(w_dram_stall),
+                               .i_ctrl(i_mask),
+                               .sys_state(r_cache_state), // not used
+                               .w_bus_cpustate(0), // not used
+                               .mem_state(w_mem_state), // not used
+
+                                .w_init_done(w_init_done),
+                                .d_pc(d_pc),
+
+                               .clk(clk),
+                               .rst_x(rst_x),
+                               .clk_sdram(clk_sdram),
+                               .o_init_calib_complete(calib_done),
+                               .sdram_fail(sdram_fail),
+
+                               .O_sdram_clk(O_sdram_clk),
+                               .O_sdram_cke(O_sdram_cke),
+                               .O_sdram_cs_n(O_sdram_cs_n),            // chip select
+                               .O_sdram_cas_n(O_sdram_cas_n),           // columns address select
+                               .O_sdram_ras_n(O_sdram_ras_n),           // row address select
+                               .O_sdram_wen_n(O_sdram_wen_n),           // write enable
+                               .IO_sdram_dq(IO_sdram_dq),       // 32 bit bidirectional data bus
+                               .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
+                               .O_sdram_ba(O_sdram_ba),        // two banks
+                               .O_sdram_dqm(O_sdram_dqm),       // 32/4
+
+                                .w_rxd(w_rxd),
+                                .w_txd(w_txd),
+                                .w_led(w_led),
+                                .w_btnl(w_btnl),
+                                .w_btnr(w_btnr),
+                                // when sdcard_pwr_n = 0, SDcard power on
+                                .sdcard_pwr_n(sdcard_pwr_n),
+                                // signals connect to SD bus
+                                .sdclk(sdclk),
+                                .sdcmd(sdcmd),
+                                .sddat0(sddat0),
+                                .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+                                // display
+                                .MAX7219_CLK(MAX7219_CLK),
+                                .MAX7219_DATA(MAX7219_DATA),
+                                .MAX7219_LOAD(MAX7219_LOAD)
+                               );
+			      
+`ifdef laur0
     DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
     dram_con (
                                // user interface ports
@@ -156,7 +232,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
                                `endif
                                );
-       
+`endif       
 endmodule
 
 /**************************************************************************************************/

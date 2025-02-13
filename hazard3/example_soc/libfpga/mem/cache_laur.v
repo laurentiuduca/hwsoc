@@ -103,6 +103,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 						// save old data to ram
 						// and load data from ram
                         	                // and write ram data in cache
+						r_c_dirtyi <= 0;
 						r_dram_idata <= c_odata;
 						r_dram_addr <= w_cache_addr;
 						r_wr_en <= 1;
@@ -138,7 +139,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                 	                        r_c_dirtyi <= 1;
 					end else begin
 						// write from ram to cache
-                                                // and then write new data to cache
+                                                // and then write the selected octets from new data to cache
                                                	r_rd_en <= 1;
                                                	r_dram_addr <= i_addr;
                                                	state <= 14;
@@ -328,7 +329,7 @@ module m_dram_cache#(parameter ADDR_WIDTH = 30, D_WIDTH = 32, ENTRY = 1024)
     input  wire [ADDR_WIDTH-1:0]    w_addr;
     output wire [ADDR_WIDTH-1:0]    w_cache_addr;
     input  wire    [D_WIDTH-1:0]    w_idata;
-    input wire [3:0] i_mask;
+    input wire  [3:0] 		    i_mask;
     output wire    [D_WIDTH-1:0]    w_odata;
     output wire                     w_oe;             //output enable
 

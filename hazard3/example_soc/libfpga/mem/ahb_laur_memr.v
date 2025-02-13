@@ -43,7 +43,24 @@ module ahb_sync_sram #(
     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
-    output wire [3:0] O_sdram_dqm        // 32/4
+    output wire [3:0] O_sdram_dqm,       // 32/4
+
+     input  wire        w_rxd,
+     output wire        w_txd,
+     output wire [5:0] w_led,
+     input wire w_btnl,
+     input wire w_btnr,
+     // when sdcard_pwr_n = 0, SDcard power on
+     output wire         sdcard_pwr_n,
+     // signals connect to SD bus
+     output wire         sdclk,
+     inout  wire         sdcmd,
+     input  wire         sddat0,
+     output wire         sddat1, sddat2, sddat3,
+     // display
+     output wire MAX7219_CLK,
+     output wire MAX7219_DATA,
+     output wire MAX7219_LOAD
 );
 
 // ----------------------------------------------------------------------------
@@ -211,6 +228,8 @@ assign ahbls_hrdata = w_dram_odata;
 
 	       .r_cache_state(w_cache_state),
 	       .c_oe(w_c_oe),
+		
+	       .d_pc(d_pc),
 
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
@@ -221,6 +240,24 @@ assign ahbls_hrdata = w_dram_odata;
                                .IO_sdram_dq(IO_sdram_dq),       // 32 bit bidirectional data bus
                                .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
                                .O_sdram_ba(O_sdram_ba),        // two banks
-                               .O_sdram_dqm(O_sdram_dqm)       // 32/4
+                               .O_sdram_dqm(O_sdram_dqm),       // 32/4
+
+                                .w_rxd(w_rxd),
+                                .w_txd(w_txd),
+                                .w_led(w_led),
+                                .w_btnl(w_btnl),
+                                .w_btnr(w_btnr),
+                                // when sdcard_pwr_n = 0, SDcard power on
+                                .sdcard_pwr_n(sdcard_pwr_n),
+                                // signals connect to SD bus
+                                .sdclk(sdclk),
+                                .sdcmd(sdcmd),
+                                .sddat0(sddat0),
+                                .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+                                // display
+                                .MAX7219_CLK(MAX7219_CLK),
+                                .MAX7219_DATA(MAX7219_DATA),
+                                .MAX7219_LOAD(MAX7219_LOAD)
+
                ); 
 endmodule
