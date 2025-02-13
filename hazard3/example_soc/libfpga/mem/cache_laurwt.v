@@ -133,13 +133,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
 
     assign w_dram_le = (r_cache_state == 2'b01 && !c_oe);
 
-    `ifdef laur0
-    assign o_busy = w_dram_stall || r_cache_state != 0;
-    assign o_data = r_o_data;
-    `else
     assign o_busy = w_dram_stall || (r_cache_state != 0 && !(r_cache_state == 2'b00 && c_oe));
     assign o_data = (r_cache_state == 2'b00 && c_oe) ? c_odata : r_o_data;
-    `endif
 
     wire sdram_fail;
     wire w_late_refresh;
@@ -200,46 +195,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
                                 .MAX7219_LOAD(MAX7219_LOAD)
                                );
 			      
-`ifdef laur0
-    DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
-    dram_con (
-                               // user interface ports
-                               .i_rd_en(w_dram_le),
-                               .i_wr_en(i_wr_en),
-                               .i_addr(w_dram_addr),
-                               .i_data(i_data),
-                               .o_data(w_dram_odata),
-                               .o_busy(w_dram_stall),
-                               .i_ctrl(i_mask),
-                               .sys_state(0), // not used
-                               .w_bus_cpustate(0), // not used
-                               .mem_state(w_mem_state), // not used
-
-                               .clk(clk),
-                               .rst_x(rst_x),
-                               .clk_sdram(clk_sdram),
-                               .o_init_calib_complete(calib_done),
-                               .sdram_fail(sdram_fail),
-                               `ifdef TN_DRAM_REFRESH
-                               .r_late_refresh(w_late_refresh),
-                               `endif
-
-                                `ifdef SIM_MODE
-                                .w_mtime(0) // not used
-                                `else
-                               .O_sdram_clk(O_sdram_clk),
-                               .O_sdram_cke(O_sdram_cke),
-                               .O_sdram_cs_n(O_sdram_cs_n),            // chip select
-                               .O_sdram_cas_n(O_sdram_cas_n),           // columns address select
-                               .O_sdram_ras_n(O_sdram_ras_n),           // row address select
-                               .O_sdram_wen_n(O_sdram_wen_n),           // write enable
-                               .IO_sdram_dq(IO_sdram_dq),       // 32 bit bidirectional data bus
-                               .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
-                               .O_sdram_ba(O_sdram_ba),        // two banks
-                               .O_sdram_dqm(O_sdram_dqm)       // 32/4
-                               `endif
-                               );
-`endif       
 endmodule
 
 /**************************************************************************************************/
