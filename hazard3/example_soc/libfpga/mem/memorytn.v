@@ -294,7 +294,7 @@ end
 
 `ifdef SIM_MODE
 `ifdef SIM_TNSRAM
-    m_sdram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata), 
+    m_sdram_sim #(`BIN_SIZE) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata), 
         .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_mask(r_mask), .w_stall(w_busy), 
         .w_mtime(w_mtime[31:0]),
         `ifdef TN_DRAM_REFRESH
@@ -305,7 +305,7 @@ end
         );
 `else
     error
-    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(i_addr), .w_odata(o_data), 
+    m_dram_sim #(`BIN_SIZE) idbmem(.CLK(clk), .w_addr(i_addr), .w_odata(o_data), 
         .w_we(i_wr_en), .w_le(i_rd_en), .w_wdata(i_data), .w_ctrl(r_ctrl), .w_stall(o_busy), 
         .w_mtime(w_mtime[31:0]));
 `endif

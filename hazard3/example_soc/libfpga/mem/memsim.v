@@ -9,7 +9,7 @@
 /**** Byte unit BRAM Main Memory module with LATENCY for simulation (1-port)                   ****/
 /**************************************************************************************************/
 `ifdef DRAM_SIM
-module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
+module m_bu_mem #(parameter MEM_SIZE = `BIN_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mask);
     input  wire             CLK;
     input  wire [31:0] w_addr;
@@ -119,7 +119,7 @@ endmodule
 /**************************************************************************************************/
 // template from memory.v
 
-module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)(
+module m_dram_sim#(parameter MEM_SIZE = `BIN_SIZE)(
      input wire                         o_clk,
      input  wire [31:0]                  i_addr,
      output wire [31:0]                  o_data,
@@ -375,7 +375,7 @@ endmodule
 
 /**************************************************************************************************/
 
-module cache_ctrl#(parameter MEM_SIZE = `MEM_SIZE)(
+module cache_ctrl#(parameter MEM_SIZE = `BIN_SIZE)(
      // on FPGA, o_clk is output
      input wire                         o_clk,
      // user interface ports
@@ -490,7 +490,7 @@ endmodule
 /**** Byte unit BRAM Main Memory module with LATENCY for simulation (1-port)                   ****/
 /**************************************************************************************************/
 
-module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
+module m_bu_mem #(parameter MEM_SIZE = `BIN_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;
@@ -586,7 +586,7 @@ endmodule
 /**** BRAM Wrapper for simulation (1-port)                                                     ****/
 /**************************************************************************************************/
 
-module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
+module m_dram_sim#(parameter MEM_SIZE = `BIN_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;
@@ -605,7 +605,7 @@ endmodule
 /**************************************************************************************************/
 /**** sdRAM Main Memory module
 /**************************************************************************************************/
-module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
+module m_sbu_mem #(parameter MEM_SIZE = `BIN_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;
@@ -706,7 +706,7 @@ endmodule
 /**************************************************************************************************/
 /**** BRAM Wrapper for simulation (1-port)                                                     ****/
 /**************************************************************************************************/
-module m_sdram_sim#(parameter MEM_SIZE = `MEM_SIZE)
+module m_sdram_sim#(parameter MEM_SIZE = `BIN_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;

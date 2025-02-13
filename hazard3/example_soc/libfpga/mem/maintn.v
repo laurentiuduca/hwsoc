@@ -333,7 +333,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
             r_zero_we    <= 0;
             r_zeroaddr <= r_zeroaddr + 4;
         end
-        if(r_zeroaddr >= `MEM_SIZE) r_zero_done <= 1;
+        if(r_zeroaddr >= `BIN_SIZE) r_zero_done <= 1;
 `endif
     end
 

@@ -1,5 +1,5 @@
 // laur
-//`define SIM_MODE
+`define SIM_MODE
 `define TN_DRAM_REFRESH // for tang nano
 `define SIM_TNSRAM // tang nano not only sim ram
 `define FAT32_SD
@@ -22,7 +22,7 @@
 `endif
 
 `define MEM_SIZE (8*1024*1024)
-`define BBL_SIZE `MEM_SIZE
+`define BBL_SIZE `MEM_SIZE // 840
 `define BIN_BBL_SIZE   `BBL_SIZE
 `define BIN_DISK_SIZE 0
 `define BIN_SIZE       (`BIN_BBL_SIZE + `BIN_DISK_SIZE)
