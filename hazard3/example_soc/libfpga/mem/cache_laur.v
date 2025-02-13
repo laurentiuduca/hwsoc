@@ -111,10 +111,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 					end else begin // !c_dirtyo and !c_oe
 						// load data from ram
                         	                // write ram data in cache
-						if(w_init_done) begin
-							r_c_dirtyi <= 0;
-							state <= 3;
-						end
+						r_c_dirtyi <= 0;
+						state <= 3;
 					end
 				end
 			    end else if(i_wr_en) begin
@@ -158,9 +156,11 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 				state <= state_next;
 		    end else if(state == 3) begin
 			// load data from ram
-			r_rd_en <= 1;
-			r_dram_addr <= i_addr;
-			state <= 4;
+			if(w_init_done) begin
+				r_rd_en <= 1;
+				r_dram_addr <= i_addr;
+				state <= 4;
+			end
 		    end else if(state == 4) begin
 			if(w_dram_busy) begin
 				r_rd_en <= 0;
@@ -227,9 +227,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
     wire w_late_refresh;
     wire [7:0] w_mem_state;
     wire calib_done;
-    reg [31:0] r_dram_addr=0;
-    reg [31:0] r_dram_idata=0;
-    reg r_rd_en=0, r_wr_en=0;
+    reg [31:0] r_dram_addr;
+    reg [31:0] r_dram_idata;
+    reg r_rd_en, r_wr_en;
     wire [31:0] w_dram_odata;
     wire w_init_done;
     //DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
@@ -243,11 +243,11 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                .o_data(w_dram_odata),
                                .o_busy(w_dram_busy),
                                .i_ctrl(4'b1111/*i_mask*/),
-                               .sys_state(0), // not used
+                               .sys_state(state), // not used
                                .w_bus_cpustate(0), // not used
                                .mem_state(w_mem_state), // not used
-			       .w_init_done(w_init_done),
 
+			       	.w_init_done(w_init_done),
 				.d_pc(d_pc),
 
                                .clk(clk),

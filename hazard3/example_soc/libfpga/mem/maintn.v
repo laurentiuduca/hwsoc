@@ -25,7 +25,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
      output wire [31:0]                  o_data,
      output wire                         o_busy,
      input  wire [3:0]                   i_ctrl,
-     input  wire [2:0]                   sys_state,
+     input  wire [6:0]                   sys_state,
      input  wire [3:0]                   w_bus_cpustate,
      output wire [7:0]                   mem_state,
 
@@ -434,7 +434,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire [31:0] data_vector;
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? d_pc : w_sd_checksum;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {4'h1, 20'h0, 1'b0, sys_state} : w_btnl ? d_pc: w_sd_checksum;
 
     `ifndef SIM_MODE
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
