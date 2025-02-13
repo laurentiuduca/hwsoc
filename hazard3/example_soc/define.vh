@@ -5,7 +5,7 @@
 `define FAT32_SD
 `define FREQ 27_000_000
 
-`define CACHE_SIZE (1*1024)
+`define CACHE_SIZE (2*1024)
 
 `ifdef SIM_MODE
 `define SERIAL_WCNT 2
