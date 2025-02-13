@@ -1,5 +1,5 @@
 // laur
-`define SIM_MODE
+//`define SIM_MODE
 `define TN_DRAM_REFRESH // for tang nano
 `define SIM_TNSRAM // tang nano not only sim ram
 `define FAT32_SD
@@ -18,7 +18,7 @@
 
 `ifndef SIM_MODE
 	`define LAUR_MEM_RB // mem read-back after writing it with BBL
-	//`define LAUR_MEM_RB_ONLY_CHECK
+	`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
 `define MEM_SIZE (8*1024*1024)

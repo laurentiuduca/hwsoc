@@ -29,7 +29,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
      input  wire [3:0]                   w_bus_cpustate,
      output wire [7:0]                   mem_state,
 
-     output wire w_init_done,
+     output wire 			 w_init_done,
+     input wire [31:0]             	 d_pc,
 
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
@@ -433,12 +434,12 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire [31:0] data_vector;
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(100), .clkdiv(clkdiv));
 
-    assign data_vector = w_sd_checksum; //(w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? w_pc1 : w_sd_checksum;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? d_pc : w_sd_checksum;
 
     `ifndef SIM_MODE
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                        1'b0, r_zero_done, o_init_calib_complete & !sdram_fail & !w_late_refresh} :
+                        w_init_done, r_zero_done, o_init_calib_complete & !sdram_fail & !w_late_refresh} :
                         sd_led_status;
     `endif
 endmodule

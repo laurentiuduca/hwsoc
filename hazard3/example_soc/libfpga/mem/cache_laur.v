@@ -248,6 +248,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
                                .mem_state(w_mem_state), // not used
 			       .w_init_done(w_init_done),
 
+				.d_pc(d_pc),
+
                                .clk(clk),
                                .rst_x(rst_x),
                                .clk_sdram(clk_sdram),

@@ -48,7 +48,7 @@ wire pll_clk, clk_sdram;
 
 wire        w_rxd=1;
 wire        w_txd;
-assign o_tx=w_txd;
+//assign o_tx=w_txd;
 
 reg RST_X=0;
 example_soc es (
@@ -65,7 +65,7 @@ example_soc es (
 	.tdo(),
 
 	// IO
-	.uart_tx(),
+	.uart_tx(o_tx),
 	.uart_rx(1'b1),
 
     // tang nano 20k SDRAM
