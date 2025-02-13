@@ -57,7 +57,7 @@ add_file example_soc/libfpga/mem/memory_controller.v
 add_file example_soc/libfpga/mem/memorytn.v 
 add_file example_soc/libfpga/mem/memsim.v 
 add_file example_soc/libfpga/mem/ahb_laur_mem.v 
-add_file example_soc/libfpga/mem/cache_laurr.v
+add_file example_soc/libfpga/mem/cache_laurwt.v
 
 add_file example_soc/libfpga/mem/maintn.v
 add_file example_soc/libfpga/mem/sdram.v
