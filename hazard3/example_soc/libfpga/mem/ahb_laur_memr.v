@@ -226,7 +226,7 @@ assign ahbls_hrdata = w_dram_odata;
                .o_busy(w_dram_busy),
                .i_mask(r_mask),
 
-	       .r_cache_state(w_cache_state),
+	       .state(w_cache_state),
 	       .c_oe(w_c_oe),
 		
 	       .d_pc(d_pc),

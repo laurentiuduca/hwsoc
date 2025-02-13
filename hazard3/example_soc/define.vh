@@ -1,5 +1,5 @@
 // laur
-`define SIM_MODE
+//`define SIM_MODE
 `define TN_DRAM_REFRESH // for tang nano
 `define SIM_TNSRAM // tang nano not only sim ram
 `define FAT32_SD

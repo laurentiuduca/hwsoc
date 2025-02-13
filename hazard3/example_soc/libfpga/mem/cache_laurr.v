@@ -32,7 +32,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
      output wire                         o_busy,
      input  wire [3:0]                   i_mask,
 
-     output reg [1:0] 			 r_cache_state,
+     output wire [6:0] 			 state,
      output wire 			 c_oe,
 
      input wire [31:0]                   d_pc,
@@ -67,7 +67,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
      output wire MAX7219_LOAD
     );
 
-
+    reg [1:0] r_cache_state;
+    assign state = {4'h0, r_cache_state};
+    reg r_wait = 0;
 
     /***** store output data to registers in posedge clock cycle *****/
     //reg   [1:0] r_cache_state = 0;
@@ -100,6 +102,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
     always@(posedge clk or negedge rst_x) begin
 	if(!rst_x) begin
 		r_cache_state <= 0;
+		r_wait <= 0;
 	end else begin
 
         if(r_cache_state == 2'b01 && !c_oe) begin
@@ -114,10 +117,14 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
             r_cache_state <= 2'b11;
             r_addr <= i_addr;
         end
-        else if(i_rd_en && !c_oe) begin
-            r_cache_state <= 2'b01;
-            r_addr <= i_addr;
-        end
+	else if((i_rd_en && !c_oe) || r_wait) begin
+	    if(w_init_done) begin
+            	r_cache_state <= 2'b01;
+            	r_addr <= i_addr;
+		r_wait <= 0;
+            end else
+		r_wait <= 1;
+	end
 	end
     end
 
@@ -242,7 +249,7 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
   input  wire                     CLK, w_we;
   input  wire [$clog2(ENTRY)-1:0] w_addr;
   input  wire         [WIDTH-1:0] w_idata;
-  output reg          [WIDTH-1:0] r_odata;
+  output wire          [WIDTH-1:0] r_odata;
 
   reg          [WIDTH-1:0]  mem [0:ENTRY-1];
 
