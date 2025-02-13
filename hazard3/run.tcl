@@ -3,6 +3,7 @@ set_device -name GW2AR-18C GW2AR-LV18QN88C8/I7
 
 
 add_file example_soc/m_topsim.v
+add_file example_soc/libfpga/mem/gowin_rpll.v
 
 add_file example_soc/soc/example_soc.v 
 add_file example_soc/libfpga/common/reset_sync.v 
@@ -34,14 +35,14 @@ add_file hdl/debug/cdc/hazard3_apb_async_bridge.v
 add_file hdl/debug/cdc/hazard3_reset_sync.v 
 add_file hdl/debug/cdc/hazard3_sync_1bit.v 
 add_file hdl/debug/dm/hazard3_dm.v 
-add_file /example_soc/soc/peri/hazard3_riscv_timer.v 
-add_file /example_soc/libfpga/peris/uart/uart_mini.v 
-add_file /example_soc/libfpga/peris/uart/uart_regs.v 
+add_file example_soc/soc/peri/hazard3_riscv_timer.v 
+add_file example_soc/libfpga/peris/uart/uart_mini.v 
+add_file example_soc/libfpga/peris/uart/uart_regs.v 
 add_file example_soc/libfpga/common/clkdiv_frac.v 
 add_file example_soc/libfpga/common/sync_fifo.v 
 add_file example_soc/libfpga/cdc/sync_1bit.v 
-add_file /example_soc/libfpga/peris/spi_03h_xip/spi_03h_xip.v 
-add_file /example_soc/libfpga/peris/spi_03h_xip/spi_03h_xip_regs.v 
+add_file example_soc/libfpga/peris/spi_03h_xip/spi_03h_xip.v 
+add_file example_soc/libfpga/peris/spi_03h_xip/spi_03h_xip_regs.v 
 add_file example_soc/libfpga/mem/ahb_cache_readonly.v 
 add_file example_soc/libfpga/mem/ahb_cache_writeback.v 
 add_file example_soc/libfpga/mem/cache_mem_set_associative.v 

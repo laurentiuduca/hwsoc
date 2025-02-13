@@ -78,8 +78,9 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     /**********************************************************************************************/
     reg         r_uart_we = 0;
     reg   [7:0] r_uart_data = 0;
-    wire w_tx_ready=0;
+    wire w_tx_ready;
 `ifdef LAUR_ON_HAZARD3
+    assign w_tx_ready = 0;
 `else
     // OUTPUT CHAR
     UartTx UartTx0(clk, rst_x, r_uart_data, r_uart_we, w_txd, w_tx_ready);

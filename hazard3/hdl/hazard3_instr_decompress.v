@@ -442,7 +442,10 @@ end else begin: no_uop_ctr
 	//always @ (*) 
 	//laur
 	always @ (posedge clk or negedge rst_n) 
-		uop_ctr = 4'h0;
+		if(!rst_n)
+			uop_ctr = 4'h0;
+		else
+			uop_ctr = 4'h0;
 end
 endgenerate
 

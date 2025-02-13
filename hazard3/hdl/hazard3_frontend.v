@@ -228,10 +228,17 @@ end else begin: no_btb
 	//always @(*) begin
 	//laur
 	always @ (posedge clk or negedge rst_n) begin
-		btb_src_addr = {W_ADDR{1'b0}};
-		btb_target_addr = {W_ADDR{1'b0}};
-		btb_valid = 1'b0;
-		btb_src_size = 1'b0;
+		if(!rst_n) begin
+			btb_src_addr = {W_ADDR{1'b0}};
+			btb_target_addr = {W_ADDR{1'b0}};
+			btb_valid = 1'b0;
+			btb_src_size = 1'b0;
+		end else begin
+                        btb_src_addr = {W_ADDR{1'b0}};
+                        btb_target_addr = {W_ADDR{1'b0}};
+                        btb_valid = 1'b0;
+                        btb_src_size = 1'b0;
+		end
 	end
 end
 endgenerate
