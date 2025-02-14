@@ -77,7 +77,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
     reg r_c_dirtyi, r_c_we, r_busy;
     reg [6:0] state_next;
     assign o_busy = r_busy;
-    assign o_data = state == 0 && i_rd_en && c_oe ? c_odata : r_odata;
+    assign o_data = state == 0 && c_oe ? c_odata : r_odata;
 
     always @(posedge clk or negedge rst_x) begin
 	    if(!rst_x) begin
@@ -96,6 +96,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 	    end else begin
 		    if(state == 0) begin
 			    if(i_rd_en) begin
+				if(i_mask != 4'b1111) begin
+					//$display("cache read i_mask=%x", i_mask);
+				end
 				if(c_oe) begin
 				end else begin
 					r_busy <= 1;
