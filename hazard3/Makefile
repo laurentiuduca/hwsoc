@@ -26,7 +26,7 @@ VERIFLAGS += --exe sim.cpp --cc
 VERIFLAGS2 = $(VERIFLAGS) -I$(HDL) -I$(HDLLF)/..
 
 .PHONY: all clean
-all: veri
+all: veriwt
 
 SYNTH_CMD += read_verilog -I $(HDL) -DCONFIG_HEADER="config_default.vh" ${TOPSOURCE} ${OTHERSOURCE};
 SYNTH_CMD += hierarchy -top $(TOPMODULE);
@@ -51,6 +51,7 @@ veriwb:
 	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEMWB}
 	make -j -C obj_dir -f V$(TOPMODULE).mk V$(TOPMODULE)
 	cp obj_dir/Vm_topsim simv
+	./simv
 verio:
 	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LUKEMEM}
 	make -j -C obj_dir -f V$(TOPMODULE).mk V$(TOPMODULE)

@@ -119,12 +119,20 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 			    end else if(i_wr_en) begin
 				r_busy <= 1;
 				if(c_oe) begin
-					// write new data in cache and set dirty
-                                        r_c_idata <= i_data;
-                                        r_mask <= i_mask;
-                                        r_c_dirtyi <= 1;
-                                        r_c_we <= 1;
-                                        state <= 7;
+					if(c_dirtyo) begin
+						// write new data in cache
+        	                                r_c_idata <= i_data;
+                	                        r_mask <= i_mask;
+                        	                r_c_dirtyi <= 1;
+                                	        r_c_we <= 1;
+                                        	state <= 7;
+					end else begin
+						// write from ram to cache
+                                                // and then write the selected octets from new data to cache
+                                                r_rd_en <= 1;
+                                                r_dram_addr <= i_addr;
+                                                state <= 14;
+					end
 				end else begin
 					if(c_dirtyo) begin
 						// save old data to ram
