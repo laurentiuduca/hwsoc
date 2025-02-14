@@ -12,14 +12,12 @@
 
 /**************************************************************************************************/
 
-module cache_ctrl#(parameter PRELOAD_FILE = "",
-	`include "hazard3_config.vh"
-)
+module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH=23)
      (
      input wire                          clk,
      input wire 			 rst_x,
      input wire 			 clk_sdram,
-     input wire [W_ADDR-1:0]          	 d_pc,
+     input wire [31:0]          	 d_pc,
      // user interface ports
      input  wire                         i_rd_en,
      input  wire                         i_wr_en,
@@ -62,7 +60,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
      output wire MAX7219_LOAD
     );
 
-    m_dram_cache#(32,32,`CACHE_SIZE/4)
+    m_dram_cache#(ADDR_WIDTH,32,`CACHE_SIZE/4)
 			cache (.CLK(clk), .RST_X(1'b1), .w_flush(1'b0), .w_clr(1'b0), 
 				.w_we(r_c_we), .w_dirtyi(r_c_dirtyi), .w_dirtyo(c_dirtyo), 
 				.w_addr(i_addr), .w_idata(r_c_idata), .i_mask(r_mask), .w_odata(c_odata), .w_oe(c_oe), 
@@ -105,8 +103,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "",
 					if(c_dirtyo) begin
 						// save old data to ram
 						// and load data from ram
-                        	                // and write ram data in cache
-						r_c_dirtyi <= 0;
 						r_dram_idata <= c_odata;
 						r_dram_addr <= w_cache_addr;
 						r_wr_en <= 1;
@@ -417,5 +413,3 @@ module m_dram_cache#(parameter ADDR_WIDTH = 30, D_WIDTH = 32, ENTRY = 1024)
 	end
 
 endmodule 
-/**************************************************************************************************/
-

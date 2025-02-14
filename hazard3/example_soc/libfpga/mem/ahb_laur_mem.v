@@ -209,7 +209,7 @@ assign ahbls_hrdata = w_dram_odata;
     wire [6:0] w_cache_state;
     wire w_c_oe;
 
-    cache_ctrl #(.PRELOAD_FILE(PRELOAD_FILE))
+    cache_ctrl #(.PRELOAD_FILE(PRELOAD_FILE), .ADDR_WIDTH(32))
     cache_ctrl (
                // output clk, rst (active-low)
                .clk(clk),

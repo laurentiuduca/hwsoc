@@ -18,7 +18,7 @@
 
 /**************************************************************************************************/
 
-module cache_ctrl#(parameter PRELOAD_FILE = "")
+module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
      (
      input wire                          clk,
      input wire 			 rst_x,
@@ -128,7 +128,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "")
 	end
     end
 
-    m_dram_cache#(32,32,`CACHE_SIZE/4) cache(clk, 1'b1, 1'b0, c_clr, c_we,
+    m_dram_cache#(ADDR_WIDTH,32,`CACHE_SIZE/4) cache(clk, 1'b1, 1'b0, c_clr, c_we,
                                 c_addr[31:0], c_idata, c_odata, c_oe);
 
     assign w_dram_le = (r_cache_state == 2'b01 && !c_oe);
