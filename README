@@ -32,3 +32,6 @@ make
 cd ../hazard3
 ./run-nuttx2.sh
 
+5. notes
+wb cache is wip, use wt
+
