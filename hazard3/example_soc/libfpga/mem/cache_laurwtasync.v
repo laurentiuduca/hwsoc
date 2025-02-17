@@ -67,9 +67,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
      output wire MAX7219_LOAD
     );
 
-    reg [1:0] r_cache_state, r_prev_state;
+    reg [1:0] r_cache_state;
     assign state = {4'h0, r_cache_state};
-    reg r_wait_init, r_was_read;
+    reg r_wait = 0;
 
     /***** store output data to registers in posedge clock cycle *****/
     //reg   [1:0] r_cache_state = 0;
@@ -91,7 +91,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     wire [31:0] c_addr  = i_addr; //(r_cache_state == 2'b00) ? i_addr : r_addr;
     wire[31:0] c_idata = w_dram_odata;
     wire[31:0] c_odata;
-    integer i=0;
     /*
     cache states:
         2'b00=idle,
@@ -103,42 +102,29 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     always@(posedge clk or negedge rst_x) begin
 	if(!rst_x) begin
 		r_cache_state <= 0;
-		r_prev_state <= 0;
-		r_wait_init <= 0;
-		r_was_read <= 0;
+		r_wait <= 0;
 	end else begin
-	        if(r_cache_state == 2'b01 && !c_oe) begin
-        	    r_cache_state <= 2'b10;
-	        end
-        	else if(r_cache_state == 2'b11 || (r_cache_state == 2'b01 && c_oe)
-                	|| (r_cache_state == 2'b10 && !w_dram_stall)) begin
-	            r_cache_state <= 2'b00;
-        	    r_o_data <= (r_cache_state == 2'b01) ? c_odata : w_dram_odata;
-		     if(r_cache_state == 2'b10)
-	                $write("mem read addr %8x data %8x\n", i_addr, w_dram_odata);
-        	     else if(r_cache_state == 2'b11)
-                	$write("mem write addr %8x data %8x mask %1x\n", i_addr, i_data, i_mask);
-	        end
-        	else if(i_wr_en) begin
-	            r_cache_state <= 2'b11;
-        	    r_addr <= i_addr;
-	        end
-		else if(r_cache_state == 0) begin
-			if(r_was_read) begin
-	                    if(!c_oe && !r_prev_state) begin
-        	                 r_cache_state <= 2'b01;
-                	         r_addr <= i_addr;
-				 //r_was_read <= 0;
-			    end else begin
-			   	 if(!i_rd_en)
-	        	        	r_was_read <= 0;
-			    end
-	                end else if(i_rd_en) begin
-			    $display("cache new command i_rd_en %d", $time);
-			    r_was_read <= 1;
-			end
-		end
-		r_prev_state <= r_cache_state;
+
+        if(r_cache_state == 2'b01 && !c_oe) begin
+            r_cache_state <= 2'b10;
+        end
+        else if(r_cache_state == 2'b11 || (r_cache_state == 2'b01 && c_oe)
+                || (r_cache_state == 2'b10 && !w_dram_stall)) begin
+            r_cache_state <= 2'b00;
+            r_o_data <= (r_cache_state == 2'b01) ? c_odata : w_dram_odata;
+        end
+        else if(i_wr_en) begin
+            r_cache_state <= 2'b11;
+            r_addr <= i_addr;
+        end
+	else if((i_rd_en && !c_oe) || r_wait) begin
+	    if(w_init_done) begin
+            	r_cache_state <= 2'b01;
+            	r_addr <= i_addr;
+		r_wait <= 0;
+            end else
+		r_wait <= 1;
+	end
 	end
     end
 
@@ -147,9 +133,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 
     assign w_dram_le = (r_cache_state == 2'b01 && !c_oe);
 
-    assign o_busy = w_dram_stall || (r_cache_state != 0 || 
-	    (r_cache_state == 0 && ((r_was_read && !c_oe) || !r_was_read)));
-    assign o_data = (r_cache_state == 2'b00 && c_oe && r_was_read && !r_prev_state) ? c_odata : r_o_data;
+    assign o_busy = w_dram_stall || (r_cache_state != 0 && !(r_cache_state == 2'b00 && c_oe));
+    assign o_data = (r_cache_state == 2'b00 && c_oe) ? c_odata : r_o_data;
 
     wire sdram_fail;
     wire w_late_refresh;
@@ -219,7 +204,7 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
   input  wire                     CLK, w_we;
   input  wire [$clog2(ENTRY)-1:0] w_addr;
   input  wire         [WIDTH-1:0] w_idata;
-  output reg          [WIDTH-1:0] r_odata;
+  output wire          [WIDTH-1:0] r_odata;
 
   reg          [WIDTH-1:0]  mem [0:ENTRY-1];
 
@@ -228,9 +213,9 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
 
   always  @(posedge  CLK)  begin
     if (w_we) mem[w_addr] <= w_idata;
-    r_odata <= w_idata;
+    //r_odata <= mem[w_addr];
   end
-  //assign r_odata = mem[w_addr];
+  assign r_odata = mem[w_addr];
 endmodule
 
 /**************************************************************************************************/

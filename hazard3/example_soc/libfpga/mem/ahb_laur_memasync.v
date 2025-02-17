@@ -70,27 +70,28 @@ module ahb_sync_sram #(
 
 wire [3:0] wmask_noshift = ~({4{1'b1}} << (1 << ahbls_hsize));
 wire [3:0] wmask = wmask_noshift << ahbls_haddr[1:0];
-reg r_was_read_aphase;
-
 
 task check_new_req;
 			if (ahb_read_aphase) begin
-                                state <= 0;
+                                r_ahbls_haddr <= ahbls_haddr;
+				if(state == 11 || state == 10) begin
+					r_dram_le <= 1;
+                                	state <= 10;
+				end else begin
+					r_dram_le <= 0;
+					state <= 12;
+				end
                                 r_mask <= wmask;
-				r_was_read_aphase <= 1;
 			end else if(ahb_write_aphase) begin
 				r_ahbls_haddr <= ahbls_haddr;
                                 state <= 22;
                                 r_mask <= wmask;
 				r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
+				r_dram_le <= 0;
 			end else begin
+				r_dram_le <= 0;
 				state <= 0;
 			end
-			if((ahb_read_aphase || ahb_write_aphase) && k < 10) begin
-                                $display("ahb_read_aphase=%x || ahb_write_aphase=%x state=%d ahbls_haddr=%x time %8d",
-                                        ahb_read_aphase, ahb_write_aphase, state, ahbls_haddr, $time);
-                                k <= k+1;
-                        end
 endtask
 
 // Decode AHBL controls
@@ -112,27 +113,21 @@ always @ (posedge clk or negedge rst_n) begin
 		r_dram_wr <= 0;
 		r_ahbls_hrdata <= 0;
 		r_ahbls_hwdata <= 0;
-		r_was_read_aphase <= 0;
+		//if(state == 0)
+		//	check_new_req;
 	end else begin
 		if(state == 0) begin
 			if(ahb_read_aphase) begin
-                                state <= 0;
+				r_dram_le <= 1;
+				r_ahbls_haddr <= ahbls_haddr;
+                                state <= 10;
                                 r_mask <= wmask;
-				r_was_read_aphase <= 1;
-			end else begin
-				r_was_read_aphase <= 0;
-				if(ahb_write_aphase) begin
-                                	r_ahbls_haddr <= ahbls_haddr;
-	                                state <= 22;
-        	                        r_mask <= wmask;
-                	                r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
-				end
+                        end else if(ahb_write_aphase) begin
+                                r_ahbls_haddr <= ahbls_haddr;
+                                state <= 22;
+                                r_mask <= wmask;
+                                r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
 			end
-			if((ahb_read_aphase || ahb_write_aphase) && k < 10) begin
-                		$display("ahb_read_aphase=%x || ahb_write_aphase=%x state=%d ahbls_haddr=%x time %8d",
-                        		ahb_read_aphase, ahb_write_aphase, state, ahbls_haddr, $time);
-                		k <= k+1;
-        		end
 		end else if(state == 10) begin
 			// read
 			if(w_dram_busy) begin
@@ -190,10 +185,14 @@ end
 
 
 assign ahbls_hresp = 1'b0;
-assign ahbls_hready_resp = (state == 0) ? !w_dram_busy : 
+assign ahbls_hready_resp = (state == 0) ? 0 :
+			   (state == 10) ? ((w_cache_state == 0 && w_c_oe) ? 1 : 0) :
+			   (state == 11) ? (w_dram_busy ? 0 : 1) :
+			   (state == 12) ? 0 :
 			   (state == 22 || state == 20) ? 0 :
 			   (state == 21) ? (w_dram_busy ? 0 : 1) : 0;
 assign ahbls_hrdata = w_dram_odata;
+	//r_ahbls_hrdata;
 
 // ----------------------------------------------------------------------------
 // RAM 
@@ -205,8 +204,7 @@ assign ahbls_hrdata = w_dram_odata;
     wire calib_done;
     wire [31:0] w_dram_odata;
     wire w_wr_en=r_dram_wr;
-    wire w_dram_le=ahb_read_aphase; 
-    wire [31:0] w_addr = {ahbls_haddr[W_DATA-1:2], 2'b00};
+    wire w_dram_le=r_dram_le;
 
     wire [6:0] w_cache_state;
     wire w_c_oe;
@@ -221,7 +219,7 @@ assign ahbls_hrdata = w_dram_odata;
                // user interface ports
                .i_rd_en(w_dram_le),
                .i_wr_en(w_wr_en),
-               .i_addr(w_addr),
+               .i_addr({r_ahbls_haddr[W_DATA-1:2], 2'b00}),
                .i_data(r_ahbls_hwdata),
                .o_data(w_dram_odata),
                .o_busy(w_dram_busy),
