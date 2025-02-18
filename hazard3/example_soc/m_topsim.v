@@ -111,12 +111,12 @@ end
 // reset
 reg [31:0] cnt=0;
 always @(posedge clk) begin
-	if(cnt < 100)
-		cnt <= cnt + 1;
-	else
+	if(cnt > 100)
 		RST_X <= 1;
 	if(cnt == 32'hf000)
 		$finish;
+	else
+		cnt <= cnt + 1;
 end
 
    initial begin
