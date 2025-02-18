@@ -16,23 +16,18 @@ int main(int argc, char** argv) {
     top = new Vm_topsim;                // Create instance
 
     // register
-    uint32_t clk   = 0; // reg clk = 0;
-    //uint32_t RST_X = 0; // reg RST_X;
+    uint32_t clk   = 0; 
+
+    // vcd
+    Verilated::traceEverOn(true);
 
     while (!Verilated::gotFinish()) {
-        if (main_time == 600) {
-            //RST_X = 1;
-        }
         if ((main_time % 5) == 0) {
             clk = clk ? 0 : 1;
         }
-        //if ((main_time % 2) == 1) { 
-        //    clk = 1;
-        //}
 
         // Set some inputs
         top->clk   = clk;
-        //top->RST_X = RST_X;
 
         top->eval(); // Evaluate model
         main_time++; // Time passes...

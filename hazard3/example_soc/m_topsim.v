@@ -108,12 +108,20 @@ always begin
 end
 `endif
 
+// reset
 reg [31:0] cnt=0;
 always @(posedge clk) begin
 	if(cnt < 100)
 		cnt <= cnt + 1;
 	else
 		RST_X <= 1;
+	if(cnt == 32'hf000)
+		$finish;
 end
+
+   initial begin
+      $dumpfile("dump.vcd");
+      $dumpvars();
+   end
 
 endmodule

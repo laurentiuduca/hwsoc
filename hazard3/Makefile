@@ -22,7 +22,7 @@ VERIFLAGS += --x-assign 0 --x-initial 0
 VERIFLAGS += --threads 1 -O2 
 #VERIFLAGS += --threads 3 -DVL_THREADED -O2
 VERIFLAGS += -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-COMBDLY -Wno-LATCH
-VERIFLAGS += --exe sim.cpp --cc 
+VERIFLAGS += --exe sim.cpp --cc --trace
 VERIFLAGS2 = $(VERIFLAGS) -I$(HDL) -I$(HDLLF)/..
 
 .PHONY: all clean
@@ -45,7 +45,7 @@ clean:
 	rm -rf synth.vg impl serialout.txt ftn.txt *out stip*.txt
 	rm -rf laur2.txt log*txt
 	rm -rf xsim*.* xelab*.* xvlog*.*
-	rm -f init_kernel.txt fh fl fout cl ch cr impl
+	rm -f init_kernel.txt fh fl fout cl ch cr impl dump.vcd
 
 veriwb:
 	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEMWB}

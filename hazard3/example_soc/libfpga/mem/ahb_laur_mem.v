@@ -84,11 +84,13 @@ task check_new_req;
 			end else begin
 				state <= 0;
 			end
+			`ifdef SIM_MODE
 			if((ahb_read_aphase || ahb_write_aphase) && k < 10) begin
                                 $display("ahb_read_aphase=%x || ahb_write_aphase=%x state=%d ahbls_haddr=%x time %8d",
                                         ahb_read_aphase, ahb_write_aphase, state, ahbls_haddr, $time);
                                 k <= k+1;
                         end
+			`endif
 endtask
 
 // Decode AHBL controls

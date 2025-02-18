@@ -153,7 +153,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 
     reg r_dram_le, r_dram_wr;
 
-    assign o_busy = (state > 1) || (state == 1 && !c_oe);
+    assign o_busy = (state > 1) || (state == 1 && !c_oe) || (state == 0 && !c_oe);
     assign o_data = (state <= 1 && c_oe) ? c_odata : w_dram_odata;
 
     wire sdram_fail;
@@ -224,7 +224,7 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
   input  wire                     CLK, w_we;
   input  wire [$clog2(ENTRY)-1:0] w_addr;
   input  wire         [WIDTH-1:0] w_idata;
-  output wire          [WIDTH-1:0] r_odata;
+  output reg          [WIDTH-1:0] r_odata;
 
   reg          [WIDTH-1:0]  mem [0:ENTRY-1];
 
@@ -232,10 +232,12 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
   initial for (i=0;i<ENTRY;i=i+1) mem[i]=0;
 
   always  @(posedge  CLK)  begin
-    if (w_we) mem[w_addr] <= w_idata;
-    //r_odata <= mem[w_addr];
+	  if (w_we) begin
+		mem[w_addr] <= w_idata;
+		r_odata <= w_idata;
+	  end else 
+    		r_odata <= mem[w_addr];
   end
-  assign r_odata = mem[w_addr];
 endmodule
 
 /**************************************************************************************************/

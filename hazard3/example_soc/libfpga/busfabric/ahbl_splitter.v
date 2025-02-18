@@ -162,6 +162,7 @@ assign src_hready_resp = (!slave_sel_d && (err_ph1 || !decode_err_d)) ||
 	|(slave_sel_d & dst_hready_resp);
 assign src_hresp = decode_err_d || |(slave_sel_d & dst_hresp);
 
+`ifdef SIM_MODE
 reg [31:0] j=0, li=0;
 reg [31:0] osrc_haddr=0, odst_hrdata=0;
 reg osrc_hready=0, osrc_hwrite=0;
@@ -204,6 +205,6 @@ always @(posedge clk) begin
             end
     end
 end
-
+`endif
 
 endmodule
