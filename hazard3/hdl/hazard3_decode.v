@@ -506,7 +506,7 @@ always @ (*) begin
 			d_except = EXCEPT_INSTR_FAULT;
 		else if (d_invalid && !d_starved) begin
 			d_except = EXCEPT_INSTR_ILLEGAL;
-			$display("EXCEPT_INSTR_ILLEGAL decode");
+			$display("EXCEPT_INSTR_ILLEGAL decode %0d", $time);
 		end
 	end
 	if (partial_predicted_branch) begin

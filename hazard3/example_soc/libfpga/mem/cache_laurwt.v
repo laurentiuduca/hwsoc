@@ -89,11 +89,15 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
                 end else if(i_wr_en) begin
                         state <= 5;
                         c_clr <= 1;
+			c_addr <= i_addr;
                         // write to ram only
+			// will write to cache at next read on the same address
                         r_dram_wr <= 1;
                         r_dram_addr <= i_addr;
                         r_dram_idata <= i_data;
-                end
+			//$display("mem write req, d_pc=%x, %0d", d_pc, $time);
+                end else
+			state <= 0;
     endtask
 
     always@(posedge clk or negedge rst_x) begin
@@ -134,12 +138,12 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 	end else if(state == 5) begin
 		c_clr <= 0;
 		if(w_dram_busy) begin
-			state <= 7;
+			state <= 6;
 			r_dram_wr <= 0;
 		end
-	end else if(state == 7) begin
+	end else if(state == 6) begin
 		if(!w_dram_busy) begin
-			state <= 0;
+			check_new_req;
 		end
 	end			
     end
@@ -150,7 +154,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     reg r_dram_le, r_dram_wr;
 
     assign o_busy = (state > 1) || (state == 1 && !c_oe);
-    assign o_data = (state == 1 && c_oe) ? c_odata : w_dram_odata;
+    assign o_data = (state <= 1 && c_oe) ? c_odata : w_dram_odata;
 
     wire sdram_fail;
     wire w_late_refresh;
