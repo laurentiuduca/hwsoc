@@ -133,29 +133,6 @@ always @ (posedge clk or negedge rst_n) begin
                         		ahb_read_aphase, ahb_write_aphase, state, ahbls_haddr, $time);
                 		k <= k+1;
         		end
-		end else if(state == 10) begin
-			// read
-			if(w_dram_busy) begin
-				state <= 11;
-				r_dram_le <= 0;
-			end else if(w_cache_state == 0 && w_c_oe) begin
-				// we have data
-				//r_dram_le <= 0;
-                                r_ahbls_hrdata <= w_dram_odata;
-				//state <= 0;
-				// do we have new address phase on this data phase?
-                                check_new_req;
-			end
-		end else if(state == 11) begin
-			if(!w_dram_busy) begin
-				// done
-				r_ahbls_hrdata <= w_dram_odata;
-				//state <= 0;
-				check_new_req;
-			end
-		end else if(state == 12) begin
-			r_dram_le <= 1;
-			state <= 10;
 		end else if (state == 20) begin
 			if(w_dram_busy) begin
 				state <= 21;

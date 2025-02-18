@@ -32,7 +32,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
      output wire                         o_busy,
      input  wire [3:0]                   i_mask,
 
-     output wire [6:0] 			 state,
+     output reg  [6:0] 			 state,
      output wire 			 c_oe,
 
      input wire [31:0]                   d_pc,
@@ -67,89 +67,90 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
      output wire MAX7219_LOAD
     );
 
-    reg [1:0] r_cache_state, r_prev_state;
-    assign state = {4'h0, r_cache_state};
-    reg r_wait_init, r_was_read;
-
     /***** store output data to registers in posedge clock cycle *****/
-    //reg   [1:0] r_cache_state = 0;
-
-    reg  [31:0] r_addr = 0;
-    reg   [2:0] r_ctrl = 0;
-    reg [31:0] r_o_data = 0;
+    //reg   [1:0] state = 0;
 
     // DRAM
-    wire        w_dram_stall;
-    wire        w_dram_le;
-    wire [31:0] w_dram_addr = i_addr; //(i_wr_en) ? i_addr : r_addr;
+    wire        w_dram_busy;
+    reg [31:0] r_dram_addr, r_dram_idata; 
     wire [31:0] w_dram_odata;
 
     // Cache
-    //wire        c_oe;
-    wire        c_clr   = (r_cache_state == 2'b11 && c_oe);
-    wire        c_we    = (r_cache_state == 2'b10 && !w_dram_stall);
-    wire [31:0] c_addr  = i_addr; //(r_cache_state == 2'b00) ? i_addr : r_addr;
-    wire[31:0] c_idata = w_dram_odata;
+    reg        c_clr;
+    reg        c_we;
+    reg [31:0] c_addr; //(state == 2'b00) ? i_addr : r_addr;
+    reg[31:0] c_idata;
     wire[31:0] c_odata;
-    integer i=0;
-    /*
-    cache states:
-        2'b00=idle,
-        (2'b01=read && c_oe)=read made in c_odata,
-        2'b10=cache read miss;
-        2'b11=write
 
-    */
+    task check_new_req;
+                if(i_rd_en) begin
+                        state <= 1;
+                        c_addr <= i_addr;
+                end else if(i_wr_en) begin
+                        state <= 5;
+                        c_clr <= 1;
+                        // write to ram only
+                        r_dram_wr <= 1;
+                        r_dram_addr <= i_addr;
+                        r_dram_idata <= i_data;
+                end
+    endtask
+
     always@(posedge clk or negedge rst_x) begin
-	if(!rst_x) begin
-		r_cache_state <= 0;
-		r_prev_state <= 0;
-		r_wait_init <= 0;
-		r_was_read <= 0;
-	end else begin
-	        if(r_cache_state == 2'b01 && !c_oe) begin
-        	    r_cache_state <= 2'b10;
-	        end
-        	else if(r_cache_state == 2'b11 || (r_cache_state == 2'b01 && c_oe)
-                	|| (r_cache_state == 2'b10 && !w_dram_stall)) begin
-	            r_cache_state <= 2'b00;
-        	    r_o_data <= (r_cache_state == 2'b01) ? c_odata : w_dram_odata;
-		     if(r_cache_state == 2'b10)
-	                $write("mem read addr %8x data %8x\n", i_addr, w_dram_odata);
-        	     else if(r_cache_state == 2'b11)
-                	$write("mem write addr %8x data %8x mask %1x\n", i_addr, i_data, i_mask);
-	        end
-        	else if(i_wr_en) begin
-	            r_cache_state <= 2'b11;
-        	    r_addr <= i_addr;
-	        end
-		else if(r_cache_state == 0) begin
-			if(r_was_read) begin
-	                    if(!c_oe && !r_prev_state) begin
-        	                 r_cache_state <= 2'b01;
-                	         r_addr <= i_addr;
-				 //r_was_read <= 0;
-			    end else begin
-			   	 if(!i_rd_en)
-	        	        	r_was_read <= 0;
-			    end
-	                end else if(i_rd_en) begin
-			    $display("cache new command i_rd_en %d", $time);
-			    r_was_read <= 1;
-			end
+        if(!rst_x) begin
+                state <= 0;
+		c_we <= 0;
+		c_addr <= 0;
+		c_idata <= 0;
+		r_dram_addr <= 0;
+		r_dram_le <= 0;
+		r_dram_wr <= 0;
+		r_dram_idata <= 0;
+	end else if(state == 0) begin
+		check_new_req;
+	end else if(state == 1) begin
+		if(c_oe) begin
+			check_new_req;
+		end else begin
+			// read from ram, then write to cache
+			r_dram_addr <= c_addr;
+			r_dram_le <= 1;
+			state <= 2;
 		end
-		r_prev_state <= r_cache_state;
-	end
+	end else if(state == 2) begin
+		if(w_dram_busy) begin
+			state <= 3;
+			r_dram_le <= 0;
+		end
+	end else if(state == 3) begin
+		if(!w_dram_busy) begin
+			c_we <= 1;
+			c_idata <= w_dram_odata;
+			state <= 4;
+		end
+	end else if(state == 4) begin
+		c_we <= 0;
+		state <= 0;
+	end else if(state == 5) begin
+		c_clr <= 0;
+		if(w_dram_busy) begin
+			state <= 7;
+			r_dram_wr <= 0;
+		end
+	end else if(state == 7) begin
+		if(!w_dram_busy) begin
+			state <= 0;
+		end
+	end			
     end
 
     m_dram_cache#(ADDR_WIDTH,32,`CACHE_SIZE/4) cache(clk, 1'b1, 1'b0, c_clr, c_we,
                                 c_addr[31:0], c_idata, c_odata, c_oe);
 
-    assign w_dram_le = (r_cache_state == 2'b01 && !c_oe);
+    reg r_dram_le, r_dram_wr;
 
-    assign o_busy = w_dram_stall || (r_cache_state != 0 || 
-	    (r_cache_state == 0 && ((r_was_read && !c_oe) || !r_was_read)));
-    assign o_data = (r_cache_state == 2'b00 && c_oe && r_was_read && !r_prev_state) ? c_odata : r_o_data;
+    assign o_busy = (state > 1) || (state == 1 && !c_oe);
+    assign o_data = (state == 1 && c_oe) ? c_odata : w_dram_odata;
 
     wire sdram_fail;
     wire w_late_refresh;
@@ -161,14 +162,14 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     m_maintn #(.PRELOAD_FILE(PRELOAD_FILE))
     boot (
                                // user interface ports
-                               .i_rd_en(w_dram_le),
-                               .i_wr_en(i_wr_en),
-                               .i_addr(w_dram_addr),
-                               .i_data(i_data),
+                               .i_rd_en(r_dram_le),
+                               .i_wr_en(r_dram_wr),
+                               .i_addr(r_dram_addr),
+                               .i_data(r_dram_idata),
                                .o_data(w_dram_odata),
-                               .o_busy(w_dram_stall),
+                               .o_busy(w_dram_busy),
                                .i_ctrl(i_mask),
-                               .sys_state(r_cache_state), // not used
+                               .sys_state(state), // not used
                                .w_bus_cpustate(0), // not used
                                .mem_state(w_mem_state), // not used
 
@@ -219,7 +220,7 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
   input  wire                     CLK, w_we;
   input  wire [$clog2(ENTRY)-1:0] w_addr;
   input  wire         [WIDTH-1:0] w_idata;
-  output reg          [WIDTH-1:0] r_odata;
+  output wire          [WIDTH-1:0] r_odata;
 
   reg          [WIDTH-1:0]  mem [0:ENTRY-1];
 
@@ -228,9 +229,9 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
 
   always  @(posedge  CLK)  begin
     if (w_we) mem[w_addr] <= w_idata;
-    r_odata <= w_idata;
+    //r_odata <= mem[w_addr];
   end
-  //assign r_odata = mem[w_addr];
+  assign r_odata = mem[w_addr];
 endmodule
 
 /**************************************************************************************************/
