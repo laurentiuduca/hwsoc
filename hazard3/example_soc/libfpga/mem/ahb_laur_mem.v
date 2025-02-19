@@ -165,7 +165,8 @@ assign ahbls_hrdata = w_dram_odata;
     wire [31:0] w_dram_odata;
     wire w_wr_en=r_dram_wr;
     wire w_dram_le=ahb_read_aphase; 
-    wire [31:0] w_addr = (state == 22 || state == 20) ? {r_ahbls_haddr[W_DATA-1:2], 2'b00} : {ahbls_haddr[W_DATA-1:2], 2'b00};
+    wire [31:0] w_addr = (state == 22 || state == 20) ? {r_ahbls_haddr[W_DATA-1:2], 2'b00} : 
+	    {ahbls_haddr[W_DATA-1:2], 2'b00};
 
     wire [6:0] w_cache_state;
     wire w_c_oe;

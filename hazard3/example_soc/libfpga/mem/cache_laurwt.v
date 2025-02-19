@@ -78,9 +78,11 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     // Cache
     reg        c_clr;
     reg        c_we;
-    wire [31:0] c_addr = (state == 4) ? r_dram_addr : i_addr;
+    wire [31:0] c_addr = (state <= 1) ? i_addr : r_dram_addr;
     reg[31:0] c_idata;
     wire[31:0] c_odata;
+
+    integer j=0;
 
     task check_new_req;
                 if(i_rd_en) begin
@@ -94,7 +96,10 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
                         r_dram_wr <= 1;
                         r_dram_addr <= i_addr;
                         r_dram_idata <= i_data;
-			//$display("mem write req, d_pc=%x, %0d", d_pc, $time);
+			if(j < 10) begin
+				$display("mem write req, d_pc=%x, %0d", d_pc, $time);
+				j <= j+1;
+			end
                 end else
 			state <= 0;
     endtask
@@ -116,7 +121,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 			check_new_req;
 		end else begin
 			// read from ram, then write to cache
-			//r_dram_addr <= c_addr;
 			r_dram_le <= 1;
 			state <= 2;
 		end
@@ -133,16 +137,16 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 		end
 	end else if(state == 4) begin
 		c_we <= 0;
-		check_new_req;
+		state <= 0;
 	end else if(state == 10) begin
-		c_clr <= 0;
 		if(w_dram_busy) begin
 			state <= 11;
 			r_dram_wr <= 0;
+			c_clr <= 0;
 		end
 	end else if(state == 11) begin
 		if(!w_dram_busy) begin
-			check_new_req;
+			state <= 0;
 		end
 	end			
     end
