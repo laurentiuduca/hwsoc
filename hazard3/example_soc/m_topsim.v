@@ -111,17 +111,23 @@ end
 // reset
 reg [31:0] cnt=0;
 always @(posedge clk) begin
-	if(cnt > 100)
+	if(cnt > 20)
 		RST_X <= 1;
 	if(cnt == 32'hf000)
+		`ifdef DUMP_VCD
 		$finish;
+		`else
+		;
+		`endif
 	else
 		cnt <= cnt + 1;
 end
 
+`ifdef DUMP_VCD
    initial begin
       $dumpfile("dump.vcd");
       $dumpvars();
    end
+`endif
 
 endmodule

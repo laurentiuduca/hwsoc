@@ -78,18 +78,17 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     // Cache
     reg        c_clr;
     reg        c_we;
-    reg [31:0] c_addr; //(state == 2'b00) ? i_addr : r_addr;
+    wire [31:0] c_addr = (state == 4) ? r_dram_addr : i_addr;
     reg[31:0] c_idata;
     wire[31:0] c_odata;
 
     task check_new_req;
                 if(i_rd_en) begin
                         state <= 1;
-                        c_addr <= i_addr;
+			r_dram_addr <= i_addr;
                 end else if(i_wr_en) begin
-                        state <= 5;
+                        state <= 10;
                         c_clr <= 1;
-			c_addr <= i_addr;
                         // write to ram only
 			// will write to cache at next read on the same address
                         r_dram_wr <= 1;
@@ -104,7 +103,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
         if(!rst_x) begin
                 state <= 0;
 		c_we <= 0;
-		c_addr <= 0;
+		//c_addr <= 0;
 		c_idata <= 0;
 		r_dram_addr <= 0;
 		r_dram_le <= 0;
@@ -117,7 +116,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 			check_new_req;
 		end else begin
 			// read from ram, then write to cache
-			r_dram_addr <= c_addr;
+			//r_dram_addr <= c_addr;
 			r_dram_le <= 1;
 			state <= 2;
 		end
@@ -134,14 +133,14 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 		end
 	end else if(state == 4) begin
 		c_we <= 0;
-		state <= 0;
-	end else if(state == 5) begin
+		check_new_req;
+	end else if(state == 10) begin
 		c_clr <= 0;
 		if(w_dram_busy) begin
-			state <= 6;
+			state <= 11;
 			r_dram_wr <= 0;
 		end
-	end else if(state == 6) begin
+	end else if(state == 11) begin
 		if(!w_dram_busy) begin
 			check_new_req;
 		end
@@ -153,8 +152,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 
     reg r_dram_le, r_dram_wr;
 
-    assign o_busy = (state > 1) || (state == 1 && !c_oe) || (state == 0 && !c_oe);
-    assign o_data = (state <= 1 && c_oe) ? c_odata : w_dram_odata;
+    assign o_busy = (state != 1 && state != 0) || (state == 1 && !c_oe);
+    assign o_data = (state == 1 && c_oe) ? c_odata : w_dram_odata;
 
     wire sdram_fail;
     wire w_late_refresh;
@@ -234,6 +233,7 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
   always  @(posedge  CLK)  begin
 	  if (w_we) begin
 		mem[w_addr] <= w_idata;
+		//$display("mem[%x]<=%x", w_addr, w_idata);
 		r_odata <= w_idata;
 	  end else 
     		r_odata <= mem[w_addr];
