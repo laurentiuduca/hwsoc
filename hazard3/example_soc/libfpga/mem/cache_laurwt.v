@@ -2,7 +2,7 @@
  * spdx license identifier: Apache 2.0
  * write through cache
  * pipelined with arm ahb amba bus version 5
- *
+ * uses bram template
  */
 `default_nettype none
 /**************************************************************************************************/
@@ -82,17 +82,11 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     integer j=0, k=0;
 
     task check_new_req;
+	    if(w_init_done)
                 if(i_rd_en) begin
                         state <= 1;
 			r_dram_addr <= i_addr;
 			r_dram_mask <= i_mask;
-			if(k < 10 && state == 1) begin
-                                $display("mem read req state 1, d_pc=%x, %0d", d_pc, $time);
-                                k <= k+1;
-                        end
-			if(i_addr == 32'h119f0) begin
-				//$display("mem read req at 119f0 state %0d, d_pc=%x, %0d", state, d_pc, $time);
-			end
                 end else if(i_wr_en) begin
                         state <= 10;
                         c_clr <= 1;
@@ -102,13 +96,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 			r_dram_mask <= i_mask;
                         r_dram_addr <= i_addr;
                         r_dram_idata <= i_data;
-			if(j < 10) begin
-				$display("mem write req, d_pc=%x, %0d", d_pc, $time);
-				j <= j+1;
-			end
-			if(i_addr == 32'h119f0) begin
-                                //$display("mem write req at 119f0 state %d, d_pc=%x, %0d", state, d_pc, $time);
-			end
                 end else
 			state <= 0;
     endtask
@@ -127,15 +114,11 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 		check_new_req;
 	end else if(state == 1) begin
 		if(c_oe) begin
+			`ifdef SIM_MODE
 			$fwrite(f, "mem read addr %8x data %8x\n", r_dram_addr, c_odata);
-			if(r_dram_addr == 32'h119f0) begin
-				//$write("mem read addr %8x data %8x state1\n", r_dram_addr, c_odata);
-			end
+			`endif
 			check_new_req;
 		end else begin
-			if(r_dram_addr == 32'h119f0) begin
-                                //$write("mem read addr %8x data %8x state1 from ram\n", r_dram_addr, c_odata);
-                        end
 			// read from ram, then write to cache
 			r_dram_le <= 1;
 			state <= 2;
@@ -154,7 +137,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 	end else if(state == 4) begin
 		c_we <= 0;
 		state <= 0;
+		`ifdef SIM_MODE
 		$fwrite(f, "mem read addr %8x data %8x\n", r_dram_addr, w_dram_odata);
+		`endif
 	end else if(state == 10) begin
 		c_clr <= 0;
 		if(w_dram_busy) begin
@@ -164,7 +149,9 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 		end
 	end else if(state == 11) begin
 		if(!w_dram_busy) begin
+			`ifdef SIM_MODE
 			$fwrite(f, "mem write addr %8x data %8x mask %1x\n", r_dram_addr, r_dram_idata, r_dram_mask);
+			`endif
 			state <= 0;
 		end
 	end			
@@ -175,7 +162,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 
     reg r_dram_le, r_dram_wr;
 
-    assign o_busy = (state != 1 && state != 0) || (state == 1 && !c_oe);
+    assign o_busy = (state != 1 && state != 0) || (state == 1 && !c_oe) || !w_init_done;
     assign o_data = (state == 1 && c_oe) ? c_odata : w_dram_odata;
 
     wire sdram_fail;
@@ -237,6 +224,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
                                 .MAX7219_LOAD(MAX7219_LOAD)
                                );
 
+`ifdef SIM_MODE
 integer f;  
 reg opened=0, closed=0;      
 reg [31:0] timecnt=0;
@@ -256,18 +244,18 @@ always @(posedge clk) begin
                         //$finish();     
     end
 end
+`endif
 
 endmodule
 
 /**************************************************************************************************/
 
 /*** Single-port RAM with synchronous read                                                      ***/
-module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odata, w_lauro);
+module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odata);
   input  wire                     CLK, w_we;
   input  wire [$clog2(ENTRY)-1:0] w_addr;
   input  wire         [WIDTH-1:0] w_idata;
   output reg          [WIDTH-1:0] r_odata;
-  output wire [WIDTH-1:0] w_lauro;
 
   reg          [WIDTH-1:0]  mem [0:ENTRY-1];
 
@@ -277,12 +265,10 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
   always  @(posedge  CLK)  begin
 	  if (w_we) begin
 		mem[w_addr] <= w_idata;
-		//$display("mem[%x]<=%x", w_addr, w_idata);
 		r_odata <= w_idata;
 	  end else 
     		r_odata <= mem[w_addr];
   end
-  assign w_lauro = mem[w_addr];
 
 endmodule
 
@@ -321,21 +307,14 @@ module m_dram_cache#(parameter ADDR_WIDTH = 30, D_WIDTH = 32, ENTRY = 1024)
     assign {w_mvalid, w_mtag, w_mdata} = w_modata;
 
 
-    wire [(ADDR_WIDTH - $clog2(ENTRY) + D_WIDTH):0] w_lauro;
     m_bram#((ADDR_WIDTH - $clog2(ENTRY) + D_WIDTH)+1, ENTRY)
-        mem(CLK, w_mwe, w_maddr, w_mwdata, w_modata, w_lauro);
+        mem(CLK, w_mwe, w_maddr, w_mwdata, w_modata);
 
     assign w_odata  = w_mdata;
     assign w_oe     = (w_mvalid && w_mtag == r_tag);
 
     integer l=0;
     always  @(posedge  CLK)  begin
-	    if(w_mtag == wltag && w_idx == wlidx && l < 10) begin
-		//$display("cache , w_mtag=%x w_tag=%x w_idx=%x {wltag=%x, wlidx=%x}=%x w_mwe=%x w_mwdata=%x w_modata=%x w_oe=%x w_lauro=%x %0d", 
-			//w_mtag, w_tag, w_idx, wltag, wlidx, {wltag, wlidx}, w_mwe, w_mwdata, w_modata, w_oe, w_lauro, $time);
-		//$display("tagsize=%d indexsize=%d", (ADDR_WIDTH - $clog2(ENTRY)), $clog2(ENTRY));
-		l <= l+1;
-	    end
         r_tag <= w_tag;
         r_idx <= w_idx;
     end
