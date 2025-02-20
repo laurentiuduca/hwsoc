@@ -1,13 +1,9 @@
 /* Modified by Laurentiu-Cristian Duca, 2024-12
  * spdx license identifier: Apache 2.0
  * write through cache
- * read in the same period when hit
+ * pipelined with arm ahb amba bus version 5
  *
  */
-/**************************************************************************************************/
-/**** RVSoC (Mini Kuroda/RISC-V)                       since 2018-08-07   ArchLab. TokyoTech   ****/
-/**** Memory Module v0.02                                                                      ****/
-/**************************************************************************************************/
 `default_nettype none
 /**************************************************************************************************/
 `include "define.vh"
