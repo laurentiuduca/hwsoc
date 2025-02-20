@@ -103,6 +103,8 @@ endtask
 
 task prepare_write_base;
 begin
+	 //if({i_addr[31:2], 2'b0} == 32'h119f0)
+		//$display("write at addr 119f0 with data %x, ctrl=%x %0d", i_data, i_ctrl, $time);
 	 r_addr <= i_addr;
          r_maddr <= {i_addr[31:2], 2'b0};
          r_wdata_ui <= i_data;

@@ -74,6 +74,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     wire        w_dram_busy;
     reg [31:0] r_dram_addr, r_dram_idata; 
     wire [31:0] w_dram_odata;
+    reg [3:0] r_dram_mask;
 
     // Cache
     reg        c_clr;
@@ -82,23 +83,35 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     reg[31:0] c_idata;
     wire[31:0] c_odata;
 
-    integer j=0;
+    integer j=0, k=0;
 
     task check_new_req;
                 if(i_rd_en) begin
                         state <= 1;
 			r_dram_addr <= i_addr;
+			r_dram_mask <= i_mask;
+			if(k < 10 && state == 1) begin
+                                $display("mem read req state 1, d_pc=%x, %0d", d_pc, $time);
+                                k <= k+1;
+                        end
+			if(i_addr == 32'h119f0) begin
+				//$display("mem read req at 119f0 state %0d, d_pc=%x, %0d", state, d_pc, $time);
+			end
                 end else if(i_wr_en) begin
                         state <= 10;
                         c_clr <= 1;
                         // write to ram only
 			// will write to cache at next read on the same address
                         r_dram_wr <= 1;
+			r_dram_mask <= i_mask;
                         r_dram_addr <= i_addr;
                         r_dram_idata <= i_data;
 			if(j < 10) begin
 				$display("mem write req, d_pc=%x, %0d", d_pc, $time);
 				j <= j+1;
+			end
+			if(i_addr == 32'h119f0) begin
+                                //$display("mem write req at 119f0 state %d, d_pc=%x, %0d", state, d_pc, $time);
 			end
                 end else
 			state <= 0;
@@ -108,18 +121,25 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
         if(!rst_x) begin
                 state <= 0;
 		c_we <= 0;
-		//c_addr <= 0;
 		c_idata <= 0;
 		r_dram_addr <= 0;
 		r_dram_le <= 0;
 		r_dram_wr <= 0;
 		r_dram_idata <= 0;
+		r_dram_mask <= 0;
 	end else if(state == 0) begin
 		check_new_req;
 	end else if(state == 1) begin
 		if(c_oe) begin
+			$fwrite(f, "mem read addr %8x data %8x\n", r_dram_addr, c_odata);
+			if(r_dram_addr == 32'h119f0) begin
+				//$write("mem read addr %8x data %8x state1\n", r_dram_addr, c_odata);
+			end
 			check_new_req;
 		end else begin
+			if(r_dram_addr == 32'h119f0) begin
+                                //$write("mem read addr %8x data %8x state1 from ram\n", r_dram_addr, c_odata);
+                        end
 			// read from ram, then write to cache
 			r_dram_le <= 1;
 			state <= 2;
@@ -138,14 +158,17 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 	end else if(state == 4) begin
 		c_we <= 0;
 		state <= 0;
+		$fwrite(f, "mem read addr %8x data %8x\n", r_dram_addr, w_dram_odata);
 	end else if(state == 10) begin
+		c_clr <= 0;
 		if(w_dram_busy) begin
 			state <= 11;
 			r_dram_wr <= 0;
-			c_clr <= 0;
+			//c_clr <= 0;
 		end
 	end else if(state == 11) begin
 		if(!w_dram_busy) begin
+			$fwrite(f, "mem write addr %8x data %8x mask %1x\n", r_dram_addr, r_dram_idata, r_dram_mask);
 			state <= 0;
 		end
 	end			
@@ -175,7 +198,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
                                .i_data(r_dram_idata),
                                .o_data(w_dram_odata),
                                .o_busy(w_dram_busy),
-                               .i_ctrl(i_mask),
+                               .i_ctrl(r_dram_mask),
                                .sys_state(state), // not used
                                .w_bus_cpustate(0), // not used
                                .mem_state(w_mem_state), // not used
@@ -217,17 +240,38 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
                                 .MAX7219_DATA(MAX7219_DATA),
                                 .MAX7219_LOAD(MAX7219_LOAD)
                                );
-			      
+
+integer f;  
+reg opened=0, closed=0;      
+reg [31:0] timecnt=0;
+always @(posedge clk) begin              
+    if(!opened) begin
+            opened = 1;
+            f = $fopen("cr", "w");
+            if (f == 0) begin
+                $display ("ERROR: cr not opened");
+                $finish;
+            end 
+    end
+    timecnt <= timecnt + 1;
+    if(timecnt > 50000000) begin
+                        closed <= 1;
+                        $fclose(f);
+                        //$finish();     
+    end
+end
+
 endmodule
 
 /**************************************************************************************************/
 
 /*** Single-port RAM with synchronous read                                                      ***/
-module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odata);
+module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odata, w_lauro);
   input  wire                     CLK, w_we;
   input  wire [$clog2(ENTRY)-1:0] w_addr;
   input  wire         [WIDTH-1:0] w_idata;
   output reg          [WIDTH-1:0] r_odata;
+  output wire [WIDTH-1:0] w_lauro;
 
   reg          [WIDTH-1:0]  mem [0:ENTRY-1];
 
@@ -242,6 +286,8 @@ module m_bram#(parameter WIDTH=32, ENTRY=256)(CLK, w_we, w_addr, w_idata, r_odat
 	  end else 
     		r_odata <= mem[w_addr];
   end
+  assign w_lauro = mem[w_addr];
+
 endmodule
 
 /**************************************************************************************************/
@@ -261,13 +307,15 @@ module m_dram_cache#(parameter ADDR_WIDTH = 30, D_WIDTH = 32, ENTRY = 1024)
     reg  [(ADDR_WIDTH - $clog2(ENTRY))-1:0] r_tag = 0;
 
     // index and tag
-    wire                [$clog2(ENTRY)-1:0] w_idx;
-    wire [(ADDR_WIDTH - $clog2(ENTRY))-1:0] w_tag;
+    wire                [$clog2(ENTRY)-1:0] w_idx, wlidx;
+    wire [(ADDR_WIDTH - $clog2(ENTRY))-1:0] w_tag, wltag;
     assign {w_tag, w_idx} = w_addr;
+    assign {wltag, wlidx} = 32'h119f0;
 
     wire                                            w_mwe = w_clr | w_we | !RST_X | w_flush;
     wire                      [$clog2(ENTRY)-1:0]   w_maddr = w_idx;
-    wire [ADDR_WIDTH - $clog2(ENTRY) + D_WIDTH:0]   w_mwdata = w_we ? {1'b1, w_tag, w_idata} : 0;
+    wire [ADDR_WIDTH - $clog2(ENTRY) + D_WIDTH:0]   w_mwdata = w_we ? {1'b1, w_tag, w_idata} : 
+	    							{1'b0, {(ADDR_WIDTH - $clog2(ENTRY)) {1'b0}}, {D_WIDTH{1'b0}}};
     wire [ADDR_WIDTH - $clog2(ENTRY) + D_WIDTH:0]   w_modata;
 
     wire                                            w_mvalid;
@@ -277,13 +325,21 @@ module m_dram_cache#(parameter ADDR_WIDTH = 30, D_WIDTH = 32, ENTRY = 1024)
     assign {w_mvalid, w_mtag, w_mdata} = w_modata;
 
 
+    wire [(ADDR_WIDTH - $clog2(ENTRY) + D_WIDTH):0] w_lauro;
     m_bram#((ADDR_WIDTH - $clog2(ENTRY) + D_WIDTH)+1, ENTRY)
-        mem(CLK, w_mwe, w_maddr, w_mwdata, w_modata);
+        mem(CLK, w_mwe, w_maddr, w_mwdata, w_modata, w_lauro);
 
     assign w_odata  = w_mdata;
-    assign w_oe     = (w_mvalid && w_mtag == w_tag);
+    assign w_oe     = (w_mvalid && w_mtag == r_tag);
 
+    integer l=0;
     always  @(posedge  CLK)  begin
+	    if(w_mtag == wltag && w_idx == wlidx && l < 10) begin
+		//$display("cache , w_mtag=%x w_tag=%x w_idx=%x {wltag=%x, wlidx=%x}=%x w_mwe=%x w_mwdata=%x w_modata=%x w_oe=%x w_lauro=%x %0d", 
+			//w_mtag, w_tag, w_idx, wltag, wlidx, {wltag, wlidx}, w_mwe, w_mwdata, w_modata, w_oe, w_lauro, $time);
+		//$display("tagsize=%d indexsize=%d", (ADDR_WIDTH - $clog2(ENTRY)), $clog2(ENTRY));
+		l <= l+1;
+	    end
         r_tag <= w_tag;
         r_idx <= w_idx;
     end

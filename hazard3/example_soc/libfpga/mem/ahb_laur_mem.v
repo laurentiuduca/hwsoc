@@ -185,7 +185,7 @@ assign ahbls_hrdata = w_dram_odata;
                .i_data(r_ahbls_hwdata),
                .o_data(w_dram_odata),
                .o_busy(w_dram_busy),
-               .i_mask(r_mask),
+               .i_mask((state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask),
 
 	       .state(w_cache_state),
 	       .c_oe(w_c_oe),
