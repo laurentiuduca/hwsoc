@@ -35,7 +35,11 @@ cd ../hazard3
 5. notes
 wb cache is wip, use wt
 
-6. resources on tang nano 20k
+6. implementation on tang nano 20k
+comment SIM_MODE in define.vh
+make gwsynth
+openFPGALoader --board tangnano20k impl/pnr/project.fs
+
 Resource	Usage	Utilization
 Logic	7863(6866 LUT, 997 ALU) / 20736	38%
 Register	3081 / 15915	20%
