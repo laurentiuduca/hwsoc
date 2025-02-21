@@ -35,12 +35,11 @@ cd ../hazard3
 5. notes
 wb cache is wip, use wt
 
-6. resources
-<pre>
+6. resources on tang nano 20k
 Resource	Usage	Utilization
 Logic	7863(6866 LUT, 997 ALU) / 20736	38%
 Register	3081 / 15915	20%
   --Register as Latch	0 / 15915	0%
   --Register as FF	3081 / 15915	20%
 BSRAM	28 / 46	61%
-</pre>
+
