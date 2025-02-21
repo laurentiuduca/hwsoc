@@ -51,7 +51,9 @@ wire        w_txd;
 //assign o_tx=w_txd;
 
 reg RST_X=0;
-example_soc es (
+example_soc #(.SRAM_DEPTH(1 << 21), // 2 Mwords x 4 -> 8MB
+              .CLK_MHZ(27)      // For timer timebase
+) es (
 	// System clock + reset
 	.clk(pll_clk),
 	.rst_n(RST_X),
