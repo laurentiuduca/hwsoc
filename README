@@ -4,8 +4,6 @@ Hazard3 verilator simulation using nuttx
 0.
 download nuttx 12.8.0 os and apps from https://nuttx.apache.org/download
 extract archives
-cp -r nuttx nuttx-12.8.0
-cp -r apps apps-12.8.0
 cd nuttx
 patch -p1 <../nuttx-patch-12.8.0.patch
 cd ../apps
