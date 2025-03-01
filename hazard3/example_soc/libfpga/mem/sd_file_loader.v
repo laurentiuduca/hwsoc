@@ -9,7 +9,7 @@
 
 `include "define.vh"
 
-module sd_file_loader (
+module sd_file_loader #(parameter SD_CLK_DIV = 3'd2) (
     input  wire         clk27mhz,
     // when sdcard_pwr_n = 0, SDcard power on
     output wire         sdcard_pwr_n,
@@ -47,7 +47,7 @@ wire [7:0] outbyte;   // a byte of file content
 sd_file_reader #(
     .FILE_NAME_LEN    ( 11      ),         // the length of "example.txt" (in bytes)
     .FILE_NAME        ( "initmem.bin"  ),  // file name to read
-    .CLK_DIV          ( 2              )   // because clk=27MHz, CLK_DIV must ≥2
+    .CLK_DIV          ( SD_CLK_DIV     )
 ) u_sd_file_reader (
     .rstn             ( resetn         ),
     .clk              ( clk            ),

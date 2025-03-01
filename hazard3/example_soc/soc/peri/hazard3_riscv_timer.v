@@ -88,7 +88,8 @@ always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		ctrl_en <= 1'b1;
 	end else if (bus_write && paddr == ADDR_CTRL) begin
-		ctrl_en <= pwdata[0];
+		// laur - nuttx sends ipi at this addr
+		//ctrl_en <= pwdata[0];
 	end
 end
 

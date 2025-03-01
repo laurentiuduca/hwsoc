@@ -1,5 +1,5 @@
 // laur
-`define SIM_MODE
+//`define SIM_MODE
 
 //`define DUMP_VCD
 
@@ -7,6 +7,7 @@
 `define SIM_TNSRAM // tang nano not only sim ram
 `define FAT32_SD
 `define FREQ 27_000_000
+`define SDCARD_CLK_DIV 2 // clk is between 25-50mhz
 
 `define CACHE_SIZE (32*1024)
 

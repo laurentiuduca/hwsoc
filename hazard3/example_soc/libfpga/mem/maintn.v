@@ -119,7 +119,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
     `ifdef FAT32_SD
-    sd_file_loader sd_file_loader(.clk27mhz(clk), .resetn(rst_x), 
+    sd_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader
+      (.clk27mhz(clk), .resetn(rst_x), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state), 
         .tangled(sd_led_status),
