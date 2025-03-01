@@ -104,7 +104,7 @@ wire [1:0] card_type;
 // sd_reader
 //----------------------------------------------------------------------------------------------------
 sd_reader #(
-    .CLK_DIV          ( 2              )   // because clk=27MHz, CLK_DIV must ≥2
+    .CLK_DIV          ( `SDCARD_CLK_DIV )   // because clk=27MHz, CLK_DIV must ≥2
 ) u_sd_reader (
     .rstn             ( resetn         ),
     .clk              ( clk27mhz      ),
