@@ -19,7 +19,6 @@ module hazard3_cpu_1port #(
 	input wire                rst_n,
 
 	output wire [W_ADDR-1:0]  d_pc,
-	output wire [W_MEMOP-1:0]   xm_memop,
 	`ifdef RISCV_FORMAL
 	`RVFI_OUTPUTS ,
 	`endif
@@ -119,7 +118,6 @@ hazard3_core #(
 	.rst_n                      (rst_n),
 
 	.d_pc			    (d_pc),
-	.xm_memop		    (xm_memop),
 
 	.pwrup_req                  (pwrup_req),
 	.pwrup_ack                  (pwrup_ack),

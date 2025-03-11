@@ -272,7 +272,6 @@ wire              unblock_out;
 
 wire              uart_irq;
 wire              timer_irq;
-wire [W_MEMOP-1:0]   xm_memop;
 
 hazard3_cpu_1port #(
 	// These must have the values given here for you to end up with a useful SoC:
@@ -324,7 +323,6 @@ hazard3_cpu_1port #(
 	.rst_n                      (rst_n_cpu),
 
 	.d_pc			    (d_pc),
-	.xm_memop		    (xm_memop),
 
 	.pwrup_req                  (pwrup_req),
 	.pwrup_ack                  (pwrup_req),   // Tied back

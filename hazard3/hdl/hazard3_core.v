@@ -16,7 +16,6 @@ module hazard3_core #(
 	input wire                 rst_n,
 
 	output wire [W_ADDR-1:0]    d_pc,
-	output reg  [W_MEMOP-1:0]   xm_memop,
 
 	// Power control signals
 	output wire                pwrup_req,
@@ -347,7 +346,7 @@ reg  [W_REGADDR-1:0] xm_rs2;
 reg  [W_REGADDR-1:0] xm_rd;
 reg  [W_DATA-1:0]    xm_result;
 reg  [1:0]           xm_addr_align;
-//reg  [W_MEMOP-1:0]   xm_memop;
+reg  [W_MEMOP-1:0]   xm_memop;
 reg  [W_EXCEPT-1:0]  xm_except;
 reg                  xm_except_to_d_mode;
 reg                  xm_no_pc_increment;
