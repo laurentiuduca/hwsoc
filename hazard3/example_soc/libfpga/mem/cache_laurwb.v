@@ -18,6 +18,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH=23)
      input wire 			 rst_x,
      input wire 			 clk_sdram,
      input wire [31:0]          	 d_pc,
+     output wire 			 w_init_done,
+     
      // user interface ports
      input  wire                         i_rd_en,
      input  wire                         i_wr_en,
@@ -239,7 +241,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH=23)
     reg [31:0] r_dram_idata;
     reg r_rd_en, r_wr_en;
     wire [31:0] w_dram_odata;
-    wire w_init_done;
+    
     //DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
     m_maintn #(.PRELOAD_FILE(PRELOAD_FILE))
     boot (

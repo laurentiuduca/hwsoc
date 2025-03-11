@@ -538,6 +538,8 @@ apb_splitter #(
 // actually enter an infinite crash loop after reset if memory is
 // zero-initialised so don't leave the little guy hanging too long)
 
+wire w_init_done;
+
 ahb_sync_sram #(
 	.DEPTH (SRAM_DEPTH),
 	.HAS_WRITE_BUFFER (1), // 0 does not work
@@ -548,7 +550,8 @@ ahb_sync_sram #(
 	.clk_sdram         (clk_sdram),
 
 	.d_pc              (d_pc),
-	.xm_memop	   (xm_memop),
+        .w_init_done(w_init_done),
+
 	.ahbls_hready_resp (sram0_hready_resp),
 	.ahbls_hready      (sram0_hready),
 	.ahbls_hresp       (sram0_hresp),

@@ -33,6 +33,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 
      input wire [31:0]                   d_pc,
 
+     output wire w_init_done,
+
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -169,7 +171,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     wire w_late_refresh;
     wire [7:0] w_mem_state;
     wire calib_done;
-    wire w_init_done;
 
 
     m_maintn #(.PRELOAD_FILE(PRELOAD_FILE))

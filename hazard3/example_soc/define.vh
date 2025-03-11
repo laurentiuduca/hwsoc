@@ -1,5 +1,5 @@
 // laur
-//`define SIM_MODE
+`define SIM_MODE
 
 //`define DUMP_VCD
 

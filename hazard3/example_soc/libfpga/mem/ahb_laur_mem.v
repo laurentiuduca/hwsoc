@@ -19,7 +19,7 @@ module ahb_sync_sram #(
 	input wire clk_sdram,
 
 	input wire [W_ADDR-1:0]   d_pc,
-	input wire [W_MEMOP-1:0]   xm_memop,
+        output wire w_init_done,
 
 	// AHB lite slave interface
 	output wire               ahbls_hready_resp,
@@ -178,6 +178,8 @@ assign ahbls_hrdata = w_dram_odata;
                .rst_x(rst_n),
 	       .clk_sdram(clk_sdram),
 	       .d_pc(d_pc),
+	       .w_init_done(w_init_done),
+
                // user interface ports
                .i_rd_en(w_dram_le),
                .i_wr_en(w_wr_en),

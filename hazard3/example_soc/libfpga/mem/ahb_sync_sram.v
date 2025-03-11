@@ -36,7 +36,7 @@ module ahb_sync_sram #(
 	input wire clk_sdram,
 
 	input wire [31:0] d_pc,
-	input wire [W_MEMOP-1:0]   xm_memop,
+	output wire w_init_done,
 
 	// AHB lite slave interface
 	output wire               ahbls_hready_resp,
@@ -99,6 +99,8 @@ wire read_collision = !HAS_WRITE_BUFFER && write_retire && ahb_read_aphase; // =
 wire [W_SRAM_ADDR-1:0] haddr_row = ahbls_haddr[W_BYTEADDR +: W_SRAM_ADDR];
 wire [W_BYTES-1:0] wmask_noshift = ~({W_BYTES{1'b1}} << (1 << ahbls_hsize));
 wire [W_BYTES-1:0] wmask = wmask_noshift << ahbls_haddr[W_BYTEADDR-1:0];
+
+assign w_init_done=1;
 
 // AHBL state machine (mainly controlling write buffer)
 always @ (posedge clk or negedge rst_n) begin
