@@ -412,6 +412,7 @@ wire               bridge_hmastlock;
 wire [W_DATA-1:0]  bridge_hwdata;
 wire [W_DATA-1:0]  bridge_hrdata;
 
+`ifdef laur0
 ahbl_splitter #(
 	.N_PORTS     (2),
 	.ADDR_MAP    (64'h40000000_00000000),
@@ -446,6 +447,48 @@ ahbl_splitter #(
 	.dst_hmastlock   ({bridge_hmastlock   , sram0_hmastlock  }),
 	.dst_hwdata      ({bridge_hwdata      , sram0_hwdata     }),
 	.dst_hrdata      ({bridge_hrdata      , sram0_hrdata     })
+);
+`endif
+ahbl_crossbar #(
+        .N_MASTERS(1),
+        .N_SLAVES(2),
+        .W_ADDR(32),
+        .W_DATA(32),
+        .ADDR_MAP    (64'h40000000_00000000),
+        .ADDR_MASK   (64'he0000000_e0000000)
+) ahbl_crossbar (
+        // Global signals
+        .clk             (clk),
+        .rst_n           (rst_n),
+        .d_pc            (d_pc),
+
+        // From masters; function as slave ports
+        .src_hready_resp (proc_hready   ),
+        //.src_hready      (proc_hready   ),
+        .src_hresp       (proc_hresp    ),
+        .src_haddr       (proc_haddr    ),
+        .src_hwrite      (proc_hwrite   ),
+        .src_htrans      (proc_htrans   ),
+        .src_hsize       (proc_hsize    ),
+        .src_hburst      (proc_hburst   ),
+        .src_hprot       (proc_hprot    ),
+        .src_hmastlock   (proc_hmastlock),
+        .src_hwdata      (proc_hwdata   ),
+        .src_hrdata      (proc_hrdata   ), 
+
+        // To slaves; function as master ports
+	.dst_hready_resp ({bridge_hready_resp , sram0_hready_resp}),
+        .dst_hready      ({bridge_hready      , sram0_hready     }),
+        .dst_hresp       ({bridge_hresp       , sram0_hresp      }),
+        .dst_haddr       ({bridge_haddr       , sram0_haddr      }),
+        .dst_hwrite      ({bridge_hwrite      , sram0_hwrite     }),
+        .dst_htrans      ({bridge_htrans      , sram0_htrans     }),
+        .dst_hsize       ({bridge_hsize       , sram0_hsize      }),
+        .dst_hburst      ({bridge_hburst      , sram0_hburst     }),
+        .dst_hprot       ({bridge_hprot       , sram0_hprot      }),
+        .dst_hmastlock   ({bridge_hmastlock   , sram0_hmastlock  }),
+        .dst_hwdata      ({bridge_hwdata      , sram0_hwdata     }),
+        .dst_hrdata      ({bridge_hrdata      , sram0_hrdata     })
 );
 
 // APB layer
