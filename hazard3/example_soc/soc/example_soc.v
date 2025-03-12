@@ -252,8 +252,8 @@ assign hart_reset_done = rst_n_cpu;
 // ----------------------------------------------------------------------------
 // Processor
 
-wire [W_ADDR-1:0] proc_haddr;
 wire [W_ADDR-1:0] d_pc;
+wire [W_ADDR-1:0] proc_haddr;
 wire              proc_hwrite;
 wire [1:0]        proc_htrans;
 wire [2:0]        proc_hsize;
@@ -449,8 +449,22 @@ ahbl_splitter #(
 	.dst_hrdata      ({bridge_hrdata      , sram0_hrdata     })
 );
 `endif
+wire [W_ADDR-1:0] sd_haddr;
+wire              sd_hwrite;
+wire [1:0]        sd_htrans;
+wire [2:0]        sd_hsize;
+wire [2:0]        sd_hburst;
+wire [3:0]        sd_hprot;
+wire              sd_hmastlock;
+wire              sd_hexcl;
+wire              sd_hready;
+wire              sd_hresp;
+wire              sd_hexokay = 1'b1; // No global monitor
+wire [W_DATA-1:0] sd_hwdata;
+wire [W_DATA-1:0] sd_hrdata;
+
 ahbl_crossbar #(
-        .N_MASTERS(1),
+        .N_MASTERS(2),
         .N_SLAVES(2),
         .W_ADDR(32),
         .W_DATA(32),
@@ -463,18 +477,18 @@ ahbl_crossbar #(
         .d_pc            (d_pc),
 
         // From masters; function as slave ports
-        .src_hready_resp (proc_hready   ),
-        //.src_hready      (proc_hready   ),
-        .src_hresp       (proc_hresp    ),
-        .src_haddr       (proc_haddr    ),
-        .src_hwrite      (proc_hwrite   ),
-        .src_htrans      (proc_htrans   ),
-        .src_hsize       (proc_hsize    ),
-        .src_hburst      (proc_hburst   ),
-        .src_hprot       (proc_hprot    ),
-        .src_hmastlock   (proc_hmastlock),
-        .src_hwdata      (proc_hwdata   ),
-        .src_hrdata      (proc_hrdata   ), 
+        .src_hready_resp ({sd_hready, proc_hready}),
+        //.src_hready      ({sd_hready, proc_hready}),
+        .src_hresp       ({sd_hresp, proc_hresp}),
+        .src_haddr       ({sd_haddr, proc_haddr}),
+        .src_hwrite      ({sd_hwrite, proc_hwrite}),
+        .src_htrans      ({/*sd_htrans*/2'h0, proc_htrans}),
+        .src_hsize       ({sd_hsize, proc_hsize}),
+        .src_hburst      ({sd_hburst, proc_hburst}),
+        .src_hprot       ({sd_hprot, proc_hprot}),
+        .src_hmastlock   ({sd_hmastlock, proc_hmastlock}),
+        .src_hwdata      ({sd_hwdata, proc_hwdata}),
+        .src_hrdata      ({sd_hrdata, proc_hrdata}), 
 
         // To slaves; function as master ports
 	.dst_hready_resp ({bridge_hready_resp , sram0_hready_resp}),
