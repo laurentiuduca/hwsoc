@@ -459,7 +459,6 @@ wire              sd_hmastlock;
 wire              sd_hexcl;
 wire              sd_hready;
 wire              sd_hresp;
-wire              sd_hexokay = 1'b1; // No global monitor
 wire [W_DATA-1:0] sd_hwdata;
 wire [W_DATA-1:0] sd_hrdata;
 
@@ -482,7 +481,7 @@ ahbl_crossbar #(
         .src_hresp       ({sd_hresp, proc_hresp}),
         .src_haddr       ({sd_haddr, proc_haddr}),
         .src_hwrite      ({sd_hwrite, proc_hwrite}),
-        .src_htrans      ({/*sd_htrans*/2'h0, proc_htrans}),
+        .src_htrans      ({/*sd_htrans*/2'b0, proc_htrans}),
         .src_hsize       ({sd_hsize, proc_hsize}),
         .src_hburst      ({sd_hburst, proc_hburst}),
         .src_hprot       ({sd_hprot, proc_hprot}),
@@ -534,6 +533,15 @@ wire [31:0] timer_prdata;
 wire        timer_pready;
 wire        timer_pslverr;
 
+wire        sd_psel;    
+wire        sd_penable; 
+wire        sd_pwrite;
+wire [15:0] sd_paddr;
+wire [31:0] sd_pwdata;
+wire [31:0] sd_prdata;
+wire        sd_pready;
+wire        sd_pslverr;
+
 ahbl_to_apb apb_bridge_u (
 	.clk               (clk),
 	.rst_n             (rst_n),
@@ -562,9 +570,9 @@ ahbl_to_apb apb_bridge_u (
 );
 
 apb_splitter #(
-	.N_SLAVES   (2),
-	.ADDR_MAP   (32'h4000_0000),
-	.ADDR_MASK  (32'hc000_c000)
+	.N_SLAVES   (3),
+	.ADDR_MAP   (48'h8000_4000_0000),
+	.ADDR_MASK  (48'hc000_c000_c000)
 ) inst_apb_splitter (
 	.clk (clk),
 	.apbs_paddr   (bridge_paddr),
@@ -576,14 +584,14 @@ apb_splitter #(
 	.apbs_prdata  (bridge_prdata),
 	.apbs_pslverr (bridge_pslverr),
 
-	.apbm_paddr   ({uart_paddr   , timer_paddr  }),
-	.apbm_psel    ({uart_psel    , timer_psel   }),
-	.apbm_penable ({uart_penable , timer_penable}),
-	.apbm_pwrite  ({uart_pwrite  , timer_pwrite }),
-	.apbm_pwdata  ({uart_pwdata  , timer_pwdata }),
-	.apbm_pready  ({uart_pready  , timer_pready }),
-	.apbm_prdata  ({uart_prdata  , timer_prdata }),
-	.apbm_pslverr ({uart_pslverr , timer_pslverr})
+	.apbm_paddr   ({sd_paddr   , uart_paddr  , timer_paddr}),
+	.apbm_psel    ({sd_psel    , uart_psel   , timer_psel}),
+	.apbm_penable ({sd_penable , uart_penable, timer_penable}),
+	.apbm_pwrite  ({sd_pwrite  , uart_pwrite , timer_pwrite}),
+	.apbm_pwdata  ({sd_pwdata  , uart_pwdata , timer_pwdata}),
+	.apbm_pready  ({sd_pready  , uart_pready , timer_pready}),
+	.apbm_prdata  ({sd_prdata  , uart_prdata , timer_prdata}),
+	.apbm_pslverr ({sd_pslverr , uart_pslverr, timer_pslverr})
 );
 
 // ----------------------------------------------------------------------------
@@ -709,6 +717,34 @@ hazard3_riscv_timer timer_u (
 	.tick      (timer_tick),
 
 	.timer_irq (timer_irq)
+);
+
+hazard3_sd sd (
+        .clk       (clk),
+        .rst_n     (rst_n),
+
+        .haddr                      (sd_haddr),
+        .hwrite                     (sd_hwrite),
+        .htrans                     (sd_htrans),
+        .hsize                      (sd_hsize),
+        .hburst                     (sd_hburst),
+        .hprot                      (sd_hprot),
+        .hmastlock                  (sd_hmastlock),
+        .hexcl                      (sd_hexcl),
+        .hready                     (sd_hready),
+        .hresp                      (sd_hresp),
+        //.hexokay                    (sd_hexokay),
+        .hwdata                     (sd_hwdata),
+        .hrdata                     (sd_hrdata),
+
+        .psel      (sd_psel),
+        .penable   (sd_penable),
+        .pwrite    (sd_pwrite),
+        .paddr     (sd_paddr),
+        .pwdata    (sd_pwdata),
+        .prdata    (sd_prdata),
+        .pready    (sd_pready),
+        .pslverr   (sd_pslverr)
 );
 
 endmodule

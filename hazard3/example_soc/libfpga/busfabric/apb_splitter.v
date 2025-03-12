@@ -1,9 +1,9 @@
 module apb_splitter #(
 	parameter W_ADDR = 16,
 	parameter W_DATA = 32,
-	parameter N_SLAVES = 2,
-	parameter ADDR_MAP =  32'h0000_4000,
-	parameter ADDR_MASK = 32'hc000_c000
+	parameter N_SLAVES = 3,
+	parameter ADDR_MAP =  48'h4000_2000_0000,
+	parameter ADDR_MASK = 48'he000_e000_e000
 ) (
 	input wire clk,
 	input wire  [W_ADDR-1:0]          apbs_paddr,
