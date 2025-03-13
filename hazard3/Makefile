@@ -14,7 +14,7 @@ OTHERSOURCE= $(HAZARD3DIR)/example_soc/soc/example_soc.v $(HDLLFCOMMON)/reset_sy
 LAURMEMWB=$(HDLLF)/mem/memory_controller.v $(HDLLF)/mem/memorytn.v $(HDLLF)/mem/memsim.v $(HDLLF)/mem/ahb_laur_mem.v $(HDLLF)/mem/cache_laurwb.v $(HDLLF)/mem/maintn.v $(HDLLF)/mem/sdram.v $(HDLLF)/mem/max7219.v $(HDLLF)/mem/clkdivider.v $(HDLLF)/mem/sd_loader.v $(HDLLF)/mem/sd_file_loader.v $(HDLLF)/mem/sd_file_reader.v $(HDLLF)/mem/sd_reader.v $(HDLLF)/mem/sdcmd_ctrl.v
 LAURMEMWT=$(HDLLF)/mem/memory_controller.v $(HDLLF)/mem/memorytn.v $(HDLLF)/mem/memsim.v $(HDLLF)/mem/ahb_laur_mem.v $(HDLLF)/mem/cache_laurwt.v $(HDLLF)/mem/maintn.v $(HDLLF)/mem/sdram.v $(HDLLF)/mem/max7219.v $(HDLLF)/mem/clkdivider.v $(HDLLF)/mem/sd_loader.v $(HDLLF)/mem/sd_file_loader.v $(HDLLF)/mem/sd_file_reader.v $(HDLLF)/mem/sd_reader.v $(HDLLF)/mem/sdcmd_ctrl.v
 LUKEMEM=$(HDLLF)/mem/sram_sync.v $(HDLLF)/mem/ahb_sync_sram.v 
-SD=$(HDLSD)/hazard3_sd.v
+SD=$(HDLSD)/sd.v
 
 # Verilator
 TOPMODULE = m_topsim
