@@ -19,7 +19,7 @@ module hazard3_sd #(
         input  wire               hready,
         input  wire               hresp,
         //input  wire               hexokay,
-        output wire [W_DATA-1:0]  hwdata,
+        output reg [W_DATA-1:0]  hwdata,
         input  wire [W_DATA-1:0]  hrdata,
 
         // APB Port
@@ -35,17 +35,58 @@ module hazard3_sd #(
 
 
 reg [7:0] state;
+reg rbusy;
+reg [31:0] rwdata;
+integer i;
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		state <= 0;
+		rbusy <= 0;
+		hwdata <= 0;
+		hsize <= 0;
+		htrans <= 0;
+		rwdata <= 0;
+		i <= 0;
 	end else begin
 		if(state == 0) begin
-			if(pwrite)
+			if(pwrite) begin
 				$display("sd write %x", pwdata);
+				rbusy <= 0;
+				state <= 1;
+				rwdata <= pwdata;
+			end
+		end else if(state == 1) begin
+			rbusy <= 0;
+			if(!pwrite) begin
+				hwrite <= 1;
+                                htrans <= 2'b10; // nonseq transfer
+                                haddr <= rwdata;
+				hsize <= 2; // 0=1byte, 1=2bytes, 2=4bytes
+                                hwdata <= 32'h76543210;
+				state <= 2;
+			end
+		end else if(state == 2) begin
+			if(i < 10) begin
+				$display("sd state 2 pwrite=%x hready=%x htrans=%x\n", pwrite, hready, htrans);
+				i <= i + 1;
+			end
+			if(!hready) begin
+				htrans <= 0; // idle
+				hwrite <= 0;
+				rbusy <= 0;
+				state <= 3;
+			end
+		end else if(state == 3) begin
+                        if(i < 20) begin
+                                $display("sd state 3 pwrite=%x hready=%x htrans=%x\n", pwrite, hready, htrans);
+                                i <= i + 1;
+                        end
+			if(!pwrite)
+				state <= 0;
 		end
 	end
 end
 
-assign pready=1;
+assign pready=!rbusy;
 
 endmodule

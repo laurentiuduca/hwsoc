@@ -481,7 +481,7 @@ ahbl_crossbar #(
         .src_hresp       ({sd_hresp, proc_hresp}),
         .src_haddr       ({sd_haddr, proc_haddr}),
         .src_hwrite      ({sd_hwrite, proc_hwrite}),
-        .src_htrans      ({/*sd_htrans*/2'b0, proc_htrans}),
+        .src_htrans      ({sd_htrans/*2'b0*/, proc_htrans}),
         .src_hsize       ({sd_hsize, proc_hsize}),
         .src_hburst      ({sd_hburst, proc_hburst}),
         .src_hprot       ({sd_hprot, proc_hprot}),
