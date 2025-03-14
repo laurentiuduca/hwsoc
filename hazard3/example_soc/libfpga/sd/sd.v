@@ -4,7 +4,7 @@
 module hazard3_sd #(
         parameter W_ADDR = 32,
         parameter W_DATA = 32,
-	parameter ramdisk="ramdisk2.hex",
+	parameter ramdisk="example_soc/libfpga/sdramdisk2.hex",
 	parameter sd_model_log_file={"sd_model.log"}
   	//parameter wb_memory_file={`BIN_DIR, "/wb_memory.txt"})
 ) (
