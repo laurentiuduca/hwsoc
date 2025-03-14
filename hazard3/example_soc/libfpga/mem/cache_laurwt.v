@@ -83,6 +83,38 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
 
     integer j=0, k=0;
 
+    reg r_dram_le, r_dram_wr;
+
+    assign o_busy = (state != 1 && state != 0) || (state == 1 && !c_oe) || !w_init_done;
+    assign o_data = (state == 1 && c_oe) ? c_odata : w_dram_odata;
+
+    wire sdram_fail;
+    wire w_late_refresh;
+    wire [7:0] w_mem_state;
+    wire calib_done;
+
+`ifdef SIM_MODE
+integer f;
+reg opened=0, closed=0;
+reg [31:0] timecnt=0;
+always @(posedge clk) begin
+    if(!opened) begin
+            opened = 1;
+            f = $fopen("cr", "w");
+            if (f == 0) begin
+                $display ("ERROR: cr not opened");
+                $finish;
+            end
+    end
+    timecnt <= timecnt + 1;
+    if(timecnt > 50000000) begin
+                        closed <= 1;
+                        $fclose(f);
+                        //$finish();     
+    end
+end
+`endif
+
     task check_new_req;
 	    if(w_init_done)
                 if(i_rd_en) begin
@@ -162,17 +194,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
     m_dram_cache#(ADDR_WIDTH,32,`CACHE_SIZE/4) cache(clk, 1'b1, 1'b0, c_clr, c_we,
                                 c_addr[31:0], c_idata, c_odata, c_oe);
 
-    reg r_dram_le, r_dram_wr;
-
-    assign o_busy = (state != 1 && state != 0) || (state == 1 && !c_oe) || !w_init_done;
-    assign o_data = (state == 1 && c_oe) ? c_odata : w_dram_odata;
-
-    wire sdram_fail;
-    wire w_late_refresh;
-    wire [7:0] w_mem_state;
-    wire calib_done;
-
-
     m_maintn #(.PRELOAD_FILE(PRELOAD_FILE))
     boot (
                                // user interface ports
@@ -184,7 +205,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
                                .o_busy(w_dram_busy),
                                .i_ctrl(r_dram_mask),
                                .sys_state(state), // not used
-                               .w_bus_cpustate(0), // not used
+                               .w_bus_cpustate(4'h0), // not used
                                .mem_state(w_mem_state), // not used
 
                                 .w_init_done(w_init_done),
@@ -224,28 +245,6 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
                                 .MAX7219_DATA(MAX7219_DATA),
                                 .MAX7219_LOAD(MAX7219_LOAD)
                                );
-
-`ifdef SIM_MODE
-integer f;  
-reg opened=0, closed=0;      
-reg [31:0] timecnt=0;
-always @(posedge clk) begin              
-    if(!opened) begin
-            opened = 1;
-            f = $fopen("cr", "w");
-            if (f == 0) begin
-                $display ("ERROR: cr not opened");
-                $finish;
-            end 
-    end
-    timecnt <= timecnt + 1;
-    if(timecnt > 50000000) begin
-                        closed <= 1;
-                        $fclose(f);
-                        //$finish();     
-    end
-end
-`endif
 
 endmodule
 

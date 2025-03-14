@@ -92,6 +92,7 @@ reg [N_PORTS-1:0]        actual_hmastlock;
 always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
 		if (buf_valid[i]) begin
+
 			actual_haddr     [i * W_ADDR +: W_ADDR] = buf_haddr     [i];
 			actual_hwrite    [i]                    = buf_hwrite    [i];
 			actual_htrans    [i * 2 +: 2]           = buf_htrans    [i];
@@ -180,7 +181,8 @@ wire [N_PORTS-1:0] mast_in_dphase = buf_valid | mast_gnt_d;
 // There are two reasons to report ready:
 // - the master is currently not in data phase with the arbiter (IDLE)
 // - the master is in data phase with both arbiter and slave, and slave is ready
-assign src_hready_resp = ~mast_in_dphase | (mast_gnt_d & {N_PORTS{dst_hready_resp}});
+// laur
+assign src_hready_resp = /*~mast_in_dphase |*/ (mast_gnt_d & {N_PORTS{dst_hready_resp}});
 assign src_hresp = mast_gnt_d & {N_PORTS{dst_hresp}};
 assign src_hrdata = {N_PORTS{dst_hrdata}};
 

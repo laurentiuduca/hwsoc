@@ -71,6 +71,31 @@ module ahb_sync_sram #(
 wire [3:0] wmask_noshift = ~({4{1'b1}} << (1 << ahbls_hsize));
 wire [3:0] wmask = wmask_noshift << ahbls_haddr[1:0];
 
+// Decode AHBL controls
+wire ahb_read_aphase  = ahbls_htrans[1] && ahbls_hready && !ahbls_hwrite;
+wire ahb_write_aphase = ahbls_htrans[1] && ahbls_hready &&  ahbls_hwrite;
+
+reg [5:0] state, ostate;
+reg [W_ADDR-1:0]  r_ahbls_haddr;
+reg [3:0]         r_mask;
+reg [W_DATA-1:0]  r_ahbls_hrdata, r_ahbls_hwdata;
+integer i=0, j=0, k=0, l=0, m=0, lj=0;
+
+// RAM 
+    reg r_dram_le, r_dram_wr;
+    wire sdram_fail;
+    wire w_late_refresh;
+    wire [7:0] w_mem_state;
+    wire w_dram_busy;
+    wire calib_done;
+    wire [31:0] w_dram_odata;
+    wire w_wr_en=r_dram_wr;
+    wire w_dram_le=ahb_read_aphase;
+    wire [31:0] w_addr = (state == 22 || state == 20) ? {r_ahbls_haddr[W_DATA-1:2], 2'b00} :
+            {ahbls_haddr[W_DATA-1:2], 2'b00};
+
+    wire [6:0] w_cache_state;
+    wire w_c_oe;
 
 task check_new_req;
 			if (ahb_read_aphase) begin
@@ -93,15 +118,6 @@ task check_new_req;
 			`endif
 endtask
 
-// Decode AHBL controls
-wire ahb_read_aphase  = ahbls_htrans[1] && ahbls_hready && !ahbls_hwrite;
-wire ahb_write_aphase = ahbls_htrans[1] && ahbls_hready &&  ahbls_hwrite;
-
-reg [5:0] state, ostate;
-reg [W_ADDR-1:0]  r_ahbls_haddr;
-reg [3:0]         r_mask;
-reg [W_DATA-1:0]  r_ahbls_hrdata, r_ahbls_hwdata;
-integer i=0, j=0, k=0, l=0, m=0, lj=0;
 // AHBL state machine (mainly controlling write buffer)
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
@@ -155,21 +171,6 @@ assign ahbls_hready_resp = (state == 0) ? !w_dram_busy :
 assign ahbls_hrdata = w_dram_odata;
 
 // ----------------------------------------------------------------------------
-// RAM 
-    reg r_dram_le, r_dram_wr;
-    wire sdram_fail;
-    wire w_late_refresh;
-    wire [7:0] w_mem_state;
-    wire w_dram_busy;
-    wire calib_done;
-    wire [31:0] w_dram_odata;
-    wire w_wr_en=r_dram_wr;
-    wire w_dram_le=ahb_read_aphase; 
-    wire [31:0] w_addr = (state == 22 || state == 20) ? {r_ahbls_haddr[W_DATA-1:2], 2'b00} : 
-	    {ahbls_haddr[W_DATA-1:2], 2'b00};
-
-    wire [6:0] w_cache_state;
-    wire w_c_oe;
 
     cache_ctrl #(.PRELOAD_FILE(PRELOAD_FILE), .ADDR_WIDTH(32))
     cache_ctrl (

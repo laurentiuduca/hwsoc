@@ -15,7 +15,7 @@ localparam CommandRegSize = 16;
 
 //reg [3:0] digits [0:7];
 // state
-`define reset 0
+//`define reset 0
 `define init_on 1
 `define init_mode 2
 `define init_intensity 3
@@ -24,7 +24,7 @@ localparam CommandRegSize = 16;
 `define send_digits 6
 `define finish_state 7
 `define wait_state 8
-reg [7:0] state=`reset, next_state;
+reg [7:0] state=0/*`reset*/, next_state;
 
 // driver_state
 `define ds_idle 0
@@ -48,7 +48,7 @@ always @(posedge clk)
 begin
 	if (reset_n == 0) begin
             driver_state <= `ds_idle;
-            state        <= `reset;
+            state        <= 0/*`reset*/;
             load_out     <= 0;
             counter      <= 0;
             digit_index  <= 7;
@@ -58,7 +58,7 @@ begin
 	end else begin
 		if(clkdiv) begin
 	    case(state)
-		    `reset:
+		    0/*`reset*/:
 			    if(driver_state == `ds_idle) begin
 					command_reg <= 16'h0c00;
 					// Shutdown Register (0x0C): Shutdown Mode (0x00)
@@ -135,7 +135,6 @@ begin
 		    `finish_state: begin
 				if(driver_state == `ds_idle)
 					state <= `latch_data;
-					//state <= `reset;
 			end
             endcase
 

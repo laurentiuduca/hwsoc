@@ -179,6 +179,7 @@ hazard3_frontend #(
 	.dbg_instr_data_rdy   (dbg_instr_data_rdy)
 );
 
+wire [W_EXCEPT-1:0] x_except;
 // laur
 integer j=0;
 reg orst_n=1;
@@ -974,7 +975,7 @@ end
 
 wire [W_ADDR-1:0] m_exception_return_addr;
 
-wire [W_EXCEPT-1:0] x_except =
+assign x_except =
 	x_trig_break                                             ? EXCEPT_EBREAK         :
 	x_exec_pmp_fail                                          ? EXCEPT_INSTR_FAULT    :
 	x_jump_req_unchecked && x_jump_misaligned                ? EXCEPT_INSTR_MISALIGN :

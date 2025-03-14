@@ -191,6 +191,7 @@ endgenerate
 
 generate
 for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
+	wire [N_MASTERS-1:0]         arb_mwin;
 	wire [N_MASTERS-1:0]         arb_hready;
 	wire [N_MASTERS-1:0]         arb_hready_resp;
 	wire [N_MASTERS-1:0]         arb_hresp;

@@ -34,6 +34,16 @@ module m_topsim (
         output wire MAX7219_LOAD
 );
 
+`ifdef ICARUS
+reg clk=0;
+always begin
+        clk = 0;
+        #5;
+        clk = 1;
+        #5;
+end
+`endif
+
 wire pll_clk, clk_sdram;
 `ifdef SIM_MODE
     assign pll_clk = clk;
@@ -99,16 +109,6 @@ example_soc #(.SRAM_DEPTH(1 << 21), // 2 Mwords x 4 -> 8MB
                                 .MAX7219_DATA(MAX7219_DATA),
                                 .MAX7219_LOAD(MAX7219_LOAD)
 );
-
-`ifdef ICARUS
-reg clk=0;
-always begin
-	clk = 0;
-	#5;
-	clk = 1;
-	#5;
-end
-`endif
 
 // reset
 reg [31:0] cnt=0;

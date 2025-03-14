@@ -412,7 +412,7 @@ wire               bridge_hmastlock;
 wire [W_DATA-1:0]  bridge_hwdata;
 wire [W_DATA-1:0]  bridge_hrdata;
 
-`ifdef laur0
+`ifndef laur0
 ahbl_splitter #(
 	.N_PORTS     (2),
 	.ADDR_MAP    (64'h40000000_00000000),
@@ -448,20 +448,7 @@ ahbl_splitter #(
 	.dst_hwdata      ({bridge_hwdata      , sram0_hwdata     }),
 	.dst_hrdata      ({bridge_hrdata      , sram0_hrdata     })
 );
-`endif
-wire [W_ADDR-1:0] sd_haddr;
-wire              sd_hwrite;
-wire [1:0]        sd_htrans;
-wire [2:0]        sd_hsize;
-wire [2:0]        sd_hburst;
-wire [3:0]        sd_hprot;
-wire              sd_hmastlock;
-wire              sd_hexcl;
-wire              sd_hready;
-wire              sd_hresp;
-wire [W_DATA-1:0] sd_hwdata;
-wire [W_DATA-1:0] sd_hrdata;
-
+`else
 ahbl_crossbar #(
         .N_MASTERS(2),
         .N_SLAVES(2),
@@ -503,6 +490,7 @@ ahbl_crossbar #(
         .dst_hwdata      ({bridge_hwdata      , sram0_hwdata     }),
         .dst_hrdata      ({bridge_hrdata      , sram0_hrdata     })
 );
+`endif
 
 // APB layer
 
@@ -718,6 +706,20 @@ hazard3_riscv_timer timer_u (
 
 	.timer_irq (timer_irq)
 );
+
+//------------------------------------------------------------
+wire [W_ADDR-1:0] sd_haddr;
+wire              sd_hwrite;
+wire [1:0]        sd_htrans;
+wire [2:0]        sd_hsize;
+wire [2:0]        sd_hburst;
+wire [3:0]        sd_hprot;
+wire              sd_hmastlock;
+wire              sd_hexcl;
+wire              sd_hready;
+wire              sd_hresp;
+wire [W_DATA-1:0] sd_hwdata;
+wire [W_DATA-1:0] sd_hrdata;
 
 hazard3_sd sd (
         .clk       (clk),

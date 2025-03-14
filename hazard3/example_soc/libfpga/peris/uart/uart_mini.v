@@ -30,6 +30,11 @@ module uart_mini (
 
 reg [7:0] state;
 reg r_tx_ready, r_was_write;
+
+wire w_tx_ready;
+reg         r_uart_we;
+reg   [7:0] r_uart_data;
+
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		r_uart_we <= 0;
@@ -67,9 +72,6 @@ end
 assign irq=0;
 assign apbs_pready = r_tx_ready;
 
-wire w_tx_ready;
-reg         r_uart_we;
-reg   [7:0] r_uart_data;
 UartTx UartTx0(clk, rst_n, r_uart_data, r_uart_we, tx, w_tx_ready);
 
 

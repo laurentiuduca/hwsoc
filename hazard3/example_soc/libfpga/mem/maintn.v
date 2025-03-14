@@ -62,6 +62,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     	output wire MAX7219_LOAD
     );
 
+    // xsim requires declaration before use
+    reg r_set_dram_le=0;
 
     /**********************************************************************************************/
     // bus interface
@@ -172,15 +174,15 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     reg  [31:0]  r_initaddr   = 0;
     reg  [31:0]  r_initaddr3  = 0;
     reg  [31:0]  r_checksum = 0, r_sd_checksum=0;
+    wire w_pl_init_we=0;
+    wire [31:0] w_pl_init_data=0;
+    wire [31:0] w_checksum = r_checksum;
+    wire [31:0] w_sd_checksum = r_sd_checksum;
     always@(posedge clk) begin
 	    r_checksum <= (!rst_x)                      ? 0                             :
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
 		               r_checksum;
     end
-    wire w_pl_init_we=0;
-    wire [31:0] w_pl_init_data=0;
-    wire [31:0] w_checksum = r_checksum;
-    wire [31:0] w_sd_checksum = r_sd_checksum;
     /**************************************************************************************************/
     reg          r_bbl_done   = 0;
     reg          r_bblsd_done = 0;
@@ -235,8 +237,6 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
 
     end
 
-    // xsim requires declaration before use
-    reg r_set_dram_le=0;
 `ifdef LAUR_MEM_RB
 `ifdef LAUR_MEM_RB_ONLY_CHECK
         reg [31:0] r_rb_delay=0;
@@ -427,14 +427,14 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     /**********************************************************************************************/
 
     // debug on display
+    wire clkdiv;
+    wire [31:0] data_vector;
     max7219 max7219(.clk(clk), .clkdiv(clkdiv), .reset_n(rst_x), .data_vector(data_vector),
             .clk_out(MAX7219_CLK),
             .data_out(MAX7219_DATA),
             .load_out(MAX7219_LOAD)
         );
-    wire clkdiv;
-    wire [31:0] data_vector;
-    clkdivider cd(.clk(clk), .reset_n(rst_x), .n(100), .clkdiv(clkdiv));
+    clkdivider cd(.clk(clk), .reset_n(rst_x), .n(21'd100), .clkdiv(clkdiv));
 
     assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {4'h1, 20'h0, 1'b0, sys_state} : w_btnl ? d_pc: w_sd_checksum;
 
