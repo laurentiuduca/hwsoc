@@ -67,7 +67,7 @@ module sdModel
   
 );
 
-`ifdef laur0
+`ifndef laur0
 
 reg oeCmd;
 reg oeDat;

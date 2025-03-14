@@ -21,10 +21,11 @@ SD=$(HDLSD)/sd.v $(HDLSD)/sdModel.v $(HDLSD)/bistable_domain_cross.v  $(HDLSD)/g
 TOPMODULE = m_topsim
 VERILATOR  = verilator 
 VERIFLAGS += --public --top-module $(TOPMODULE) --clk clk
-VERIFLAGS += --x-assign 0 --x-initial 0
+VERIFLAGS += --x-assign 0 --x-initial 0 --timing
 VERIFLAGS += --threads 1 -O2 
 #VERIFLAGS += --threads 3 -DVL_THREADED -O2
-VERIFLAGS += -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-COMBDLY -Wno-LATCH -Wno-UNOPTFLAT
+VERIFLAGS += -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-COMBDLY -Wno-LATCH
+VERIFLAGS += -Wno-UNOPTFLAT -Wno-INITIALDLY -Wno-INITIALDLY -Wno-MULTIDRIVEN
 VERIFLAGS += --exe sim.cpp --cc --trace
 VERIFLAGS2 = $(VERIFLAGS) -I$(HDL) -I$(HDLLF)/.. -I$(HDLSD)
 
@@ -47,7 +48,7 @@ clean:
 	rm -rf obj_dir
 	rm -rf synth.vg impl serialout.txt ftn.txt *out stip*.txt
 	rm -rf laur2.txt log*txt ./a.out
-	rm -rf xsim*.* xelab*.* xvlog*.*
+	rm -rf xsim*.* xelab*.* xvlog*.* sd_model.log
 	rm -f init_kernel.txt fh fl fout cl ch cr impl dump.vcd
 
 veriwb:
