@@ -113,7 +113,7 @@ always @(posedge clk or negedge rst_n) begin
 		brd1 <= 0;
 	end else if(state == 0) begin
 		if(bus_write) begin
-			$display("bus w wbs_sds_adr_i=%x wbs_sds_ack_o=%x", paddr, wbs_sds_ack_o);
+			$display("bus w paddr_i=%x ack_o=%x pwdata=%x", paddr, wbs_sds_ack_o, pwdata);
 			if(paddr == 16'h8100) begin
 				$display("finish");
 				$finish;
@@ -137,7 +137,7 @@ always @(posedge clk or negedge rst_n) begin
 				bwr1 <= 1;
 			end
 		end else if(bus_read) begin
-			$display("bus r wbs_sds_adr_i=%x wbs_sds_ack_o=%x", paddr, wbs_sds_ack_o);
+			$display("bus r paddr=%x ack_o=%x", paddr, wbs_sds_ack_o);
                         if(paddr < `BLOCK_ADDR) begin
                                 // cmd
                                 state <= 12;
@@ -160,13 +160,13 @@ always @(posedge clk or negedge rst_n) begin
 			wbs_sds_we_i <= 0;
                         wbs_sds_cyc_i <= 0;
                         wbs_sds_stb_i <= 0;
-			$display("sdw wbs_sds_ack_o=%x", wbs_sds_ack_o);
+			$display("sdw ack_o=%x", wbs_sds_ack_o);
 			pready <= 1;
 			state <= 0;
 		end
 	end else if(state == 12) begin
                 if(wbs_sds_ack_o) begin
-			$display("sdr wbs_sds_ack_o=%x", wbs_sds_ack_o);
+			$display("sdr ack_o=%x dat_o=%x", wbs_sds_ack_o, wbs_sds_dat_o);
                         state <= 0;
 			prdata <= wbs_sds_dat_o;
                         wbs_sds_cyc_i <= 0;
