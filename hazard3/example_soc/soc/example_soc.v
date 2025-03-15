@@ -557,10 +557,11 @@ ahbl_to_apb apb_bridge_u (
 	.apbm_pslverr      (bridge_pslverr)
 );
 
+`define SDDEVADDR 16'h8000
 apb_splitter #(
 	.N_SLAVES   (3),
 	// inside devices paddr has 16 bytes
-	.ADDR_MAP   (48'h8000_4000_0000),
+	.ADDR_MAP   ({`SDDEVADDR, 32'h4000_0000}),
 	.ADDR_MASK  (48'hc000_c000_c000)
 ) inst_apb_splitter (
 	.clk (clk),
@@ -722,7 +723,7 @@ wire              sd_hresp;
 wire [W_DATA-1:0] sd_hwdata;
 wire [W_DATA-1:0] sd_hrdata;
 
-hazard3_sd sd (
+hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .clk       (clk),
         .rst_n     (rst_n),
 

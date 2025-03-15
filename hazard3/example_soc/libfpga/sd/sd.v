@@ -2,6 +2,7 @@
 `include "sd_defines.h"
 
 module hazard3_sd #(
+	parameter DEVADDR=16'h8000,
         parameter W_ADDR = 32,
         parameter W_DATA = 32,
 	parameter ramdisk="example_soc/libfpga/sdramdisk2.hex",
@@ -34,7 +35,7 @@ module hazard3_sd #(
         input wire [15:0] paddr,
         input wire [31:0] pwdata,
         output reg [31:0] prdata,
-        output wire pready,
+        output reg pready,
         output wire pslverr
 );
 
@@ -73,20 +74,18 @@ wire sd_clk_pad_o;
 wire int_cmd, int_data;
 
 reg [7:0] state;
-reg rready;
 reg [31:0] rwdata;
 
 wire bus_write = pwrite && psel && penable;
 wire bus_read = !pwrite && psel && penable;
-assign pready = rready;
 
-`define BLOCK_ADDR 16'h8200
+`define BLOCK_ADDR (DEVADDR + 200)
 `define ADDRUH 16'h4000
 
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		state <= 0;
-		rready <= 0;
+		pready <= 0;
 		rwdata <= 0;
 	end else if(state == 0) begin
 		if(bus_write) begin
@@ -94,7 +93,7 @@ always @(posedge clk or negedge rst_n) begin
 			if(paddr < `BLOCK_ADDR) begin
 				// cmd
 				state <= 2;
-				rready <= 0;
+				pready <= 0;
 				wbs_sds_dat_i <= pwdata;
 				wbs_sds_adr_i <= {`ADDRUH, paddr};
 				wbs_sds_sel_i <= 4'hf;
@@ -107,7 +106,7 @@ always @(posedge clk or negedge rst_n) begin
                         if(paddr < `BLOCK_ADDR) begin
                                 // cmd
                                 state <= 12;
-                                rready <= 0;
+                                pready <= 0;
                                 wbs_sds_adr_i <= {`ADDRUH, paddr};
                                 wbs_sds_sel_i <= 4'hf;
                                 wbs_sds_we_i <= 0;
@@ -121,7 +120,7 @@ always @(posedge clk or negedge rst_n) begin
                         wbs_sds_cyc_i <= 0;
                         wbs_sds_stb_i <= 0;
 			$display("sdw wbs_sds_ack_o=%x", wbs_sds_ack_o);
-			rready <= 1;
+			pready <= 1;
 			state <= 0;
 		end
 	end else if(state == 12) begin
@@ -131,7 +130,7 @@ always @(posedge clk or negedge rst_n) begin
 			prdata <= wbs_sds_dat_o;
                         wbs_sds_cyc_i <= 0;
                         wbs_sds_stb_i <= 0;
-			rready <= 1;			
+			pready <= 1;			
                 end
         end
 end
