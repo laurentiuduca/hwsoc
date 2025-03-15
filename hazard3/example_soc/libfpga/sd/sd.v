@@ -52,11 +52,11 @@ wire wbs_sds_ack_o;
 wire [31:0] wbm_sdm_adr_o;
 wire [3:0] wbm_sdm_sel_o;
 wire wbm_sdm_we_o;
-wire [31:0] wbm_sdm_dat_i;
+reg [31:0] wbm_sdm_dat_i;
 wire [31:0] wbm_sdm_dat_o;
 wire wbm_sdm_cyc_o;
 wire wbm_sdm_stb_o;
-wire wbm_sdm_ack_i;
+reg wbm_sdm_ack_i;
 wire [2:0] wbm_sdm_cti_o;
 wire [1:0] wbm_sdm_bte_o;
 
@@ -82,11 +82,35 @@ wire bus_read = !pwrite && psel && penable;
 `define BLOCK_ADDR (DEVADDR + 200)
 `define ADDRUH 16'h4000
 
+// our block mem
+reg [31:0] bidata1, bidata2, baddr1, baddr2, bodata1, bodata2;
+reg bwr1, bwr2, brd1, brd2;
+wire bwr = bwr1 | bwr2;
+wire [31:0] bidata = bwr2 ? bidata2 : bidata1;
+wire [31:0] baddr = bwr2 ? baddr2 : baddr1;
+reg [31:0] mem [0:DEVADDR/4-1];
+initial for (integer i=0;i<DEVADDR;i=i+1) mem[i]=0;
+always @(posedge clk or negedge rst_n) begin
+	if(rst_n) begin
+	end else begin
+		if(bwr)
+			mem[baddr] <= bidata;
+		if(brd1)
+			bodata1 <= mem[baddr1];
+		if(brd2)
+			bodata2 <= mem[baddr2];
+	end
+end
+
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		state <= 0;
 		pready <= 0;
 		rwdata <= 0;
+		bidata1 <= 0;
+		baddr1 <= 0;
+		bwr1 <= 0;
+		brd1 <= 0;
 	end else if(state == 0) begin
 		if(bus_write) begin
 			$display("bus w wbs_sds_adr_i=%x wbs_sds_ack_o=%x", paddr, wbs_sds_ack_o);
@@ -100,6 +124,13 @@ always @(posedge clk or negedge rst_n) begin
 				wbs_sds_we_i <= 1;
 				wbs_sds_cyc_i <= 1;
 				wbs_sds_stb_i <= 1;
+			end else begin
+				// write to our block mem
+				pready <= 0;
+				state <= 5;
+				bidata1 <= pwdata;
+				baddr1 <= paddr - DEVADDR;
+				bwr1 <= 1;
 			end
 		end else if(bus_read) begin
 			$display("bus r wbs_sds_adr_i=%x wbs_sds_ack_o=%x", paddr, wbs_sds_ack_o);
@@ -112,7 +143,13 @@ always @(posedge clk or negedge rst_n) begin
                                 wbs_sds_we_i <= 0;
                                 wbs_sds_cyc_i <= 1;
                                 wbs_sds_stb_i <= 1;
-                        end			
+			end else begin
+				// read from our block mem
+				pready <= 0;
+                                state <= 15;
+                                baddr1 <= paddr - DEVADDR;
+                                brd1 <= 1;
+			end
 		end
 	end else if(state == 2) begin
 		if(wbs_sds_ack_o) begin
@@ -132,6 +169,75 @@ always @(posedge clk or negedge rst_n) begin
                         wbs_sds_stb_i <= 0;
 			pready <= 1;			
                 end
+        end else if(state == 5) begin
+                        pready <= 1;
+                        state <= 0;
+                        bwr1 <= 0;
+	end else if(state == 15) begin
+                         pready <= 1;
+                         state <= 0;
+			 prdata <= bodata1;
+			 brd1 <= 0;
+	end
+end
+
+reg [7:0] sdstate;
+wire rd_sel = wbm_sdm_cyc_o && wbm_sdm_stb_o && !wbm_sdm_we_o;
+wire wr_sel = wbm_sdm_cyc_o && wbm_sdm_stb_o && wbm_sdm_we_o;
+
+task check_sdreq;
+                if(wr_sel) begin
+			$display("sd wrsel wbm_sdm_adr_o=%x wbm_sdm_dat_o=%x", wbm_sdm_adr_o, wbm_sdm_dat_o);
+			if(wbm_sdm_sel_o != 4'hf) begin
+				$display("sd wrsel wbm_sdm_sel_o != 4'hf");
+				$finish;
+			end
+                        wbm_sdm_ack_i <= 0;
+                        baddr2 <= wbm_sdm_adr_o;
+                        bwr2 <= 1;
+                        bidata2 <= wbm_sdm_dat_o;
+                        sdstate <= 1;
+                end else if(rd_sel) begin
+			$display("sd rdsel wbm_sdm_adr_o=%x", wbm_sdm_adr_o);
+			if(wbm_sdm_sel_o != 4'hf) begin
+				$display("sd rdsel wbm_sdm_sel_o != 4'hf");
+                                $finish;
+                        end
+                        wbm_sdm_ack_i <= 0;
+                        baddr2 <= wbm_sdm_adr_o;
+                        brd2 <= 1;
+                        sdstate <= 11;
+		end else begin
+			wbm_sdm_ack_i <= 0;
+	                sdstate <= 0;
+		end
+endtask	
+
+always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) begin
+                sdstate <= 0;
+                bidata2 <= 0;
+                baddr2 <= 0;    
+                bwr2 <= 0;      
+                brd2 <= 0;      
+        end else
+	if(sdstate == 0) begin
+		check_sdreq;
+		// assume wbm_sdm_sel_o = 16'hf
+	end else if(sdstate == 1) begin
+		bwr2 <= 0;
+		wbm_sdm_ack_i <= 1;
+		sdstate <= 2;
+	end 
+	else if(sdstate == 2) begin
+		check_sdreq;
+	end else if(sdstate == 11) begin
+                brd2 <= 0;
+		wbm_sdm_dat_i <= bodata2;
+                wbm_sdm_ack_i <= 1;
+                sdstate <= 12;
+        end else if(sdstate == 12) begin
+		check_sdreq;
         end
 end
 
