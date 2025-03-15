@@ -5,7 +5,7 @@ module hazard3_sd #(
 	parameter DEVADDR=16'h8000,
         parameter W_ADDR = 32,
         parameter W_DATA = 32,
-	parameter ramdisk="example_soc/libfpga/sdramdisk2.hex",
+	parameter ramdisk="example_soc/libfpga/sd/ramdisk2.hex",
 	parameter sd_model_log_file={"sd_model.log"}
   	//parameter wb_memory_file={`BIN_DIR, "/wb_memory.txt"})
 ) (
@@ -114,6 +114,10 @@ always @(posedge clk or negedge rst_n) begin
 	end else if(state == 0) begin
 		if(bus_write) begin
 			$display("bus w wbs_sds_adr_i=%x wbs_sds_ack_o=%x", paddr, wbs_sds_ack_o);
+			if(paddr == 16'h8100) begin
+				$display("finish");
+				$finish;
+			end
 			if(paddr < `BLOCK_ADDR) begin
 				// cmd
 				state <= 2;
@@ -230,14 +234,16 @@ always @(posedge clk or negedge rst_n) begin
 		sdstate <= 2;
 	end 
 	else if(sdstate == 2) begin
-		check_sdreq;
+		wbm_sdm_ack_i <= 0;
+		state <= 0;
 	end else if(sdstate == 11) begin
                 brd2 <= 0;
 		wbm_sdm_dat_i <= bodata2;
                 wbm_sdm_ack_i <= 1;
                 sdstate <= 12;
         end else if(sdstate == 12) begin
-		check_sdreq;
+		wbm_sdm_ack_i <= 0;
+                state <= 0;
         end
 end
 
