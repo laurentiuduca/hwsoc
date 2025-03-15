@@ -559,6 +559,7 @@ ahbl_to_apb apb_bridge_u (
 
 apb_splitter #(
 	.N_SLAVES   (3),
+	// inside devices paddr has 16 bytes
 	.ADDR_MAP   (48'h8000_4000_0000),
 	.ADDR_MASK  (48'hc000_c000_c000)
 ) inst_apb_splitter (

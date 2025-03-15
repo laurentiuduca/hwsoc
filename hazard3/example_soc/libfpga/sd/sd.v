@@ -39,7 +39,7 @@ module hazard3_sd #(
 );
 
 wire wb_clk=clk;
-wire wb_rst=rst_n;
+wire wb_rst=!rst_n;
 reg [31:0] wbs_sds_dat_i;
 wire [31:0] wbs_sds_dat_o;
 reg [31:0] wbs_sds_adr_i;
@@ -80,61 +80,58 @@ wire bus_write = pwrite && psel && penable;
 wire bus_read = !pwrite && psel && penable;
 assign pready = rready;
 
+`define BLOCK_ADDR 16'h8200
+`define ADDRUH 16'h4000
+
 always @(posedge clk or negedge rst_n) begin
-	if(rst_n) begin
+	if(!rst_n) begin
 		state <= 0;
 		rready <= 0;
 		rwdata <= 0;
 	end else if(state == 0) begin
 		if(bus_write) begin
-			if(paddr < 16'h8200) begin
+			$display("bus w wbs_sds_adr_i=%x wbs_sds_ack_o=%x", paddr, wbs_sds_ack_o);
+			if(paddr < `BLOCK_ADDR) begin
 				// cmd
-				state <= 1;
+				state <= 2;
 				rready <= 0;
 				wbs_sds_dat_i <= pwdata;
-				wbs_sds_adr_i <= paddr;
+				wbs_sds_adr_i <= {`ADDRUH, paddr};
 				wbs_sds_sel_i <= 4'hf;
 				wbs_sds_we_i <= 1;
 				wbs_sds_cyc_i <= 1;
 				wbs_sds_stb_i <= 1;
 			end
 		end else if(bus_read) begin
-                        if(paddr < 16'h8200) begin
+			$display("bus r wbs_sds_adr_i=%x wbs_sds_ack_o=%x", paddr, wbs_sds_ack_o);
+                        if(paddr < `BLOCK_ADDR) begin
                                 // cmd
-                                state <= 11;
+                                state <= 12;
                                 rready <= 0;
-                                wbs_sds_adr_i <= paddr;
+                                wbs_sds_adr_i <= {`ADDRUH, paddr};
                                 wbs_sds_sel_i <= 4'hf;
                                 wbs_sds_we_i <= 0;
                                 wbs_sds_cyc_i <= 1;
                                 wbs_sds_stb_i <= 1;
                         end			
 		end
-	end else if(state == 1) begin
-		if(!wbs_sds_ack_o) begin
-			state <= 2;
-                        wbs_sds_we_i <= 0;
-                        wbs_sds_cyc_i <= 0;
-                        wbs_sds_stb_i <= 0;
-		end
 	end else if(state == 2) begin
 		if(wbs_sds_ack_o) begin
+			wbs_sds_we_i <= 0;
+                        wbs_sds_cyc_i <= 0;
+                        wbs_sds_stb_i <= 0;
+			$display("sdw wbs_sds_ack_o=%x", wbs_sds_ack_o);
 			rready <= 1;
 			state <= 0;
 		end
-	end else if(state == 11) begin
-                if(!wbs_sds_ack_o) begin
-                        state <= 12;
-                        wbs_sds_cyc_i <= 0;
-                        wbs_sds_stb_i <= 0;
-                end		
 	end else if(state == 12) begin
                 if(wbs_sds_ack_o) begin
+			$display("sdr wbs_sds_ack_o=%x", wbs_sds_ack_o);
                         state <= 0;
 			prdata <= wbs_sds_dat_o;
                         wbs_sds_cyc_i <= 0;
                         wbs_sds_stb_i <= 0;
-			rready <= 1;
+			rready <= 1;			
                 end
         end
 end
@@ -156,7 +153,7 @@ sdc_controller sd_controller_top_dut(
     .wb_we_i(wbs_sds_we_i),
     .wb_stb_i(wbs_sds_stb_i),
     .wb_cyc_i(wbs_sds_cyc_i),
-    .wb_ack_o(wbs_sds_ack_o),
+    .wb_ack_o(wbs_sds_ack_o), // 0 on wb_rst
     .m_wb_adr_o(wbm_sdm_adr_o),
     .m_wb_sel_o(wbm_sdm_sel_o),
     .m_wb_we_o(wbm_sdm_we_o),
