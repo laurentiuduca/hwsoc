@@ -38,15 +38,15 @@ module hazard3_sd #(
         output wire pslverr
 );
 
-reg wb_clk;
-reg wb_rst;
-wire [31:0] wbs_sds_dat_i;
+wire wb_clk=clk;
+wire wb_rst=rst_n;
+reg [31:0] wbs_sds_dat_i;
 wire [31:0] wbs_sds_dat_o;
-wire [31:0] wbs_sds_adr_i;
-wire [3:0] wbs_sds_sel_i;
-wire wbs_sds_we_i;
-wire wbs_sds_cyc_i;
-wire wbs_sds_stb_i;
+reg [31:0] wbs_sds_adr_i;
+reg [3:0] wbs_sds_sel_i;
+reg wbs_sds_we_i;
+reg wbs_sds_cyc_i;
+reg wbs_sds_stb_i;
 wire wbs_sds_ack_o;
 wire [31:0] wbm_sdm_adr_o;
 wire [3:0] wbm_sdm_sel_o;
@@ -71,6 +71,73 @@ assign sd_dat =  sd_dat_oe  ? datIn : 4'bz;
 
 wire sd_clk_pad_o;
 wire int_cmd, int_data;
+
+reg [7:0] state;
+reg rready;
+reg [31:0] rwdata;
+
+wire bus_write = pwrite && psel && penable;
+wire bus_read = !pwrite && psel && penable;
+assign pready = rready;
+
+always @(posedge clk or negedge rst_n) begin
+	if(rst_n) begin
+		state <= 0;
+		rready <= 0;
+		rwdata <= 0;
+	end else if(state == 0) begin
+		if(bus_write) begin
+			if(paddr < 16'h8200) begin
+				// cmd
+				state <= 1;
+				rready <= 0;
+				wbs_sds_dat_i <= pwdata;
+				wbs_sds_adr_i <= paddr;
+				wbs_sds_sel_i <= 4'hf;
+				wbs_sds_we_i <= 1;
+				wbs_sds_cyc_i <= 1;
+				wbs_sds_stb_i <= 1;
+			end
+		end else if(bus_read) begin
+                        if(paddr < 16'h8200) begin
+                                // cmd
+                                state <= 11;
+                                rready <= 0;
+                                wbs_sds_adr_i <= paddr;
+                                wbs_sds_sel_i <= 4'hf;
+                                wbs_sds_we_i <= 0;
+                                wbs_sds_cyc_i <= 1;
+                                wbs_sds_stb_i <= 1;
+                        end			
+		end
+	end else if(state == 1) begin
+		if(!wbs_sds_ack_o) begin
+			state <= 2;
+                        wbs_sds_we_i <= 0;
+                        wbs_sds_cyc_i <= 0;
+                        wbs_sds_stb_i <= 0;
+		end
+	end else if(state == 2) begin
+		if(wbs_sds_ack_o) begin
+			rready <= 1;
+			state <= 0;
+		end
+	end else if(state == 11) begin
+                if(!wbs_sds_ack_o) begin
+                        state <= 12;
+                        wbs_sds_cyc_i <= 0;
+                        wbs_sds_stb_i <= 0;
+                end		
+	end else if(state == 12) begin
+                if(wbs_sds_ack_o) begin
+                        state <= 0;
+			prdata <= wbs_sds_dat_o;
+                        wbs_sds_cyc_i <= 0;
+                        wbs_sds_stb_i <= 0;
+			rready <= 1;
+                end
+        end
+end
 
 sdModel #(.ramdisk (ramdisk),
     .log_file (sd_model_log_file)) sdModelTB0(
