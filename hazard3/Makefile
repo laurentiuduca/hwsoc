@@ -72,7 +72,7 @@ icarus:
 
 vivado:
 	@echo "**** Vivado Simulator "
-	xvlog -sv -d ICARUS -i $(HDL) ${TOPSOURCE} ${OTHERSOURCE}
+	xvlog -sv -d ICARUS -i $(HDL) -i $(HDLSD) -i example_soc ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEMWT} ${SD}
 	xelab $(TOPMODULE) -timescale 1ns/100ps
 	xsim $(TOPMODULE) -R
 

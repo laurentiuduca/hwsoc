@@ -951,7 +951,7 @@ begin
   sdModel_file_desc = $fopen(log_file);
   if (sdModel_file_desc < 2)
   begin
-    $display("*E Could not open/create testbench log file in /log/ directory!");
+    $display("*E Could not open/create testbench log file = '%s' in /log/ directory!", log_file);
     $finish;
   end
 end

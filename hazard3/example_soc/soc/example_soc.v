@@ -53,7 +53,7 @@ module example_soc #(
      // signals connect to SD bus
      output wire         sdclk,
      inout  wire         sdcmd,
-     input  wire         sddat0,
+     inout  wire         sddat0,
      output wire         sddat1, sddat2, sddat3,
      // display
      output wire MAX7219_CLK,
@@ -63,6 +63,22 @@ module example_soc #(
 
 //localparam W_ADDR = 32;
 //localparam W_DATA = 32;
+// ----------------------------------------------------------------------------
+// sd
+
+     wire         ro_sdclk;
+     wire         ro_sdcmd;
+     wire         ro_sddat0;
+     wire         ro_sddat1, ro_sddat2, ro_sddat3;
+     wire         oc_sdclk;
+     wire         oc_sdcmd;
+     wire         oc_sddat0;
+     wire         oc_sddat1, oc_sddat2, oc_sddat3;
+     assign sdclk = w_init_done ? oc_sdclk : ro_sdclk;
+     assign sdcmd = w_init_done ? oc_sdcmd : ro_sdcmd;
+     assign {sddat3, sddat2, sddat1, sddat0} = w_init_done ? 
+	     {oc_sddat3, oc_sddat2, oc_sddat1, oc_sddat0} : 
+	     {ro_sddat3, ro_sddat2, ro_sddat1, ro_sddat0};
 
 // ----------------------------------------------------------------------------
 // Processor debug
@@ -748,7 +764,12 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .pwdata    (sd_pwdata),
         .prdata    (sd_prdata),
         .pready    (sd_pready),
-        .pslverr   (sd_pslverr)
+        .pslverr   (sd_pslverr),
+
+	
+	.sd_clk_pad_o(oc_sdclk),
+	.sd_cmd(oc_sdcmd),
+	.sd_dat({oc_sddat3, sddat2, sddat1, oc_sddat0})
 );
 
 endmodule

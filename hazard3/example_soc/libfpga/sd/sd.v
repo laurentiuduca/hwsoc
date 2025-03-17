@@ -1,4 +1,5 @@
 
+`include "define.vh"
 `include "sd_defines.h"
 
 module hazard3_sd #(
@@ -36,7 +37,12 @@ module hazard3_sd #(
         input wire [31:0] pwdata,
         output reg [31:0] prdata,
         output reg pready,
-        output wire pslverr
+        output wire pslverr,
+
+	// sd signals
+	output wire sd_clk_pad_o,
+	inout wire sd_cmd,
+	inout wire [3:0] sd_dat
 );
 
 wire wb_clk=clk;
@@ -64,13 +70,13 @@ wire sd_cmd_oe;
 wire sd_dat_oe;
 wire cmdIn;
 wire [3:0] datIn;
-tri sd_cmd;
-tri [3:0] sd_dat;
+//tri sd_cmd;
+//tri [3:0] sd_dat;
 
 assign sd_cmd = sd_cmd_oe ? cmdIn: 1'bz;
 assign sd_dat =  sd_dat_oe  ? datIn : 4'bz;
 
-wire sd_clk_pad_o;
+//wire sd_clk_pad_o;
 wire int_cmd, int_data;
 
 reg [7:0] state;
@@ -247,12 +253,14 @@ always @(posedge clk or negedge rst_n) begin
         end
 end
 
+`ifdef SIM_MODE
 sdModel #(.ramdisk (ramdisk),
     .log_file (sd_model_log_file)) sdModelTB0(
     .sdClk(sd_clk_pad_o),
     .cmd(sd_cmd),
     .dat(sd_dat)
     ); 
+`endif
 
 sdc_controller sd_controller_top_dut(
     .wb_clk_i(wb_clk),
