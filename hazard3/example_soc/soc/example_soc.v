@@ -67,18 +67,12 @@ module example_soc #(
 // sd
 
      wire         ro_sdclk;
-     wire         sdcmd;
-     wire         sddat0;
-     wire         sddat1, sddat2, sddat3;
-     wire         oc_sdclk;
-     wire         sdcmd;
-     wire         sddat0;
-     wire         sddat1, sddat2, sddat3;
+     `ifdef SIM_MODE
+     assign sdclk = ro_sdclk;
+     `else
+     wire         oc_sdclk=0;
      assign sdclk = w_init_done ? oc_sdclk : ro_sdclk;
-     //assign sdcmd = w_init_done ? sdcmd : sdcmd;
-     //assign {sddat3, sddat2, sddat1, sddat0} = w_init_done ? 
-	//     {sddat3, sddat2, sddat1, sddat0} : 
-	//     {sddat3, sddat2, sddat1, sddat0};
+     `endif
 
 // ----------------------------------------------------------------------------
 // Processor debug
@@ -739,7 +733,6 @@ wire              sd_hready;
 wire              sd_hresp;
 wire [W_DATA-1:0] sd_hwdata;
 wire [W_DATA-1:0] sd_hrdata;
-`endif
 
 hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .clk       (clk),
@@ -775,5 +768,5 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
 	.sd_cmd(sdcmd),
 	.sd_dat({sddat3, sddat2, sddat1, sddat0})
 );
-
+`endif
 endmodule

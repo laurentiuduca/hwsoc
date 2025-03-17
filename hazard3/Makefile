@@ -67,7 +67,8 @@ veriwt:
 	cp obj_dir/Vm_topsim simv
 	./simv
 icarus:
-	iverilog ${TOPSOURCE} ${OTHERSOURCE}  ${LAURMEMWT} ${SD} -DICARUS -I$(HDL) -I$(HDLSD) -Iexample_soc -g2005-sv
+	iverilog ${TOPSOURCE} ${OTHERSOURCE}  ${LAURMEMWT} ${SD} -DICARUS -I$(HDL) -I$(HDLSD) -Iexample_soc
+       #	-g2005-sv
 	./a.out
 
 vivado:
