@@ -67,18 +67,18 @@ module example_soc #(
 // sd
 
      wire         ro_sdclk;
-     wire         ro_sdcmd;
-     wire         ro_sddat0;
-     wire         ro_sddat1, ro_sddat2, ro_sddat3;
+     wire         sdcmd;
+     wire         sddat0;
+     wire         sddat1, sddat2, sddat3;
      wire         oc_sdclk;
-     wire         oc_sdcmd;
-     wire         oc_sddat0;
-     wire         oc_sddat1, oc_sddat2, oc_sddat3;
+     wire         sdcmd;
+     wire         sddat0;
+     wire         sddat1, sddat2, sddat3;
      assign sdclk = w_init_done ? oc_sdclk : ro_sdclk;
-     assign sdcmd = w_init_done ? oc_sdcmd : ro_sdcmd;
-     assign {sddat3, sddat2, sddat1, sddat0} = w_init_done ? 
-	     {oc_sddat3, oc_sddat2, oc_sddat1, oc_sddat0} : 
-	     {ro_sddat3, ro_sddat2, ro_sddat1, ro_sddat0};
+     //assign sdcmd = w_init_done ? sdcmd : sdcmd;
+     //assign {sddat3, sddat2, sddat1, sddat0} = w_init_done ? 
+	//     {sddat3, sddat2, sddat1, sddat0} : 
+	//     {sddat3, sddat2, sddat1, sddat0};
 
 // ----------------------------------------------------------------------------
 // Processor debug
@@ -655,9 +655,9 @@ ahb_sync_sram #(
                                 .sdcard_pwr_n(sdcard_pwr_n),
                                 // signals connect to SD bus
                                 .sdclk(ro_sdclk),
-                                .sdcmd(ro_sdcmd),
-                                .sddat0(ro_sddat0),
-                                .sddat1(ro_sddat1), .sddat2(ro_sddat2), .sddat3(ro_sddat3),
+                                .sdcmd(sdcmd),
+                                .sddat0(sddat0),
+                                .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),
@@ -772,8 +772,8 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
 
 	
 	.sd_clk_pad_o(oc_sdclk),
-	.sd_cmd(oc_sdcmd),
-	.sd_dat({oc_sddat3, oc_sddat2, oc_sddat1, oc_sddat0})
+	.sd_cmd(sdcmd),
+	.sd_dat({sddat3, sddat2, sddat1, sddat0})
 );
 
 endmodule

@@ -16,8 +16,8 @@ module sd_file_loader #(parameter SD_CLK_DIV = 3'd2) (
     // signals connect to SD bus
     output wire         sdclk,
     inout  wire         sdcmd,
-    input  wire         sddat0,
-    output wire         sddat1, sddat2, sddat3,
+    inout  wire         sddat0,
+    inout wire         sddat1, sddat2, sddat3,
     // led to show the status of SDcard
     output wire [5:0]  tangled,
     input wire resetn,

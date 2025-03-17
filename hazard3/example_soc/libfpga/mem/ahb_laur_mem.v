@@ -57,8 +57,8 @@ module ahb_sync_sram #(
      // signals connect to SD bus
      output wire         sdclk,
      inout  wire         sdcmd,
-     input  wire         sddat0,
-     output wire         sddat1, sddat2, sddat3,
+     inout  wire         sddat0,
+     inout wire         sddat1, sddat2, sddat3,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -109,6 +109,8 @@ task check_new_req;
 			end else begin
 				state <= 0;
 			end
+endtask
+task check_debug;
 			`ifdef SIM_MODE
 			if((ahb_read_aphase || ahb_write_aphase) && k < 10) begin
                                 $display("ahb_read_aphase=%x || ahb_write_aphase=%x state=%d ahbls_haddr=%x time %8d",
@@ -131,6 +133,7 @@ always @ (posedge clk or negedge rst_n) begin
 	end else begin
 		if(state == 0) begin
 			check_new_req;
+			check_debug;
 		end else if (state == 20) begin
 			if(w_dram_busy) begin
 				state <= 21;
@@ -138,8 +141,8 @@ always @ (posedge clk or negedge rst_n) begin
 			end
 		end else if (state == 21) begin
 			if(!w_dram_busy) begin
+				check_debug;
                                 check_new_req;
-				//state <= 0;
 			end
 		end else if (state == 22) begin
 			r_ahbls_hwdata <= ahbls_hwdata;

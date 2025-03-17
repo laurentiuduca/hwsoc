@@ -57,8 +57,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
      // signals connect to SD bus
      output wire         sdclk,
      inout  wire         sdcmd,
-     input  wire         sddat0,
-     output wire         sddat1, sddat2, sddat3,
+     inout  wire         sddat0,
+     inout wire         sddat1, sddat2, sddat3,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
