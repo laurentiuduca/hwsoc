@@ -13,6 +13,7 @@ module hazard3_sd #(
         input wire                clk,
         input wire                rst_n,
 
+	`ifdef laur0
         // AHB5 Master port
         output reg  [W_ADDR-1:0]  haddr,
         output reg                hwrite,
@@ -28,6 +29,7 @@ module hazard3_sd #(
         //input  wire               hexokay,
         output reg [W_DATA-1:0]  hwdata,
         input  wire [W_DATA-1:0]  hrdata,
+	`endif
 
         // APB Port
         input wire psel,
@@ -85,7 +87,8 @@ reg [31:0] rwdata;
 wire bus_write = pwrite && psel && penable;
 wire bus_read = !pwrite && psel && penable;
 
-`define BLOCK_ADDR (DEVADDR + 200)
+`define BLOCK_SIZE 16'h200
+`define BLOCK_ADDR (DEVADDR + `BLOCK_SIZE)
 `define ADDRUH 16'h4000
 
 // our block mem
@@ -94,18 +97,15 @@ reg bwr1, bwr2, brd1, brd2;
 wire bwr = bwr1 | bwr2;
 wire [31:0] bidata = bwr2 ? bidata2 : bidata1;
 wire [31:0] baddr = bwr2 ? baddr2 : baddr1;
-reg [31:0] mem [0:DEVADDR/4-1];
-initial for (integer i=0;i<DEVADDR;i=i+1) mem[i]=0;
-always @(posedge clk or negedge rst_n) begin
-	if(rst_n) begin
-	end else begin
+reg [31:0] mem [0:`BLOCK_SIZE/4-1];
+initial for (integer i=0;i<`BLOCK_SIZE/4;i=i+1) mem[i]=0;
+always @(posedge clk) begin
 		if(bwr)
 			mem[baddr] <= bidata;
 		if(brd1)
 			bodata1 <= mem[baddr1];
 		if(brd2)
 			bodata2 <= mem[baddr2];
-	end
 end
 
 always @(posedge clk or negedge rst_n) begin
@@ -241,7 +241,7 @@ always @(posedge clk or negedge rst_n) begin
 	end 
 	else if(sdstate == 2) begin
 		wbm_sdm_ack_i <= 0;
-		state <= 0;
+		sdstate <= 0;
 	end else if(sdstate == 11) begin
                 brd2 <= 0;
 		wbm_sdm_dat_i <= bodata2;
@@ -249,7 +249,7 @@ always @(posedge clk or negedge rst_n) begin
                 sdstate <= 12;
         end else if(sdstate == 12) begin
 		wbm_sdm_ack_i <= 0;
-                state <= 0;
+                sdstate <= 0;
         end
 end
 

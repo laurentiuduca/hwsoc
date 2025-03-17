@@ -654,10 +654,10 @@ ahb_sync_sram #(
                                 // when sdcard_pwr_n = 0, SDcard power on
                                 .sdcard_pwr_n(sdcard_pwr_n),
                                 // signals connect to SD bus
-                                .sdclk(sdclk),
-                                .sdcmd(sdcmd),
-                                .sddat0(sddat0),
-                                .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+                                .sdclk(ro_sdclk),
+                                .sdcmd(ro_sdcmd),
+                                .sddat0(ro_sddat0),
+                                .sddat1(ro_sddat1), .sddat2(ro_sddat2), .sddat3(ro_sddat3),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),
@@ -726,6 +726,7 @@ hazard3_riscv_timer timer_u (
 );
 
 //------------------------------------------------------------
+`ifdef laur0
 wire [W_ADDR-1:0] sd_haddr;
 wire              sd_hwrite;
 wire [1:0]        sd_htrans;
@@ -738,11 +739,13 @@ wire              sd_hready;
 wire              sd_hresp;
 wire [W_DATA-1:0] sd_hwdata;
 wire [W_DATA-1:0] sd_hrdata;
+`endif
 
 hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .clk       (clk),
         .rst_n     (rst_n),
 
+	`ifdef laur0
         .haddr                      (sd_haddr),
         .hwrite                     (sd_hwrite),
         .htrans                     (sd_htrans),
@@ -756,6 +759,7 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         //.hexokay                    (sd_hexokay),
         .hwdata                     (sd_hwdata),
         .hrdata                     (sd_hrdata),
+	`endif
 
         .psel      (sd_psel),
         .penable   (sd_penable),
@@ -769,7 +773,7 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
 	
 	.sd_clk_pad_o(oc_sdclk),
 	.sd_cmd(oc_sdcmd),
-	.sd_dat({oc_sddat3, sddat2, sddat1, oc_sddat0})
+	.sd_dat({oc_sddat3, oc_sddat2, oc_sddat1, oc_sddat0})
 );
 
 endmodule
