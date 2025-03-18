@@ -44,7 +44,11 @@ module hazard3_sd #(
 	// sd signals
 	output wire sd_clk_pad_o,
 	inout wire sd_cmd,
-	inout wire [3:0] sd_dat
+	input wire sd_cmd_i,
+	output wire sd_cmd_oe,
+	inout wire [3:0] sd_dat,
+	output wire sd_dat_oe,
+	input wire [3:0] sd_dat_i
 );
 
 wire wb_clk=clk;
@@ -68,15 +72,15 @@ reg wbm_sdm_ack_i;
 wire [2:0] wbm_sdm_cti_o;
 wire [1:0] wbm_sdm_bte_o;
 
-wire sd_cmd_oe;
-wire sd_dat_oe;
+//wire sd_cmd_oe;
+//wire sd_dat_oe;
 wire cmdIn;
 wire [3:0] datIn;
 //tri sd_cmd;
 //tri [3:0] sd_dat;
 
-assign sd_cmd = sd_cmd_oe ? cmdIn: 1'bz;
-assign sd_dat =  sd_dat_oe  ? datIn : 4'bz;
+assign sd_cmd = sd_cmd_oe ? cmdIn: sd_cmd_i;
+assign sd_dat =  sd_dat_oe  ? datIn : sd_dat_i;
 
 //wire sd_clk_pad_o;
 wire int_cmd, int_data;

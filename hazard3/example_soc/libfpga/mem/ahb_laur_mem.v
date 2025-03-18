@@ -57,8 +57,10 @@ module ahb_sync_sram #(
      // signals connect to SD bus
      output wire         sdclk,
      inout  wire         sdcmd,
-     inout  wire         sddat0,
-     inout wire         sddat1, sddat2, sddat3,
+     input  wire 	 sdcmd_i,
+     output wire 	 sdcmd_oe,
+     input  wire         sddat0,
+     output wire         sddat1, sddat2, sddat3,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -217,6 +219,8 @@ assign ahbls_hrdata = w_dram_odata;
                                 // signals connect to SD bus
                                 .sdclk(sdclk),
                                 .sdcmd(sdcmd),
+				.sdcmd_i(sdcmd_i),
+				.sdcmd_oe(sdcmd_oe),
                                 .sddat0(sddat0),
                                 .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
                                 // display

@@ -54,8 +54,10 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     	// signals connect to SD bus
     	output wire         sdclk,
     	inout  wire         sdcmd,
-    	inout  wire         sddat0,
-    	inout wire         sddat1, sddat2, sddat3,
+	input  wire 	    sdcmd_i,
+	output wire	    sdcmd_oe,
+    	input  wire         sddat0,
+    	output wire         sddat1, sddat2, sddat3,
     	// display
     	output wire MAX7219_CLK,
     	output wire MAX7219_DATA,
@@ -126,14 +128,14 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state), 
         .tangled(sd_led_status),
-        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
+        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), .sdcmd_i(sdcmd_i), .sdcmd_oe(sdcmd_oe),
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
     `else
     // sd_loader includes define.vh
     sd_loader /*#(.SD_CLK_DIV(`SDCARD_CLK_DIV))*/ sd_loader(.clk27mhz(clk), .resetn(rst_x), 
-        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done), .sdcmd_oe(sdcmd_oe),
         .w_ctrl_state(r_sd_state),
-        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
+        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), .sdcmd_i(sdcmd_i),
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
     assign sd_led_status = {!w_sd_init_done, 5'b0};
     `endif

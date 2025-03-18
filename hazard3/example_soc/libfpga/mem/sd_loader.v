@@ -16,6 +16,8 @@ module sd_loader (
     // signals connect to SD bus
     output wire         sdclk,
     inout  wire         sdcmd,
+    input  wire		sdcmd_i,
+    output wire         sdcmd_oe,
     input  wire         sddat0,
     output wire         sddat1, sddat2, sddat3,
     
@@ -110,6 +112,8 @@ sd_reader #(
     .clk              ( clk27mhz      ),
     .sdclk            ( sdclk          ),
     .sdcmd            ( sdcmd          ),
+    .sdcmd_i	      ( sdcmd_i	       ),
+    .sdcmd_oe	      (sdcmd_oe),
     .sddat0           ( sddat0         ),
     .card_stat        ( card_stat      ),  // show the sdcard initialize status
     .card_type        ( card_type       ),  // 0=UNKNOWN    , 1=SDv1    , 2=SDv2  , 3=SDHCv2

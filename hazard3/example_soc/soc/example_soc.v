@@ -53,8 +53,7 @@ module example_soc #(
      // signals connect to SD bus
      output wire         sdclk,
      inout  wire         sdcmd,
-     inout  wire         sddat0,
-     output wire         sddat1, sddat2, sddat3,
+     inout  wire 	 sddat3, sddat2, sddat1, sddat0,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -66,13 +65,24 @@ module example_soc #(
 // ----------------------------------------------------------------------------
 // sd
 
-     wire         ro_sdclk;
-     `ifdef SIM_MODE
-     assign sdclk = ro_sdclk;
-     `else
-     wire         oc_sdclk=0;
-     assign sdclk = w_init_done ? oc_sdclk : ro_sdclk;
-     `endif
+     wire         m_sdclk;
+     wire         oc_sdclk;
+     assign sdclk = w_init_done ? oc_sdclk : m_sdclk;
+
+     wire sdcmd_oe, oc_sdcmd_oe, m_sdcmd_oe;
+     wire o_sdcmd, oc_sdcmd, m_sdcmd;
+     assign sdcmd_oe = w_init_done ? oc_sdcmd_oe : m_sdcmd_oe;
+     assign o_sdcmd = w_init_done ? oc_sdcmd : m_sdcmd;
+     assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
+
+     wire sddat_oe, oc_sddat_oe, m_sddat_oe;
+     wire [3:0] o_sddat, oc_sddat, m_sddat;
+     assign m_sddat[0] = sddat0;
+     assign m_sddat_oe = 1'b0;
+     assign sddat_oe = w_init_done ? oc_sddat_oe : m_sddat_oe;
+     assign o_sddat = w_init_done ? oc_sddat : m_sddat;
+     assign {sddat3, sddat2, sddat1} = sddat_oe ? o_sddat[3:1] : 3'bzzz;
+     assign sddat0 = sddat_oe ? o_sddat[0] : 1'bz;
 
 // ----------------------------------------------------------------------------
 // Processor debug
@@ -648,10 +658,12 @@ ahb_sync_sram #(
                                 // when sdcard_pwr_n = 0, SDcard power on
                                 .sdcard_pwr_n(sdcard_pwr_n),
                                 // signals connect to SD bus
-                                .sdclk(ro_sdclk),
-                                .sdcmd(sdcmd),
-                                .sddat0(sddat0),
-                                .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+                                .sdclk(m_sdclk),
+                                .sdcmd(m_sdcmd),
+				.sdcmd_i(sdcmd),
+				.sdcmd_oe(m_sdcmd_oe),
+                                .sddat0(m_sddat[0]),
+                                .sddat1(m_sddat[1]), .sddat2(m_sddat[2]), .sddat3(m_sddat[3]),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),
@@ -733,6 +745,7 @@ wire              sd_hready;
 wire              sd_hresp;
 wire [W_DATA-1:0] sd_hwdata;
 wire [W_DATA-1:0] sd_hrdata;
+`endif
 
 hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .clk       (clk),
@@ -765,8 +778,11 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
 
 	
 	.sd_clk_pad_o(oc_sdclk),
-	.sd_cmd(sdcmd),
-	.sd_dat({sddat3, sddat2, sddat1, sddat0})
+	.sd_cmd(oc_sdcmd),
+	.sd_cmd_i(sdcmd),
+	.sd_cmd_oe(oc_sdcmd_oe),
+	.sd_dat(oc_sddat),
+	.sd_dat_oe(oc_sddat_oe),
+	.sd_dat_i({sddat3, sddat2, sddat1, sddat0})
 );
-`endif
 endmodule

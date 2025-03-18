@@ -16,6 +16,8 @@ module sd_file_loader #(parameter SD_CLK_DIV = 3'd2) (
     // signals connect to SD bus
     output wire         sdclk,
     inout  wire         sdcmd,
+    input  wire 	sdcmd_i,
+    output wire 	sdcmd_oe,
     inout  wire         sddat0,
     inout wire         sddat1, sddat2, sddat3,
     // led to show the status of SDcard
@@ -53,6 +55,8 @@ sd_file_reader #(
     .clk              ( clk            ),
     .sdclk            ( sdclk          ),
     .sdcmd            ( sdcmd          ),
+    .sdcmd_i	      ( sdcmd_i	       ),
+    .sdcmd_oe	      ( sdcmd_oe       ),
     .sddat0           ( sddat0         ),
     .card_stat        ( led[3:0]       ),  // show the sdcard initialize status
     .card_type        ( led[5:4]       ),  // 0=UNKNOWN    , 1=SDv1    , 2=SDv2  , 3=SDHCv2

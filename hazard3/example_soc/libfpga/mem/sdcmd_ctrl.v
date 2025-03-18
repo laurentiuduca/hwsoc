@@ -15,7 +15,9 @@ module sdcmd_ctrl (
     input  wire         clk,
     // SDcard signals (sdclk and sdcmd)
     output reg          sdclk,
-    inout               sdcmd,
+    output              sdcmd,
+    input 		sdcmd_i,
+    output 		sdcmd_oe,
     // config clk freq
     input  wire  [15:0] clkdiv,
     // user input signal
@@ -41,7 +43,8 @@ reg sdcmdoe  = 1'b0;
 reg sdcmdout = 1'b1;
 
 // sdcmd tri-state driver
-assign sdcmd = sdcmdoe ? sdcmdout : 1'bz;
+assign sdcmd = sdcmdoe ? sdcmdout : sdcmd_i;
+assign sdcmd_oe = sdcmdoe;
 wire sdcmdin = sdcmdoe ? 1'b1 : sdcmd;
 
 function  [6:0] CalcCrc7;
