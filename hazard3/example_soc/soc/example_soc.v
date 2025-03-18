@@ -64,6 +64,7 @@ module example_soc #(
 //localparam W_DATA = 32;
 // ----------------------------------------------------------------------------
 // sd
+     // we have 2 sd drivers but only 1 active at a given moment of time
 
      wire         m_sdclk;
      wire         oc_sdclk;
