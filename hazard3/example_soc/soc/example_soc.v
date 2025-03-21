@@ -65,6 +65,18 @@ module example_soc #(
 // ----------------------------------------------------------------------------
 // sd
      // we have 2 sd drivers but only 1 active at a given moment of time
+`ifdef laur0
+     // spi
+     wire         m_sdclk;
+     wire         sclk;
+     assign sdclk = w_init_done ? sclk : m_sdclk;
+
+     wire sdcmd_oe, m_sdcmd_oe;
+     wire o_sdcmd, m_sdcmd;
+     assign sdcmd_oe = w_init_done ? 1 : m_sdcmd_oe;
+     assign o_sdcmd = w_init_done ? mosi : m_sdcmd;
+     assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
+`endif
 
      wire         m_sdclk;
      wire         oc_sdclk;
@@ -75,15 +87,17 @@ module example_soc #(
      assign sdcmd_oe = w_init_done ? oc_sdcmd_oe : m_sdcmd_oe;
      assign o_sdcmd = w_init_done ? oc_sdcmd : m_sdcmd;
      assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
-
-     wire sddat_oe, oc_sddat_oe, m_sddat_oe;
+        
+     wire sddat_oe0, sddat_oe321, oc_sddat_oe, m_sddat_oe0, m_sddat_oe321;
      wire [3:0] o_sddat, oc_sddat, m_sddat;
      assign m_sddat[0] = sddat0;
-     assign m_sddat_oe = 1'b0;
-     assign sddat_oe = w_init_done ? oc_sddat_oe : m_sddat_oe;
+     assign m_sddat_oe0 = 1'b0;     
+     assign m_sddat_oe321 = 1'b1;   
+     assign sddat_oe0 = w_init_done ? oc_sddat_oe : m_sddat_oe0;
+     assign sddat_oe321 = w_init_done ? oc_sddat_oe : m_sddat_oe321;
      assign o_sddat = w_init_done ? oc_sddat : m_sddat;
-     assign {sddat3, sddat2, sddat1} = sddat_oe ? o_sddat[3:1] : 3'bzzz;
-     assign sddat0 = sddat_oe ? o_sddat[0] : 1'bz;
+     assign {sddat3, sddat2, sddat1} = sddat_oe321 ? o_sddat[3:1] : 3'bzzz;
+     assign sddat0 = sddat_oe0 ? o_sddat[0] : 1'bz;
 
 // ----------------------------------------------------------------------------
 // Processor debug
@@ -733,6 +747,33 @@ hazard3_riscv_timer timer_u (
 );
 
 //------------------------------------------------------------
+
+// sd
+`ifdef laur0
+     // we have 2 sd drivers but only 1 active at a given moment of time
+
+     wire         m_sdclk;
+     wire         oc_sdclk;
+     assign sdclk = w_init_done ? oc_sdclk : m_sdclk;
+
+     wire sdcmd_oe, oc_sdcmd_oe, m_sdcmd_oe;
+     wire o_sdcmd, oc_sdcmd, m_sdcmd;
+     assign sdcmd_oe = w_init_done ? oc_sdcmd_oe : m_sdcmd_oe;
+     assign o_sdcmd = w_init_done ? oc_sdcmd : m_sdcmd;
+     assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
+
+     wire sddat_oe0, sddat_oe321, oc_sddat_oe, m_sddat_oe0, m_sddat_oe321;
+     wire [3:0] o_sddat, oc_sddat, m_sddat;
+     assign m_sddat[0] = sddat0;
+     assign m_sddat_oe0 = 1'b0;
+     assign m_sddat_oe321 = 1'b1;
+     assign sddat_oe0 = w_init_done ? oc_sddat_oe : m_sddat_oe0;
+     assign sddat_oe321 = w_init_done ? oc_sddat_oe : m_sddat_oe321;
+     assign o_sddat = w_init_done ? oc_sddat : m_sddat;
+     assign {sddat3, sddat2, sddat1} = sddat_oe321 ? o_sddat[3:1] : 3'bzzz;
+     assign sddat0 = sddat_oe0 ? o_sddat[0] : 1'bz;
+`endif
+
 `ifdef laur0
 wire [W_ADDR-1:0] sd_haddr;
 wire              sd_hwrite;
@@ -748,9 +789,10 @@ wire [W_DATA-1:0] sd_hwdata;
 wire [W_DATA-1:0] sd_hrdata;
 `endif
 
+//`ifdef laur0
 hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .clk       (clk),
-        .rst_n     (rst_n),
+        .rst_n     (w_init_done),
 
 	`ifdef laur0
         .haddr                      (sd_haddr),
@@ -776,7 +818,6 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .prdata    (sd_prdata),
         .pready    (sd_pready),
         .pslverr   (sd_pslverr),
-
 	
 	.sd_clk_pad_o(oc_sdclk),
 	.sd_cmd(oc_sdcmd),
@@ -786,4 +827,6 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
 	.sd_dat_oe(oc_sddat_oe),
 	.sd_dat_i({sddat3, sddat2, sddat1, sddat0})
 );
+//`endif
+
 endmodule

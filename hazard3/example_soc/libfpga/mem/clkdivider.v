@@ -10,7 +10,10 @@ output reg clkdiv=0;
 reg [20:0] cnt=0;
 
 always @(posedge clk) begin
-	if(cnt < n) begin
+	if(!reset_n) begin
+		cnt <= 0; 
+		clkdiv <= 0;
+	end else if(cnt < n) begin
 		cnt <= cnt+1;
 		clkdiv <= 0;
 	end else begin
