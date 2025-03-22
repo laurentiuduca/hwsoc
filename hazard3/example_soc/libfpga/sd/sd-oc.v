@@ -79,8 +79,13 @@ wire [3:0] datIn;
 //tri sd_cmd;
 //tri [3:0] sd_dat;
 
+`ifdef SIM_MODE
+assign sd_cmd = sd_cmd_oe ? cmdIn: 1'bz;
+assign sd_dat =  sd_dat_oe  ? datIn : 4'bz;
+`else
 assign sd_cmd = sd_cmd_oe ? cmdIn: sd_cmd_i;
 assign sd_dat =  sd_dat_oe  ? datIn : sd_dat_i;
+`endif
 
 //wire sd_clk_pad_o;
 wire int_cmd, int_data;
@@ -96,7 +101,8 @@ wire bus_read = !pwrite && psel && penable;
 `define ADDRUH 16'h4000
 
 // our block mem
-reg [31:0] bidata1, bidata2, baddr1, baddr2, bodata1, bodata2;
+reg [31:0] bidata1, bidata2, baddr1, baddr2;
+wire [31:0] bodata1, bodata2;
 reg bwr1, bwr2;
 wire bwr = bwr1 | bwr2;
 wire [31:0] bidata = bwr2 ? bidata2 : bidata1;

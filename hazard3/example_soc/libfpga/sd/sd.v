@@ -79,8 +79,13 @@ wire [3:0] datIn;
 //tri sd_cmd;
 //tri [3:0] sd_dat;
 
+`ifdef SIM_MODE
+assign sd_cmd = sd_cmd_oe ? cmdIn: 1'bz;
+assign sd_dat =  sd_dat_oe  ? datIn : 4'bz;
+`else
 assign sd_cmd = sd_cmd_oe ? cmdIn: sd_cmd_i;
 assign sd_dat =  sd_dat_oe  ? datIn : sd_dat_i;
+`endif
 
 //wire sd_clk_pad_o;
 wire int_cmd, int_data;
