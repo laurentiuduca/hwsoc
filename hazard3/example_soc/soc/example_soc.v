@@ -65,39 +65,22 @@ module example_soc #(
 // ----------------------------------------------------------------------------
 // sd
      // we have 2 sd drivers but only 1 active at a given moment of time
-`ifdef laur0
      // spi
      wire         m_sdclk;
-     wire         sclk;
-     assign sdclk = w_init_done ? sclk : m_sdclk;
+     wire         spi_clk;
+     assign sdclk = w_init_done ? spi_clk : m_sdclk;
 
      wire sdcmd_oe, m_sdcmd_oe;
-     wire o_sdcmd, m_sdcmd;
+     wire o_sdcmd, spi_mosi, m_sdcmd;
      assign sdcmd_oe = w_init_done ? 1 : m_sdcmd_oe;
-     assign o_sdcmd = w_init_done ? mosi : m_sdcmd;
-     assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
-`endif
-
-     wire         m_sdclk;
-     wire         oc_sdclk;
-     assign sdclk = w_init_done ? oc_sdclk : m_sdclk;
-
-     wire sdcmd_oe, oc_sdcmd_oe, m_sdcmd_oe;
-     wire o_sdcmd, oc_sdcmd, m_sdcmd;
-     assign sdcmd_oe = w_init_done ? oc_sdcmd_oe : m_sdcmd_oe;
-     assign o_sdcmd = w_init_done ? oc_sdcmd : m_sdcmd;
+     assign o_sdcmd = w_init_done ? spi_mosi : m_sdcmd;
      assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
         
-     wire sddat_oe0, sddat_oe321, oc_sddat_oe, m_sddat_oe0, m_sddat_oe321;
-     wire [3:0] o_sddat, oc_sddat, m_sddat;
+     wire [3:0] o_sddat, m_sddat;
+     wire spi_cs, spi_miso;
+     assign spi_miso = sddat0;
      assign m_sddat[0] = sddat0;
-     assign m_sddat_oe0 = 1'b0;     
-     assign m_sddat_oe321 = 1'b1;   
-     assign sddat_oe0 = w_init_done ? oc_sddat_oe : m_sddat_oe0;
-     assign sddat_oe321 = w_init_done ? oc_sddat_oe : m_sddat_oe321;
-     assign o_sddat = w_init_done ? oc_sddat : m_sddat;
-     assign {sddat3, sddat2, sddat1} = sddat_oe321 ? o_sddat[3:1] : 3'bzzz;
-     assign sddat0 = sddat_oe0 ? o_sddat[0] : 1'bz;
+     assign {sddat3, sddat2, sddat1} = w_init_done ? {spi_cs, 2'b11} : m_sddat[3:1];
 
 // ----------------------------------------------------------------------------
 // Processor debug
@@ -749,9 +732,28 @@ hazard3_riscv_timer timer_u (
 //------------------------------------------------------------
 
 // sd
+hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
+        .clk       (clk),
+        .rst_n     (w_init_done),
+
+        .psel      (sd_psel),
+        .penable   (sd_penable),
+        .pwrite    (sd_pwrite),
+        .paddr     (sd_paddr),
+        .pwdata    (sd_pwdata),
+        .prdata    (sd_prdata),
+        .pready    (sd_pready),
+        .pslverr   (sd_pslverr),
+
+        .spi_clk(spi_clk),
+        .spi_mosi(spi_mosi),
+        .spi_cs(spi_cs),
+	.spi_miso(spi_miso)
+);
+
+
 `ifdef laur0
      // we have 2 sd drivers but only 1 active at a given moment of time
-
      wire         m_sdclk;
      wire         oc_sdclk;
      assign sdclk = w_init_done ? oc_sdclk : m_sdclk;
@@ -789,7 +791,7 @@ wire [W_DATA-1:0] sd_hwdata;
 wire [W_DATA-1:0] sd_hrdata;
 `endif
 
-//`ifdef laur0
+`ifdef laur0
 hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .clk       (clk),
         .rst_n     (w_init_done),
@@ -826,7 +828,8 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
 	.sd_dat(oc_sddat),
 	.sd_dat_oe(oc_sddat_oe),
 	.sd_dat_i({sddat3, sddat2, sddat1, sddat0})
+
 );
-//`endif
+`endif
 
 endmodule
