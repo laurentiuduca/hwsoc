@@ -25,7 +25,6 @@ module hazard3_sd #(
 );
 
 reg [7:0] ctrlstate;
-reg [31:0] rwdata;
 
 wire bus_write = pwrite && psel && penable;
 wire bus_read = !pwrite && psel && penable;
@@ -79,7 +78,6 @@ always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		ctrlstate <= 0;
 		pready <= 0;
-		rwdata <= 0;
 		midata1 <= 0;
 		maddr1 <= 0;
 		mw1 <= 0;
@@ -133,12 +131,12 @@ always @(posedge clk or negedge rst_n) begin
 		// write block command
         end else if(ctrlstate == 5) begin
 			// write to mem
-			$display("\tbus w addr=%x data=%x", maddr1, midata1);
 			mcnt <= mcnt + 1;
 			auxdata <= {8'h0, auxdata[31:8]};
 			midata1 <= auxdata[15:8];
 			maddr1 <= maddr1 + 1;
 			if(mcnt == 0) begin
+				$display("\tbus w addr=%x data=%x", maddr1, midata1);
         	               	ctrlstate <= 6;
                                	mw1 <= 0;
 			end
@@ -148,12 +146,14 @@ always @(posedge clk or negedge rst_n) begin
 	end else if(ctrlstate == 15) begin
 			// read from mem
 			ctrlstate <= 16;
+			mr1 <= 0;
 	end else if(ctrlstate == 16) begin
                         mcnt <= mcnt + 1;
                         maddr1 <= maddr1 + 1;
-			prdata <= {prdata[23:0], mout};
-			$display("\tbus r paddr=%x data=%x", maddr1, mout);
+			//prdata <= {prdata[23:0], mout};
+			prdata <= {mout, mout, mout, mout}; // single char
                         if(mcnt == 0) begin
+				$display("\tbus r paddr=%x data=%x", maddr1, mout);
                                	pready <= 1;
                                	ctrlstate <= 0;
                                	mr1 <= 0;
