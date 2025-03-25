@@ -93,7 +93,6 @@ always @(posedge clk or negedge rst_n) begin
 				$finish;
 			end
 			if(paddr < `BLOCK_ADDR) begin
-				// read block for pwdata=1, write block for pwdata=2
 				if(pwdata == 1) begin
 					// read block
 					ctrlstate <= 2;
@@ -134,15 +133,18 @@ always @(posedge clk or negedge rst_n) begin
 		// write block command
         end else if(ctrlstate == 5) begin
 			// write to mem
+			$display("\tbus w addr=%x data=%x", maddr1, midata1);
 			mcnt <= mcnt + 1;
 			auxdata <= {8'h0, auxdata[31:8]};
 			midata1 <= auxdata[15:8];
 			maddr1 <= maddr1 + 1;
-			if(mcnt == 3) begin
-	                       	pready <= 1;
-        	               	ctrlstate <= 0;
+			if(mcnt == 0) begin
+        	               	ctrlstate <= 6;
                                	mw1 <= 0;
 			end
+	end else if(ctrlstate == 6) begin
+			pready <= 1;
+			ctrlstate <= 0;
 	end else if(ctrlstate == 15) begin
 			// read from mem
 			ctrlstate <= 16;
@@ -150,7 +152,8 @@ always @(posedge clk or negedge rst_n) begin
                         mcnt <= mcnt + 1;
                         maddr1 <= maddr1 + 1;
 			prdata <= {prdata[23:0], mout};
-                        if(mcnt == 3) begin
+			$display("\tbus r paddr=%x data=%x", maddr1, mout);
+                        if(mcnt == 0) begin
                                	pready <= 1;
                                	ctrlstate <= 0;
                                	mr1 <= 0;
