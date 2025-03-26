@@ -76,7 +76,7 @@ module example_soc #(
      assign o_sdcmd = w_init_done ? spi_mosi : m_sdcmd;
      assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
         
-     wire [3:0] o_sddat, m_sddat;
+     wire [3:0] m_sddat;
      wire spi_cs, spi_miso;
      assign spi_miso = sddat0;
      assign m_sddat[0] = sddat0;

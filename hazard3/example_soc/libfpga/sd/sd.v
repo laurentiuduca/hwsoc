@@ -87,6 +87,7 @@ always @(posedge clk or negedge rst_n) begin
 		mw1 <= 0;
 		mr1 <= 0;
 		mcnt <= 0;
+		sdsbaddr <= 0;
 	end else if(ctrlstate == 0) begin
 		pready <= 0;
 		if(bus_write && pready == 0) begin
@@ -116,7 +117,7 @@ always @(posedge clk or negedge rst_n) begin
 		end else if(bus_read && pready == 0) begin
 			$display("bus r paddr=%x pready=%x", paddr, pready);
                         if(paddr < `BLOCK_ADDR) begin
-                               prdata <= {24'd0, sdserror_code, sdserror, 3'd0, sdsbusy};
+                               prdata <= {20'd0, 1'b0, sdserror_code, 3'd0, sdserror, 3'd0, sdsbusy};
 			       ctrlstate <= 1;
 			end else begin
 				// read from our block mem
@@ -176,7 +177,6 @@ end
 always @ (posedge clk or negedge rst_n) begin
         if(~rst_n) begin
                 state <= 0;     
-                sdsbaddr <= 0;  
         end else if(state == 0) begin
 		oecnt <= 0;
 		if(ctrlstate == `CTRLSTATERDBLK && sdsbusy == 0) begin

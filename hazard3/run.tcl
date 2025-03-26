@@ -71,26 +71,29 @@ add_file example_soc/libfpga/mem/sd_file_reader.v
 add_file example_soc/libfpga/mem/sd_reader.v
 add_file example_soc/libfpga/mem/sdcmd_ctrl.v
 
-add_file example_soc/libfpga/sd/sd.v 
+add_file example_soc/libfpga/sd/sd.v
+add_file example_soc/libfpga/sd/sd_spi.v
+#sd-oc
+#add_file example_soc/libfpga/sd/sd-oc.v
 #add_file example_soc/libfpga/mem/sd/sdModel.v 
-add_file example_soc/libfpga/sd/bistable_domain_cross.v  
-add_file example_soc/libfpga/sd/generic_fifo_dc_gray.v 
-add_file example_soc/libfpga/sd/sd_cmd_master.v 
-add_file example_soc/libfpga/sd/sd_crc_7.v 
-add_file example_soc/libfpga/sd/sd_wb_sel_ctrl.v 
-add_file example_soc/libfpga/sd/byte_en_reg.v            
-add_file example_soc/libfpga/sd/monostable_domain_cross.v  
-add_file example_soc/libfpga/sd/sd_cmd_serial_host.v  
-add_file example_soc/libfpga/sd/sd_data_master.v       
-add_file example_soc/libfpga/sd/sd_fifo_filler.v 
-add_file example_soc/libfpga/sd/edge_detect.v            
-add_file example_soc/libfpga/sd/sdc_controller.v           
-add_file example_soc/libfpga/sd/sd_controller_wb.v    
-add_file example_soc/libfpga/sd/sd_data_serial_host.v  
-add_file example_soc/libfpga/sd/generic_dpram.v          
-add_file example_soc/libfpga/sd/sd_clock_divider.v         
-add_file example_soc/libfpga/sd/sd_crc_16.v           
-add_file example_soc/libfpga/sd/sd_data_xfer_trig.v
+#add_file example_soc/libfpga/sd/bistable_domain_cross.v  
+#add_file example_soc/libfpga/sd/generic_fifo_dc_gray.v 
+#add_file example_soc/libfpga/sd/sd_cmd_master.v 
+#add_file example_soc/libfpga/sd/sd_crc_7.v 
+#add_file example_soc/libfpga/sd/sd_wb_sel_ctrl.v 
+#add_file example_soc/libfpga/sd/byte_en_reg.v            
+#add_file example_soc/libfpga/sd/monostable_domain_cross.v  
+#add_file example_soc/libfpga/sd/sd_cmd_serial_host.v  
+#add_file example_soc/libfpga/sd/sd_data_master.v       
+#add_file example_soc/libfpga/sd/sd_fifo_filler.v 
+#add_file example_soc/libfpga/sd/edge_detect.v            
+#add_file example_soc/libfpga/sd/sdc_controller.v           
+#add_file example_soc/libfpga/sd/sd_controller_wb.v    
+#add_file example_soc/libfpga/sd/sd_data_serial_host.v  
+#add_file example_soc/libfpga/sd/generic_dpram.v          
+#add_file example_soc/libfpga/sd/sd_clock_divider.v         
+#add_file example_soc/libfpga/sd/sd_crc_16.v           
+#add_file example_soc/libfpga/sd/sd_data_xfer_trig.v
 
 add_file rlsoc.cst
 
