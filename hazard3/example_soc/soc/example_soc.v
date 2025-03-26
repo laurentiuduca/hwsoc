@@ -734,7 +734,7 @@ hazard3_riscv_timer timer_u (
 // sd
 hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
         .clk       (clk),
-        .rst_n     (w_init_done),
+        .rst_n     (w_init_done && rst_n),
 
         .psel      (sd_psel),
         .penable   (sd_penable),

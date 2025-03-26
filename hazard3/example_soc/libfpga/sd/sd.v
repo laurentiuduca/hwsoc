@@ -84,8 +84,9 @@ always @(posedge clk or negedge rst_n) begin
 		mr1 <= 0;
 		mcnt <= 0;
 	end else if(ctrlstate == 0) begin
+		pready <= 0;
 		if(bus_write) begin
-			$display("bus w paddr=%x pwdata=%x", paddr, pwdata);
+			$display("bus w paddr=%x pwdata=%x pready=%x", paddr, pwdata, pready);
 			if(paddr == 16'h8100) begin
 				$display("finish");
 				$finish;
@@ -110,7 +111,7 @@ always @(posedge clk or negedge rst_n) begin
 				mcnt <= 0;
 			end
 		end else if(bus_read) begin
-			$display("bus r paddr=%x", paddr);
+			$display("bus r paddr=%x pready=%x", paddr, pready);
                         if(paddr < `BLOCK_ADDR) begin
                                prdata <= {24'd0, sdserror_code, sdserror, 3'd0, sdsbusy};
 			       pready <= 1;
