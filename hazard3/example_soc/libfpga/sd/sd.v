@@ -114,8 +114,8 @@ always @(posedge clk or negedge rst_n) begin
 			$display("bus r paddr=%x pready=%x", paddr, pready);
                         if(paddr < `BLOCK_ADDR) begin
                                prdata <= {24'd0, sdserror_code, sdserror, 3'd0, sdsbusy};
-			       pready <= 1;
-			       ctrlstate <= 0;
+			       pready <= 0;
+			       ctrlstate <= 1;
 			end else begin
 				// read from our block mem
 				pready <= 0;
@@ -126,6 +126,9 @@ always @(posedge clk or negedge rst_n) begin
 				prdata <= 0;
 			end
 		end
+	end else if(ctrlstate == 1) begin
+			pready <= 1;
+			ctrlstate <= 0;
 	end else if(ctrlstate == 2) begin
 		// read block command 
 	end else if(ctrlstate == 12) begin
