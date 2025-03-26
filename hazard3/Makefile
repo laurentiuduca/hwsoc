@@ -14,7 +14,8 @@ OTHERSOURCE= $(HAZARD3DIR)/example_soc/soc/example_soc.v $(HDLLFCOMMON)/reset_sy
 LAURMEMWB=$(HDLLF)/mem/memory_controller.v $(HDLLF)/mem/memorytn.v $(HDLLF)/mem/memsim.v $(HDLLF)/mem/ahb_laur_mem.v $(HDLLF)/mem/cache_laurwb.v $(HDLLF)/mem/maintn.v $(HDLLF)/mem/sdram.v $(HDLLF)/mem/max7219.v $(HDLLF)/mem/clkdivider.v $(HDLLF)/mem/sd_loader.v $(HDLLF)/mem/sd_file_loader.v $(HDLLF)/mem/sd_file_reader.v $(HDLLF)/mem/sd_reader.v $(HDLLF)/mem/sdcmd_ctrl.v
 LAURMEMWT=$(HDLLF)/mem/memory_controller.v $(HDLLF)/mem/memorytn.v $(HDLLF)/mem/memsim.v $(HDLLF)/mem/ahb_laur_mem.v $(HDLLF)/mem/cache_laurwt.v $(HDLLF)/mem/maintn.v $(HDLLF)/mem/sdram.v $(HDLLF)/mem/max7219.v $(HDLLF)/mem/clkdivider.v $(HDLLF)/mem/sd_loader.v $(HDLLF)/mem/sd_file_loader.v $(HDLLF)/mem/sd_file_reader.v $(HDLLF)/mem/sd_reader.v $(HDLLF)/mem/sdcmd_ctrl.v
 LUKEMEM=$(HDLLF)/mem/sram_sync.v $(HDLLF)/mem/ahb_sync_sram.v 
-SD=$(HDLSD)/sd.v $(HDLSD)/sdModel.v $(HDLSD)/bistable_domain_cross.v  $(HDLSD)/generic_fifo_dc_gray.v $(HDLSD)/sd_cmd_master.v $(HDLSD)/sd_crc_7.v $(HDLSD)/sd_wb_sel_ctrl.v $(HDLSD)/byte_en_reg.v            $(HDLSD)/monostable_domain_cross.v  $(HDLSD)/sd_cmd_serial_host.v  $(HDLSD)/sd_data_master.v       $(HDLSD)/sd_fifo_filler.v $(HDLSD)/edge_detect.v            $(HDLSD)/sdc_controller.v           $(HDLSD)/sd_controller_wb.v    $(HDLSD)/sd_data_serial_host.v  $(HDLSD)/generic_dpram.v          $(HDLSD)/sd_clock_divider.v         $(HDLSD)/sd_crc_16.v           $(HDLSD)/sd_data_xfer_trig.v
+SDSPI=$(HDLSD)/sd.v $(HDLSD)/sd_spi.v
+SDOC=$(HDLSD)/sd-oc.v $(HDLSD)/sdModel.v $(HDLSD)/bistable_domain_cross.v  $(HDLSD)/generic_fifo_dc_gray.v $(HDLSD)/sd_cmd_master.v $(HDLSD)/sd_crc_7.v $(HDLSD)/sd_wb_sel_ctrl.v $(HDLSD)/byte_en_reg.v            $(HDLSD)/monostable_domain_cross.v  $(HDLSD)/sd_cmd_serial_host.v  $(HDLSD)/sd_data_master.v       $(HDLSD)/sd_fifo_filler.v $(HDLSD)/edge_detect.v            $(HDLSD)/sdc_controller.v           $(HDLSD)/sd_controller_wb.v    $(HDLSD)/sd_data_serial_host.v  $(HDLSD)/generic_dpram.v          $(HDLSD)/sd_clock_divider.v         $(HDLSD)/sd_crc_16.v           $(HDLSD)/sd_data_xfer_trig.v
 
 
 # Verilator
@@ -62,7 +63,7 @@ verio:
 	cp obj_dir/Vm_topsim simv
 	./simv
 veriwt:
-	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEMWT} ${SD}
+	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEMWT} ${SDSPI}
 	make -j -C obj_dir -f V$(TOPMODULE).mk V$(TOPMODULE)
 	cp obj_dir/Vm_topsim simv
 	./simv

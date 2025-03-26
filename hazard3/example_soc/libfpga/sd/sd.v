@@ -61,7 +61,7 @@ reg [7:0] state=0, errstate=0;
 reg [31:0] sdsbaddr=0, oecnt=0;
 reg sdsrd=0, sdswr=0;
 wire sdserror;
-wire sdsbusy=0;
+wire sdsbusy;
 reg noerror=1;
 reg [2:0] errorcode=0;
 wire [2:0] sdserror_code;
@@ -74,6 +74,10 @@ reg sdsdout_taken=0;
 wire [1:0] state_o;
 wire [7:0] sdsfsm_o;
 
+`define CTRLSTATERDBLK 2
+`define CTRLSTATEWRBLK 12
+
+// hazard3 sd state machine
 always @(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		ctrlstate <= 0;
@@ -92,12 +96,13 @@ always @(posedge clk or negedge rst_n) begin
 				$finish;
 			end
 			if(paddr < `BLOCK_ADDR) begin
-				if(pwdata == 1) begin
+				sdsbaddr <= pwdata;
+				if(paddr - DEVADDR == 0) begin
 					// read block
-					ctrlstate <= 2;
+					ctrlstate <= `CTRLSTATERDBLK;
 				end else begin
 					// write block;
-					ctrlstate <= 12;
+					ctrlstate <= `CTRLSTATEWRBLK;
 				end
 			end else begin
 				// write to our block mem
@@ -126,10 +131,14 @@ always @(posedge clk or negedge rst_n) begin
 			pready <= 1;
 			prdata <= {24'd0, sdserror_code, sdserror, 3'd0, sdsbusy};
 			ctrlstate <= 0;
-	end else if(ctrlstate == 2) begin
+	end else if(ctrlstate == `CTRLSTATERDBLK) begin
 		// read block command 
-	end else if(ctrlstate == 12) begin
+			ctrlstate <= 0;
+			pready <= 1;
+	end else if(ctrlstate == `CTRLSTATEWRBLK) begin
 		// write block command
+			ctrlstate <= 0;
+			pready <= 1;
         end else if(ctrlstate == 5) begin
 			// write to mem
 			mcnt <= mcnt + 1;
@@ -163,6 +172,120 @@ always @(posedge clk or negedge rst_n) begin
 	end
 end
 
+// sd spi state machine
+always @ (posedge clk or negedge rst_n) begin
+        if(~rst_n) begin
+                state <= 0;     
+                sdsbaddr <= 0;  
+        end else if(state == 0) begin
+		oecnt <= 0;
+		if(ctrlstate == `CTRLSTATERDBLK && sdsbusy == 0) begin
+                       	state <= 1;
+		end else if(ctrlstate == `CTRLSTATEWRBLK && sdsbusy == 0) begin
+			state <= 10;
+		end
+        end else if(state == 1) begin
+                sdsrd <= 1;             
+                state <= 2;     
+        end else if(state == 2) begin
+                if(sdsdout_avail && !sdserror) begin
+                        //sdsrd <= 0;
+                        outbyte <= sdsdout; 
+                        sdsdout_taken <= 1;
+                        state <= 3;
+                end     
+        end else if(state == 3) begin
+                  if(oecnt < `BLOCKSIZE) begin
+                        oecnt <= oecnt + 1;
+                        mw2 <= 1;
+                        maddr2 <= oecnt;
+                        midata2 <= outbyte;
+                        state <= 4;
+                  end
+        end else if(state == 4) begin
+                mw2 <= 0;
+                if(!sdsdout_avail) begin
+                        sdsdout_taken <= 0;
+                        if(oecnt < `BLOCKSIZE) begin
+                                state <= 2;
+                                sdsrd <= 1;
+                        end else begin
+                                sdsrd <= 0;
+                                if(sdsbusy == 0) begin
+					// read block completed
+                                        state <= 0;
+                                end
+                        end
+                end
+        end else if(state == 10) begin
+              if(oecnt < `BLOCKSIZE) begin
+                        maddr2 <= oecnt;
+			mr2 <= 1;
+                        state <= 16;
+                end else begin
+			// write block completed
+                        sdswr <= 0;
+                        if(sdsbusy == 0) begin
+                                oecnt <= 0;
+                                state <= 0;
+                        end
+                end
+        end else if(state == 16) begin
+                // read mem
+		mr2 <= 0;
+                state <= 11;
+        end else if(state == 11) begin
+                sdswr <= 1;
+                sdsdin <= mout;
+                sdsdin_valid <= 1;
+                state <= 12;
+        end else if(state == 12) begin
+                if(sdsdin_taken == 1) begin
+                        //sdswr <= 0;
+                        sdsdin_valid <= 0;
+                        state <= 13;
+                end
+        end else if(state == 13) begin
+                if(sdsdin_taken == 0) begin
+                        oecnt <= oecnt + 1;
+                        state <= 10;
+                end
+        end
+end
 
+sd_controller /*#(.WRITE_TIMEOUT(1))*/ sdc (
+                        .clk(clk), // twice the SPI clk
+                        .reset(!rst_n),
+
+                        .cs(spi_cs),
+                        .mosi(spi_mosi),
+                        .miso(spi_miso),
+                        .sclk(spi_clk),
+                        .card_present(1'b1),
+                        .card_write_prot(1'b0),
+
+                        .rd(sdsrd),// Should latch maddr on rising edge
+                        .rd_multiple(1'b0), // Should latch maddr on rising edge
+                        .wr(sdswr), // Should latch maddr on rising edge
+                        .wr_multiple(1'b0), // Should latch maddr on rising edge
+                        .addr(sdsbaddr),
+                        .erase_count(8'h0), // 8'h2 for multiple write only
+
+                        .sd_error(sdserror), // if an error occurs, reset on next RD or WR
+                        .sd_busy(sdsbusy), // '0' if a RD or WR can be accepted
+                        .sd_error_code(sdserror_code), //
+
+                        .din(sdsdin),
+                        .din_valid(sdsdin_valid),
+                        .din_taken(sdsdin_taken),
+
+                        .dout(sdsdout),
+                        .dout_avail(sdsdout_avail),
+                        .dout_taken(sdsdout_taken),
+
+                        // Debug stuff
+                        .sd_type(state_o),
+                        .sd_fsm(sdsfsm_o)
+        );
 
 endmodule
