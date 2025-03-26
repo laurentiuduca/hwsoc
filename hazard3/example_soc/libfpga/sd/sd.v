@@ -37,26 +37,19 @@ reg       outen;
 reg [7:0] outbyte;
 reg [31:0] auxdata=0;
 
-reg [7:0] m[0:`BLOCKSIZE-1];
-integer i;
-initial for(i=0; i < `BLOCKSIZE; i=i+1) m[i] <= 0;
 reg [3:0] mcnt=0;
 reg mr1=0, mr2=0, mw1=0, mw2=0;
 reg [7:0] midata1=0, midata2=0;
 wire [7:0] midata;
-reg [7:0] mout=0;
+wire [7:0] mout;
 reg [31:0] maddr1, maddr2;
 wire [31:0] maddr;
 assign maddr = (mr1 | mw1) ? maddr1 : maddr2;
 wire mw;
 assign mw = mw1 | mw2;
 assign midata = mw1 ? midata1 : midata2;
-always @ (posedge clk) begin
-        if(mw)
-                m[maddr] <= midata;
-        mout <= m[maddr];
-end
-//assign mout = m[maddr];
+
+sdspibram br(clk, maddr, midata, mw, mout);
 
 //sd state machine
 reg [7:0] state=0, errstate=0;
@@ -289,4 +282,17 @@ sd_controller /*#(.WRITE_TIMEOUT(1))*/ sdc (
                         .sd_fsm(sdsfsm_o)
         );
 
+endmodule
+
+module sdspibram(input clk, input [7:0] maddr, input [7:0] midata, input mw, output reg[7:0] mout);
+
+reg [7:0] m[0:`BLOCKSIZE-1];
+integer i;
+initial for(i=0; i < `BLOCKSIZE; i=i+1) m[i] <= 0;
+always @ (posedge clk) begin
+        if(mw)
+                m[maddr] <= midata;
+        mout <= m[maddr];
+end
+//assign mout = m[maddr];
 endmodule
