@@ -46,8 +46,10 @@ reg [7:0] midata1=0, midata2=0;
 wire [7:0] midata;
 reg [7:0] mout=0;
 reg [31:0] maddr1, maddr2;
-wire [31:0] maddr=(mr1 | mw1) ? maddr1 : maddr2;
-wire mw = mw1 | mw2;
+wire [31:0] maddr;
+assign maddr = (mr1 | mw1) ? maddr1 : maddr2;
+wire mw;
+assign mw = mw1 | mw2;
 assign midata = mw1 ? midata1 : midata2;
 always @ (posedge clk) begin
         if(mw)
@@ -117,7 +119,6 @@ always @(posedge clk or negedge rst_n) begin
 		end else if(bus_read && pready == 0) begin
 			$display("bus r paddr=%x pready=%x", paddr, pready);
                         if(paddr < `BLOCK_ADDR) begin
-                               prdata <= {20'd0, 1'b0, sdserror_code, 3'd0, sdserror, 3'd0, sdsbusy};
 			       ctrlstate <= 1;
 			end else begin
 				// read from our block mem
@@ -130,7 +131,7 @@ always @(posedge clk or negedge rst_n) begin
 		end
 	end else if(ctrlstate == 1) begin
 			pready <= 1;
-			prdata <= {24'd0, sdserror_code, sdserror, 3'd0, sdsbusy};
+			prdata <= {20'd0, 1'b0, sdserror_code, 3'd0, sdserror, 3'd0, sdsbusy};
 			ctrlstate <= 0;
 	end else if(ctrlstate == `CTRLSTATERDBLK) begin
 		// read block command 
