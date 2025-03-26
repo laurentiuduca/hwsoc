@@ -85,7 +85,7 @@ always @(posedge clk or negedge rst_n) begin
 		mcnt <= 0;
 	end else if(ctrlstate == 0) begin
 		pready <= 0;
-		if(bus_write) begin
+		if(bus_write && pready == 0) begin
 			$display("bus w paddr=%x pwdata=%x pready=%x", paddr, pwdata, pready);
 			if(paddr == 16'h8100) begin
 				$display("finish");
@@ -99,10 +99,8 @@ always @(posedge clk or negedge rst_n) begin
 					// write block;
 					ctrlstate <= 12;
 				end
-				pready <= 0;
 			end else begin
 				// write to our block mem
-				pready <= 0;
 				ctrlstate <= 5;
 				auxdata <= pwdata;
 				midata1 <= pwdata[7:0];
@@ -110,15 +108,13 @@ always @(posedge clk or negedge rst_n) begin
 				mw1 <= 1;
 				mcnt <= 0;
 			end
-		end else if(bus_read) begin
+		end else if(bus_read && pready == 0) begin
 			$display("bus r paddr=%x pready=%x", paddr, pready);
                         if(paddr < `BLOCK_ADDR) begin
                                prdata <= {24'd0, sdserror_code, sdserror, 3'd0, sdsbusy};
-			       pready <= 0;
 			       ctrlstate <= 1;
 			end else begin
 				// read from our block mem
-				pready <= 0;
                                 ctrlstate <= 15;
                                 maddr1 <= paddr - DEVADDR;
 				mr1 <= 1;
@@ -128,6 +124,7 @@ always @(posedge clk or negedge rst_n) begin
 		end
 	end else if(ctrlstate == 1) begin
 			pready <= 1;
+			prdata <= {24'd0, sdserror_code, sdserror, 3'd0, sdsbusy};
 			ctrlstate <= 0;
 	end else if(ctrlstate == 2) begin
 		// read block command 
