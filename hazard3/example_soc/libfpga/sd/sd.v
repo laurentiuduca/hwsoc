@@ -112,7 +112,7 @@ always @(posedge clk or negedge rst_n) begin
 			end else begin
 				// read from our block mem
                                 ctrlstate <= 15;
-                                maddr1 <= paddr - `SDSPI_DEVADDR;
+                                maddr1 <= paddr - `SDSPI_BLOCKADDR;
 				mr1 <= 1;
 				mcnt <= 0;
 				prdata <= 0;

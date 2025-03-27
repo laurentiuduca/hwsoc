@@ -126,19 +126,20 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
     `ifdef SDSPI
-    sdspi_loader sd_loader(.clk27mhz(clk), .resetn(rst_x),
+    wire [7:0] w_sdspiloader_state;
+    sdspi_loader sdspi_loader(.clk27mhz(clk), .resetn(rst_x),
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done), 
-        .w_ctrl_state(r_sd_state),
+        .w_ctrl_state(r_sd_state), .w_loader_state(w_sdspiloader_state),
                                 // signals connect to SD controller
-                                .m_psel(m_psel),
-                                .m_penable(m_penable),
-                                .m_pwrite(m_pwrite),
-                                .m_paddr(m_paddr),
-                                .m_pwdata(m_pwdata),
-                                .m_prdata(m_prdata),
-                                .m_pready(m_pready),
-                                .m_pslverr(m_pslverr),
-				.m_sdsbusy(m_sdsbusy));
+                                .psel(m_psel),
+                                .penable(m_penable),
+                                .pwrite(m_pwrite),
+                                .paddr(m_paddr),
+                                .pwdata(m_pwdata),
+                                .prdata(m_prdata),
+                                .pready(m_pready),
+                                .pslverr(m_pslverr),
+				.sdsbusy(m_sdsbusy));
     `else
     `ifdef FAT32_SD
     sd_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader
@@ -457,7 +458,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         );
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(21'd100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {4'h1, 20'h0, 1'b0, sys_state} : w_btnl ? d_pc: w_sd_checksum;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {24'h0, w_sdspiloader_state} :
+	    		w_btnl ? {4'h1, 20'h0, 1'b0, sys_state} : w_sd_checksum;
 
     `ifndef SIM_MODE
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
