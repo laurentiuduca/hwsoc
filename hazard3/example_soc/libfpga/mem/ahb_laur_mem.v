@@ -64,6 +64,7 @@ module ahb_sync_sram #(
         input  wire        m_pready,
         input  wire        m_pslverr,
 	input  wire        m_sdsbusy,
+	input  wire [31:0] m_sdspi_status,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -229,6 +230,7 @@ assign ahbls_hrdata = w_dram_odata;
                                 .m_pready(m_pready),
                                 .m_pslverr(m_pslverr),
 				.m_sdsbusy(m_sdsbusy),
+				.m_sdspi_status(m_sdspi_status),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),

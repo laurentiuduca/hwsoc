@@ -27,7 +27,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
      input  wire [3:0]                   i_ctrl,
      input  wire [6:0]                   sys_state,
      input  wire [3:0]                   w_bus_cpustate,
-     output wire [7:0]                   mem_state,
+     output wire [7:0]                   w_mem_state,
 
      output wire 			 w_init_done,
      input wire [31:0]             	 d_pc,
@@ -61,6 +61,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         input  wire        m_pready,
         input  wire        m_pslverr,
 	input  wire        m_sdsbusy,
+	input  wire [31:0] m_sdspi_status,
     	// display
     	output wire MAX7219_CLK,
     	output wire MAX7219_DATA,
@@ -403,7 +404,6 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
 `endif
 
     wire w_late_refresh;
-    wire [7:0] w_mem_state;
     DRAM_conRV #(.PRELOAD_FILE(PRELOAD_FILE))
     dram_con (
                                // user interface ports
@@ -458,7 +458,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         );
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(21'd100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {24'h0, w_sdspiloader_state} :
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {m_sdspi_status[15:0], 8'h0, w_sdspiloader_state} :
 	    		w_btnl ? {4'h1, 20'h0, 1'b0, sys_state} : w_sd_checksum;
 
     `ifndef SIM_MODE

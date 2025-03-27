@@ -29,6 +29,7 @@ module uart_mini (
 );
 
 assign apbs_prdata=32'h0;
+assign apbs_pslverr=0;
 
 reg [7:0] state;
 reg r_tx_ready, r_was_write;

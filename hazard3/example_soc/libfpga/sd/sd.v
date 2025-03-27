@@ -22,13 +22,16 @@ module hazard3_sd #(
 	output wire spi_mosi, spi_clk, spi_cs,
 	input wire spi_miso,
 
-	output wire sdsbusy
+	output wire sdsbusy,
+	output wire [31:0] sdspi_status
 );
 
 reg [7:0] ctrlstate;
 
 wire bus_write = pwrite && psel && penable;
 wire bus_read = !pwrite && psel && penable;
+
+assign pslverr=0;
 
 reg       outen;
 reg [7:0] outbyte;
@@ -64,6 +67,7 @@ wire sdsdout_avail;
 reg sdsdout_taken=0;
 wire [1:0] state_o;
 wire [7:0] sdsfsm_o;
+assign sdspi_status = {20'd0, 1'b0, sdserror_code, 3'd0, sdserror, 3'd0, sdsbusy};
 
 `define CTRLSTATERDBLK 2
 `define CTRLSTATEWRBLK 12
@@ -120,7 +124,7 @@ always @(posedge clk or negedge rst_n) begin
 		end
 	end else if(ctrlstate == 1) begin
 			pready <= 1;
-			prdata <= {20'd0, 1'b0, sdserror_code, 3'd0, sdserror, 3'd0, sdsbusy};
+			prdata <= sdspi_status;
 			ctrlstate <= 0;
 	end else if(ctrlstate == `CTRLSTATERDBLK) begin
 		// read block command 

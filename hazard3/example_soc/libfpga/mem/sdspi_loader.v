@@ -79,7 +79,7 @@ assign w_loader_state = state;
 			pwrite <= 0;
                         psel <= 1;
                         penable <= 1;
-                        paddr <= `SDSPI_BLOCKADDR + waddr;
+                        paddr <= `SDSPI_BLOCKADDR + (waddr & (`SDSPI_BLOCKSIZE-1));
 			state <= 11;
 	    end else if(state == 11) begin
 		    if(pready) begin
@@ -96,7 +96,7 @@ assign w_loader_state = state;
 		    end
 
             end else if(state == 20) begin
-		// send sector to main
+		// send sector to main memory
                 if(w_ctrl_state == 0)
                     if((i < `SDSPI_BLOCKSIZE) && ((rsector << $clog2(`SDSPI_BLOCKSIZE))+i) < `BIN_SIZE) begin
                         //DATA <= {mem[i+3], mem[i+2], mem[i+1], mem[i]};

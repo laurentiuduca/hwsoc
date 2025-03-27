@@ -64,6 +64,7 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
         input  wire        m_pready,
         input  wire        m_pslverr,
 	input  wire        m_sdsbusy,
+	input  wire [31:0] m_sdspi_status,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -211,7 +212,7 @@ end
                                .i_ctrl(r_dram_mask),
                                .sys_state(state), // not used
                                .w_bus_cpustate(4'h0), // not used
-                               .mem_state(w_mem_state), // not used
+                               .w_mem_state(w_mem_state), // not used
 
                                 .w_init_done(w_init_done),
                                 .d_pc(d_pc),
@@ -250,6 +251,7 @@ end
                                 .m_pready(m_pready),
                                 .m_pslverr(m_pslverr),
 				.m_sdsbusy(m_sdsbusy),
+				.m_sdspi_status(m_sdspi_status),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),

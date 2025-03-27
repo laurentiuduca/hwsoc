@@ -647,6 +647,7 @@ ahb_sync_sram #(
 				.m_pready(m_pready),
 				.m_pslverr(m_pslverr),
 				.m_sdsbusy(m_sdsbusy),
+				.m_sdspi_status(m_sdspi_status),
 
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
@@ -734,6 +735,7 @@ hazard3_riscv_timer timer_u (
 	wire        sdspi_pready, m_pready;
 	wire        sdspi_pslverr, m_pslverr;
 	wire sdsbusy, m_sdsbusy;
+	wire [31:0] sdspi_status, m_sdspi_status;
 
      assign {sdspi_psel, sdspi_penable, sdspi_pwrite, sdspi_paddr, sdspi_pwdata} = 
 	     w_init_done ? {sd_psel, sd_penable, sd_pwrite, sd_paddr, sd_pwdata} :
@@ -743,6 +745,7 @@ hazard3_riscv_timer timer_u (
      assign {m_prdata, m_pready, m_pslverr} =
              {sdspi_prdata, sdspi_pready, sdspi_pslverr};
      assign m_sdsbusy = sdsbusy;
+     assign m_sdspi_status = sdspi_status;
 
 hazard3_sd sd(
         .clk       (clk),
@@ -761,7 +764,9 @@ hazard3_sd sd(
         .spi_mosi(spi_mosi),
         .spi_cs(spi_cs),
 	.spi_miso(spi_miso),
-	.sdsbusy(sdsbusy)
+
+	.sdsbusy(sdsbusy),
+	.sdspi_status(sdspi_status)
 );
 
 
