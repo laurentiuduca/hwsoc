@@ -1,6 +1,9 @@
 /* Modified by Laurentiu-Cristian Duca 
  * WITHOUT_DISK and SEARCH_CHECKSUM options 
  */
+/******************************************************************************************/
+/**** SimCore/RISC-V since 2018-07-05                               ArchLab. TokyoTech ****/
+/******************************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +13,7 @@
 
 void load_binfile(char *fname, uint8_t *mem);
 
-#define DRAM_SIZE    (8*1024*1024) // (8*1024*1024) // 64MB main memory (64*1024*1024)
+#define DRAM_SIZE    (1*1024*1024) // (8*1024*1024) // 64MB main memory (64*1024*1024)
 #ifdef WITHOUT_DISK
 #define DISK_SIZE    0
 #define D_SIZE_DISK 0
@@ -20,7 +23,7 @@ void load_binfile(char *fname, uint8_t *mem);
 #endif
 //#define D_INITD_ADDR (6*1024*1024) // (7*1024*1024)  // (32*1024*1024) after 32MB area, write the dev tree data
 
-#define D_SIZE_DRAM (8*1024*1024) // (7*1024*1024)   // (30*1024*1024)  30 MB of (bbl + kernel + initramfs).
+#define D_SIZE_DRAM (1*1024*1024) // (7*1024*1024)   // (30*1024*1024)  30 MB of (bbl + kernel + initramfs).
 //#define D_SIZE_DEVT (4*1024)        //  4KB of device tree
 
 /*****  generate binary image file for FPGA run                                       *****/
