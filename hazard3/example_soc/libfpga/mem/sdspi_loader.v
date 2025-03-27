@@ -22,6 +22,7 @@ module sdspi_loader (
         input wire  [31:0] m_prdata,
         input wire         m_pready,
         input wire         m_pslverr,
+	input  wire        m_sdsbusy,
     output reg  [31:0]  DATA,
     output reg          WE,
     output reg          DONE

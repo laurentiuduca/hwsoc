@@ -646,6 +646,7 @@ ahb_sync_sram #(
 				.m_prdata(m_prdata),
 				.m_pready(m_pready),
 				.m_pslverr(m_pslverr),
+				.m_sdsbusy(m_sdsbusy),
 
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),

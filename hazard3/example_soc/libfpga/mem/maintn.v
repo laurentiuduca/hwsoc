@@ -59,7 +59,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         output wire [31:0] m_pwdata,
         input  wire [31:0] m_prdata,
         input  wire        m_pready,
-        input  wire        m_pslverr,	
+        input  wire        m_pslverr,
+	input  wire        m_sdsbusy,
     	// display
     	output wire MAX7219_CLK,
     	output wire MAX7219_DATA,
@@ -136,7 +137,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
                                 .m_pwdata(m_pwdata),
                                 .m_prdata(m_prdata),
                                 .m_pready(m_pready),
-                                .m_pslverr(m_pslverr));
+                                .m_pslverr(m_pslverr),
+				.m_sdsbusy(m_sdsbusy));
     `else
     `ifdef FAT32_SD
     sd_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader

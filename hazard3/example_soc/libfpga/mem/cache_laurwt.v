@@ -62,7 +62,8 @@ module cache_ctrl#(parameter PRELOAD_FILE = "", parameter ADDR_WIDTH = 23)
         output wire [31:0] m_pwdata,
         input  wire [31:0] m_prdata,
         input  wire        m_pready,
-        input  wire        m_pslverr,	
+        input  wire        m_pslverr,
+	input  wire        m_sdsbusy,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -248,6 +249,7 @@ end
                                 .m_prdata(m_prdata),
                                 .m_pready(m_pready),
                                 .m_pslverr(m_pslverr),
+				.m_sdsbusy(m_sdsbusy),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),
