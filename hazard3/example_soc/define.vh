@@ -1,13 +1,22 @@
 // laur
-//`define SIM_MODE
+`define SIM_MODE
 
 //`define DUMP_VCD
 
 `define TN_DRAM_REFRESH // for tang nano
 `define SIM_TNSRAM // tang nano not only sim ram
-//`define FAT32_SD
 `define FREQ 27_000_000
+
+`define SDSPI
+`ifdef SDSPI
+`define SDSPI_DEVADDR 16'h8000
+`define SDSPI_BLOCKSIZE 512
+`define SDSPI_BLOCKADDR (`SDSPI_DEVADDR + `SDSPI_BLOCKSIZE)
+`define SDSPI_ADDRUH 16'h4000
+`else
+//`define FAT32_SD
 `define SDCARD_CLK_DIV 2 // clk is between 25-50mhz
+`endif
 
 `define CACHE_SIZE (32*1024)
 

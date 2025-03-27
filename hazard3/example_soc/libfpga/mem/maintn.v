@@ -51,13 +51,15 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         input wire w_btnr,
     	// when sdcard_pwr_n = 0, SDcard power on
     	output wire         sdcard_pwr_n,
-    	// signals connect to SD bus
-    	output wire         sdclk,
-    	inout  wire         sdcmd,
-	input  wire 	    sdcmd_i,
-	output wire	    sdcmd_oe,
-    	input  wire         sddat0,
-    	output wire         sddat1, sddat2, sddat3,
+    	// signals connect to SD controller
+        output wire        m_psel,
+        output wire        m_penable,
+        output wire        m_pwrite,
+        output wire [15:0] m_paddr,
+        output wire [31:0] m_pwdata,
+        input  wire [31:0] m_prdata,
+        input  wire        m_pready,
+        input  wire        m_pslverr,	
     	// display
     	output wire MAX7219_CLK,
     	output wire MAX7219_DATA,
@@ -122,6 +124,20 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
+    `ifdef SDSPI
+    sdspi_loader sd_loader(.clk27mhz(clk), .resetn(rst_x),
+        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done), 
+        .w_ctrl_state(r_sd_state),
+                                // signals connect to SD controller
+                                .m_psel(m_psel),
+                                .m_penable(m_penable),
+                                .m_pwrite(m_pwrite),
+                                .m_paddr(m_paddr),
+                                .m_pwdata(m_pwdata),
+                                .m_prdata(m_prdata),
+                                .m_pready(m_pready),
+                                .m_pslverr(m_pslverr));
+    `else
     `ifdef FAT32_SD
     sd_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader
       (.clk27mhz(clk), .resetn(rst_x), 
@@ -133,12 +149,13 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     `else
     // sd_loader includes define.vh
     sd_loader /*#(.SD_CLK_DIV(`SDCARD_CLK_DIV))*/ sd_loader(.clk27mhz(clk), .resetn(rst_x), 
-        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done), .sdcmd_oe(sdcmd_oe),
+        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state),
-        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), .sdcmd_i(sdcmd_i),
+        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), .sdcmd_i(sdcmd_i), .sdcmd_oe(sdcmd_oe),
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
-    assign sd_led_status = {!w_sd_init_done, 5'b0};
     `endif
+    `endif
+    assign sd_led_status = {!w_sd_init_done, 5'b0};
 
     // sd state machine for copying sd to dram
     reg [7:0] r_sd_state=0;

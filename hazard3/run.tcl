@@ -65,14 +65,15 @@ add_file example_soc/libfpga/mem/sdram.v
 add_file example_soc/libfpga/mem/max7219.v
 add_file example_soc/libfpga/mem/clkdivider.v
 
-add_file example_soc/libfpga/mem/sd_loader.v
-add_file example_soc/libfpga/mem/sd_file_loader.v
-add_file example_soc/libfpga/mem/sd_file_reader.v
-add_file example_soc/libfpga/mem/sd_reader.v
-add_file example_soc/libfpga/mem/sdcmd_ctrl.v
+#add_file example_soc/libfpga/mem/sd_loader.v
+#add_file example_soc/libfpga/mem/sd_file_loader.v
+#add_file example_soc/libfpga/mem/sd_file_reader.v
+#add_file example_soc/libfpga/mem/sd_reader.v
+#add_file example_soc/libfpga/mem/sdcmd_ctrl.v
 
 add_file example_soc/libfpga/sd/sd.v
 add_file example_soc/libfpga/sd/sd_spi.v
+add_file example_soc/libfpga/mem/sdspi_loader.v
 #sd-oc
 #add_file example_soc/libfpga/sd/sd-oc.v
 #add_file example_soc/libfpga/mem/sd/sdModel.v 

@@ -8,6 +8,8 @@
 
 `default_nettype none
 
+`include "define.vh"
+
 module example_soc #(
 	parameter DTM_TYPE   = "JTAG",  // Can be "JTAG" or "ECP5"
 	parameter SRAM_DEPTH = 1 << 21, // 2 Mwords x 4 -> 8MB
@@ -62,25 +64,6 @@ module example_soc #(
 
 //localparam W_ADDR = 32;
 //localparam W_DATA = 32;
-// ----------------------------------------------------------------------------
-// sd
-     // we have 2 sd drivers but only 1 active at a given moment of time
-     // spi
-     wire         m_sdclk;
-     wire         spi_clk;
-     assign sdclk = w_init_done ? spi_clk : m_sdclk;
-
-     wire sdcmd_oe, m_sdcmd_oe;
-     wire o_sdcmd, spi_mosi, m_sdcmd;
-     assign sdcmd_oe = w_init_done ? 1 : m_sdcmd_oe;
-     assign o_sdcmd = w_init_done ? spi_mosi : m_sdcmd;
-     assign sdcmd = sdcmd_oe ? o_sdcmd : 1'bz;
-        
-     wire [3:0] m_sddat;
-     wire spi_cs, spi_miso;
-     assign spi_miso = sddat0;
-     assign m_sddat[0] = sddat0;
-     assign {sddat3, sddat2, sddat1} = w_init_done ? {spi_cs, 2'b11} : m_sddat[3:1];
 
 // ----------------------------------------------------------------------------
 // Processor debug
@@ -575,11 +558,10 @@ ahbl_to_apb apb_bridge_u (
 	.apbm_pslverr      (bridge_pslverr)
 );
 
-`define SDDEVADDR 16'h8000
 apb_splitter #(
 	.N_SLAVES   (3),
 	// inside devices paddr has 16 bytes
-	.ADDR_MAP   ({`SDDEVADDR, 32'h4000_0000}),
+	.ADDR_MAP   ({`SDSPI_DEVADDR, 32'h4000_0000}),
 	.ADDR_MASK  (48'hc000_c000_c000)
 ) inst_apb_splitter (
 	.clk (clk),
@@ -655,13 +637,16 @@ ahb_sync_sram #(
                                 .w_btnr(w_btnr),
                                 // when sdcard_pwr_n = 0, SDcard power on
                                 .sdcard_pwr_n(sdcard_pwr_n),
-                                // signals connect to SD bus
-                                .sdclk(m_sdclk),
-                                .sdcmd(m_sdcmd),
-				.sdcmd_i(sdcmd),
-				.sdcmd_oe(m_sdcmd_oe),
-                                .sddat0(m_sddat[0]),
-                                .sddat1(m_sddat[1]), .sddat2(m_sddat[2]), .sddat3(m_sddat[3]),
+                                // signals connect to SD controller
+				.m_psel(m_psel),
+				.m_penable(m_penable),
+				.m_pwrite(m_pwrite),
+				.m_paddr(m_paddr),
+				.m_pwdata(m_pwdata),
+				.m_prdata(m_prdata),
+				.m_pready(m_pready),
+				.m_pslverr(m_pslverr),
+
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),
@@ -732,26 +717,54 @@ hazard3_riscv_timer timer_u (
 //------------------------------------------------------------
 
 // sd
-hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
-        .clk       (clk),
-        .rst_n     (w_init_done && rst_n),
+     // spi
+     wire spi_clk, spi_mosi, spi_cs, spi_miso;
+     assign sdclk = spi_clk;
+     assign sdcmd = spi_mosi;
+     assign spi_miso = sddat0;
+     assign {sddat3, sddat2, sddat1} = {spi_cs, 2'b11};
 
-        .psel      (sd_psel),
-        .penable   (sd_penable),
-        .pwrite    (sd_pwrite),
-        .paddr     (sd_paddr),
-        .pwdata    (sd_pwdata),
-        .prdata    (sd_prdata),
-        .pready    (sd_pready),
-        .pslverr   (sd_pslverr),
+	wire        sdspi_psel, m_psel;
+	wire        sdspi_penable, m_penable; 
+	wire        sdspi_pwrite, m_pwrite;
+	wire [15:0] sdspi_paddr, m_paddr;
+	wire [31:0] sdspi_pwdata, m_pwdata;
+	wire [31:0] sdspi_prdata, m_prdata;
+	wire        sdspi_pready, m_pready;
+	wire        sdspi_pslverr, m_pslverr;
+	wire sdsbusy, m_sdsbusy;
+
+     assign {sdspi_psel, sdspi_penable, sdspi_pwrite, sdspi_paddr, sdspi_pwdata} = 
+	     w_init_done ? {sd_psel, sd_penable, sd_pwrite, sd_paddr, sd_pwdata} :
+	     		   {m_psel,  m_penable,  m_pwrite,  m_paddr,  m_pwdata};
+     assign {sd_prdata, sd_pready, sd_pslverr} = 
+	     {sdspi_prdata, sdspi_pready, sdspi_pslverr};
+     assign {m_prdata, m_pready, m_pslverr} =
+             {sdspi_prdata, sdspi_pready, sdspi_pslverr};
+     assign m_sdsbusy = sdsbusy;
+
+hazard3_sd sd(
+        .clk       (clk),
+        .rst_n     (rst_n),
+
+        .psel      (sdspi_psel),
+        .penable   (sdspi_penable),
+        .pwrite    (sdspi_pwrite),
+        .paddr     (sdspi_paddr),
+        .pwdata    (sdspi_pwdata),
+        .prdata    (sdspi_prdata),
+        .pready    (sdspi_pready),
+        .pslverr   (sdspi_pslverr),
 
         .spi_clk(spi_clk),
         .spi_mosi(spi_mosi),
         .spi_cs(spi_cs),
-	.spi_miso(spi_miso)
+	.spi_miso(spi_miso),
+	.sdsbusy(sdsbusy)
 );
 
 
+/*
 `ifdef laur0
      // we have 2 sd drivers but only 1 active at a given moment of time
      wire         m_sdclk;
@@ -831,5 +844,5 @@ hazard3_sd #(.DEVADDR(`SDDEVADDR)) sd(
 
 );
 `endif
-
+*/
 endmodule

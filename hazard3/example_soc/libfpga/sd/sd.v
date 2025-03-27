@@ -2,7 +2,6 @@
 `include "define.vh"
 
 module hazard3_sd #(
-	parameter DEVADDR=16'h8000,
         parameter W_ADDR = 32,
         parameter W_DATA = 32
 ) (
@@ -21,17 +20,15 @@ module hazard3_sd #(
 
 	// sd signals
 	output wire spi_mosi, spi_clk, spi_cs,
-	input wire spi_miso
+	input wire spi_miso,
+
+	output wire sdsbusy
 );
 
 reg [7:0] ctrlstate;
 
 wire bus_write = pwrite && psel && penable;
 wire bus_read = !pwrite && psel && penable;
-
-`define BLOCKSIZE 512
-`define BLOCK_ADDR (DEVADDR + `BLOCKSIZE)
-`define ADDRUH 16'h4000
 
 reg       outen;
 reg [7:0] outbyte;
@@ -56,7 +53,6 @@ reg [7:0] state=0, errstate=0;
 reg [31:0] sdsbaddr=0, oecnt=0;
 reg sdsrd=0, sdswr=0;
 wire sdserror;
-wire sdsbusy;
 reg noerror=1;
 reg [2:0] errorcode=0;
 wire [2:0] sdserror_code;
@@ -91,9 +87,9 @@ always @(posedge clk or negedge rst_n) begin
 				$display("finish");
 				$finish;
 			end
-			if(paddr < `BLOCK_ADDR) begin
+			if(paddr < `SDSPI_BLOCKADDR) begin
 				sdsbaddr <= pwdata;
-				if(paddr - DEVADDR == 0) begin
+				if(paddr - `SDSPI_DEVADDR == 0) begin
 					// read block
 					ctrlstate <= `CTRLSTATERDBLK;
 				end else begin
@@ -105,18 +101,18 @@ always @(posedge clk or negedge rst_n) begin
 				ctrlstate <= 5;
 				auxdata <= pwdata;
 				midata1 <= pwdata[7:0];
-				maddr1 <= paddr - DEVADDR;
+				maddr1 <= paddr - `SDSPI_DEVADDR;
 				mw1 <= 1;
 				mcnt <= 0;
 			end
 		end else if(bus_read && pready == 0) begin
 			$display("bus r paddr=%x pready=%x", paddr, pready);
-                        if(paddr < `BLOCK_ADDR) begin
+                        if(paddr < `SDSPI_BLOCKADDR) begin
 			       ctrlstate <= 1;
 			end else begin
 				// read from our block mem
                                 ctrlstate <= 15;
-                                maddr1 <= paddr - DEVADDR;
+                                maddr1 <= paddr - `SDSPI_DEVADDR;
 				mr1 <= 1;
 				mcnt <= 0;
 				prdata <= 0;
@@ -189,7 +185,7 @@ always @ (posedge clk or negedge rst_n) begin
                         state <= 3;
                 end     
         end else if(state == 3) begin
-                  if(oecnt < `BLOCKSIZE) begin
+                  if(oecnt < `SDSPI_BLOCKSIZE) begin
                         oecnt <= oecnt + 1;
                         mw2 <= 1;
                         maddr2 <= oecnt;
@@ -200,7 +196,7 @@ always @ (posedge clk or negedge rst_n) begin
                 mw2 <= 0;
                 if(!sdsdout_avail) begin
                         sdsdout_taken <= 0;
-                        if(oecnt < `BLOCKSIZE) begin
+                        if(oecnt < `SDSPI_BLOCKSIZE) begin
                                 state <= 2;
                                 sdsrd <= 1;
                         end else begin
@@ -212,7 +208,7 @@ always @ (posedge clk or negedge rst_n) begin
                         end
                 end
         end else if(state == 10) begin
-              if(oecnt < `BLOCKSIZE) begin
+              if(oecnt < `SDSPI_BLOCKSIZE) begin
                         maddr2 <= oecnt;
 			mr2 <= 1;
                         state <= 16;
@@ -284,11 +280,11 @@ sd_controller /*#(.WRITE_TIMEOUT(1))*/ sdc (
 
 endmodule
 
-module sdspibram(input clk, input [7:0] maddr, input [7:0] midata, input mw, output reg[7:0] mout);
+module sdspibram(input wire clk, input wire [7:0] maddr, input wire [7:0] midata, input wire mw, output reg[7:0] mout);
 
-reg [7:0] m[0:`BLOCKSIZE-1];
+reg [7:0] m[0:`SDSPI_BLOCKSIZE-1];
 integer i;
-initial for(i=0; i < `BLOCKSIZE; i=i+1) m[i] <= 0;
+initial for(i=0; i < `SDSPI_BLOCKSIZE; i=i+1) m[i] <= 0;
 always @ (posedge clk) begin
         if(mw)
                 m[maddr] <= midata;

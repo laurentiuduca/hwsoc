@@ -127,6 +127,7 @@ always @(posedge clk or negedge rst_n) begin
 		baddr1 <= 0;
 		bwr1 <= 0;
 	end else if(state == 0) begin
+		pready <= 0;
 		if(bus_write) begin
 			$display("bus w paddr_i=%x ack_o=%x pwdata=%x", paddr, wbs_sds_ack_o, pwdata);
 			if(paddr == 16'h8100) begin

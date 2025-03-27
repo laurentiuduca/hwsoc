@@ -54,13 +54,15 @@ module ahb_sync_sram #(
      input wire w_btnr,
      // when sdcard_pwr_n = 0, SDcard power on
      output wire         sdcard_pwr_n,
-     // signals connect to SD bus
-     output wire         sdclk,
-     inout  wire         sdcmd,
-     input  wire 	 sdcmd_i,
-     output wire 	 sdcmd_oe,
-     input  wire         sddat0,
-     output wire         sddat1, sddat2, sddat3,
+        // signals connect to SD controller
+        output wire        m_psel,
+        output wire        m_penable,
+        output wire        m_pwrite,
+        output wire [15:0] m_paddr,
+        output wire [31:0] m_pwdata,
+        input  wire [31:0] m_prdata,
+        input  wire        m_pready,
+        input  wire        m_pslverr,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -216,13 +218,15 @@ assign ahbls_hrdata = w_dram_odata;
                                 .w_btnr(w_btnr),
                                 // when sdcard_pwr_n = 0, SDcard power on
                                 .sdcard_pwr_n(sdcard_pwr_n),
-                                // signals connect to SD bus
-                                .sdclk(sdclk),
-                                .sdcmd(sdcmd),
-				.sdcmd_i(sdcmd_i),
-				.sdcmd_oe(sdcmd_oe),
-                                .sddat0(sddat0),
-                                .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+                                // signals connect to SD controller
+                                .m_psel(m_psel),
+                                .m_penable(m_penable),
+                                .m_pwrite(m_pwrite),
+                                .m_paddr(m_paddr),
+                                .m_pwdata(m_pwdata),
+                                .m_prdata(m_prdata),
+                                .m_pready(m_pready),
+                                .m_pslverr(m_pslverr),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),
