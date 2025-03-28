@@ -57,8 +57,8 @@ wire pll_clk, clk_sdram;
 `endif
 
 wire        w_rxd=1;
-wire        w_txd;
-//assign o_tx=w_txd;
+wire        w_txd, uart_tx;
+assign o_tx=w_init_done ? uart_tx : w_txd;
 
 reg RST_X=0;
 example_soc #(.SRAM_DEPTH(1 << 21), // 2 Mwords x 4 -> 8MB
@@ -77,7 +77,7 @@ example_soc #(.SRAM_DEPTH(1 << 21), // 2 Mwords x 4 -> 8MB
 	.tdo(),
 
 	// IO
-	.uart_tx(o_tx),
+	.uart_tx(uart_tx),
 	.uart_rx(1'b1),
 
     // tang nano 20k SDRAM
@@ -104,6 +104,7 @@ example_soc #(.SRAM_DEPTH(1 << 21), // 2 Mwords x 4 -> 8MB
                                 .sdcmd(sdcmd),
                                 .sddat0(sddat0),
                                 .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+				.w_init_done(w_init_done),
                                 // display
                                 .MAX7219_CLK(MAX7219_CLK),
                                 .MAX7219_DATA(MAX7219_DATA),

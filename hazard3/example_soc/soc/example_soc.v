@@ -56,6 +56,7 @@ module example_soc #(
      output wire         sdclk,
      inout  wire         sdcmd,
      inout  wire 	 sddat3, sddat2, sddat1, sddat0,
+     output wire w_init_done,
      // display
      output wire MAX7219_CLK,
      output wire MAX7219_DATA,
@@ -590,8 +591,6 @@ apb_splitter #(
 // No preloaded bootloader -- just use the debugger! (the processor will
 // actually enter an infinite crash loop after reset if memory is
 // zero-initialised so don't leave the little guy hanging too long)
-
-wire w_init_done;
 
 ahb_sync_sram #(
 	.DEPTH (SRAM_DEPTH),
