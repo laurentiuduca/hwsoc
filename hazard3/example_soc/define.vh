@@ -31,11 +31,11 @@
 
 `ifndef SIM_MODE
 	`define LAUR_MEM_RB // mem read-back after writing it with BBL
-	//`define LAUR_MEM_RB_ONLY_CHECK
+	`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
 `define MEM_SIZE (8*1024*1024)
-`define BBL_SIZE 512//(1*1024*1024)
+`define BBL_SIZE (1*1024*1024)
 `define BIN_BBL_SIZE   `BBL_SIZE
 `define BIN_DISK_SIZE 0
 `define BIN_SIZE       (`BIN_BBL_SIZE + `BIN_DISK_SIZE)
