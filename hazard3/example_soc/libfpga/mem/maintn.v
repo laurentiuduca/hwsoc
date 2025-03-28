@@ -127,10 +127,10 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
     `ifdef SDSPI
-    wire [7:0] w_sdspiloader_state;
+    wire [7:0] w_sdloader_state;
     sdspi_loader sdspi_loader(.clk27mhz(clk), .resetn(rst_x),
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done), 
-        .w_ctrl_state(r_sd_state), .w_loader_state(w_sdspiloader_state),
+        .w_ctrl_state(r_sd_state), .w_loader_status(w_sdloader_state),
                                 // signals connect to SD controller
                                 .psel(m_psel),
                                 .penable(m_penable),
@@ -460,7 +460,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(21'd100), .clkdiv(clkdiv));
 
     assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {m_sdspi_status} :
-	    		w_btnl ? {16'h0, w_sdspiloader_state, 5'b0, r_init_state} : w_sd_checksum;
+	    		w_btnl ? {w_sdloader_state} : {24'h0, 5'b0, r_init_state}; //: w_sd_checksum;
 
     `ifndef SIM_MODE
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 

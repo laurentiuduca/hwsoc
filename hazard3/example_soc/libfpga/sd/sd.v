@@ -67,7 +67,8 @@ wire sdsdout_avail;
 reg sdsdout_taken=0;
 wire [1:0] state_o;
 wire [7:0] sdsfsm_o;
-assign sdspi_status = {8'd0, sdserror_code, sdserror, 3'd0, sdsbusy, ctrlstate[7:0], state[7:0]};
+reg [7:0] firstbyte=0, first=0;
+assign sdspi_status = {firstbyte, sdserror_code, sdserror, 3'd0, sdsbusy, ctrlstate[7:0], state[7:0]};
 
 `define CTRLSTATERDBLK 2
 `define CTRLSTATEWRBLK 12
@@ -105,7 +106,7 @@ always @(posedge clk or negedge rst_n) begin
 				ctrlstate <= 5;
 				auxdata <= pwdata;
 				midata1 <= pwdata[7:0];
-				maddr1 <= paddr - `SDSPI_DEVADDR;
+				maddr1 <= paddr - `SDSPI_BLOCKADDR;
 				mw1 <= 1;
 				mcnt <= 0;
 			end
@@ -164,6 +165,10 @@ always @(posedge clk or negedge rst_n) begin
                                	mr1 <= 0;
                         end else 
 				ctrlstate <= 15;
+			if(maddr1 == 0 && !first) begin
+				first <= 1;
+				firstbyte <= mout;
+			end
 	end
 end
 
@@ -185,17 +190,17 @@ always @ (posedge clk or negedge rst_n) begin
                 if(sdsdout_avail && !sdserror) begin
                         //sdsrd <= 0;
                         outbyte <= sdsdout; 
-                        sdsdout_taken <= 1;
                         state <= 3;
                 end     
         end else if(state == 3) begin
-                  if(oecnt < `SDSPI_BLOCKSIZE) begin
+			sdsdout_taken <= 1;
                         oecnt <= oecnt + 1;
                         mw2 <= 1;
                         maddr2 <= oecnt;
                         midata2 <= outbyte;
                         state <= 4;
-                  end
+			//if(oecnt == 0)
+			//	firstbyte <= outbyte;
         end else if(state == 4) begin
                 mw2 <= 0;
                 if(!sdsdout_avail) begin

@@ -11,7 +11,7 @@ module sdspi_loader (
     input  wire         resetn,
     input  wire [2:0]   w_main_init_state,
     input  wire [7:0]   w_ctrl_state,
-    output wire [7:0]	w_loader_state,
+    output wire [31:0]	w_loader_status,
     input  wire [31:0]  sdspi_status,
         // signals connect to SD controller
         output reg         psel,
@@ -30,10 +30,10 @@ module sdspi_loader (
 
 reg [31:0] rsector=0, i=0, waddr=0;
 reg [7:0] state=0, rcnt=0;
-assign w_loader_state = state;
+assign w_loader_status = {16'h0, firstbyte, state};
 wire [7:0] sdctrlstate = sdspi_status[15:8];
 wire [7:0] sdstate = sdspi_status[7:0];
-
+reg [7:0] firstbyte=0; 
     always @(posedge clk27mhz) begin
         if(!resetn) begin
         	psel <= 0;
@@ -69,7 +69,7 @@ wire [7:0] sdstate = sdspi_status[7:0];
 			state <= 2;
 		    end
 	    end else if(state == 2) begin
-		if(sdsbusy)
+		if(sdsbusy && sdstate)
 			state <= 3;
 	    end else if(state == 3) begin
 		    if(!sdsbusy && sdstate == 0 && sdctrlstate == 0) begin
@@ -97,6 +97,8 @@ wire [7:0] sdstate = sdspi_status[7:0];
 				state <= 20;
 			end else
 				state <= 10;
+			if(waddr == 0)
+				firstbyte <= prdata[7:0];
 		    end
 
             end else if(state == 20) begin
