@@ -33,8 +33,8 @@ reg [7:0] state=0, rcnt=0;
 assign w_loader_status = {16'h0, firstbyte, state};
 wire [7:0] sdctrlstate = sdspi_status[15:8];
 wire [7:0] sdstate = sdspi_status[7:0];
-reg [7:0] firstbyte=0; 
-    always @(posedge clk27mhz) begin
+reg [7:0] firstbyte=0, first=0;
+    always @(posedge clk27mhz or negedge resetn) begin
         if(!resetn) begin
         	psel <= 0;
 	        penable <= 0;
@@ -51,8 +51,8 @@ reg [7:0] firstbyte=0;
 	    waddr <= 0;
         end else begin
             if(state == 0) begin
-                if (DONE==0)
-                    if(w_main_init_state == 3 && !sdsbusy && sdstate == 0 && sdctrlstate == 0) begin
+	        if (DONE==0) begin
+                    if(w_main_init_state == 3 && !sdsbusy && sdstate == 0 && sdctrlstate == 0 && !pready) begin
                         //trigger start reading new sector
 			pwrite <= 1;
 			psel <= 1;
@@ -61,6 +61,7 @@ reg [7:0] firstbyte=0;
 			paddr <= `SDSPI_DEVADDR; // < `SDSPI_BLOCKADDR;
 			state <= 1;
                     end
+		end
 	    end else if(state == 1) begin
 		    if(pready) begin
 			pwrite <= 0;
@@ -79,26 +80,32 @@ reg [7:0] firstbyte=0;
 			rcnt <= 0;
 		    end
 	    end else if(state == 10) begin
+		    if(!pready && sdctrlstate == 0) begin
 			// read 4 bytes from sd ctrl mem
 			pwrite <= 0;
                         psel <= 1;
                         penable <= 1;
                         paddr <= `SDSPI_BLOCKADDR + (waddr & (`SDSPI_BLOCKSIZE-1));
 			state <= 11;
+		    end
 	    end else if(state == 11) begin
 		    if(pready) begin
-			DATA <= {prdata[7:0], DATA[31:8]};
-			rcnt <= rcnt + 1;
+			psel <= 0;
+                        penable <= 0;
+			//if(waddr < 4)
+				DATA <= {prdata[7:0], DATA[31:8]};
 			waddr <= waddr + 1;
 			if(rcnt >= 3) begin
 				rcnt <= 0;
-				psel <= 0;
-                        	penable <= 0;
 				state <= 20;
-			end else
+			end else begin
+				rcnt <= rcnt + 1;
 				state <= 10;
-			if(waddr == 0)
+			end
+			if(waddr == 0 && first == 0) begin
+				first <= 1;
 				firstbyte <= prdata[7:0];
+			end
 		    end
 
             end else if(state == 20) begin
@@ -112,7 +119,7 @@ reg [7:0] firstbyte=0;
             end else if(state == 21) begin
                 if(w_ctrl_state != 0) begin
                     WE <= 0;
-		    if((i < `SDSPI_BLOCKSIZE) && ((rsector << $clog2(`SDSPI_BLOCKSIZE))+i) < `BIN_SIZE) begin
+		    if((i < `SDSPI_BLOCKSIZE)) begin // && ((rsector << $clog2(`SDSPI_BLOCKSIZE))+i) < `BIN_SIZE) begin
                         state <= 10;
                     end else begin
                         i <= 0;

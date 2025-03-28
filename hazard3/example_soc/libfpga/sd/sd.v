@@ -49,7 +49,7 @@ wire mw;
 assign mw = mw1 | mw2;
 assign midata = mw1 ? midata1 : midata2;
 
-sdspibram br(clk, maddr, midata, mw, mout);
+sdspibram br(.clk(clk), .maddr(maddr), .midata(midata), .mw(mw), .mout(mout));
 
 //sd state machine
 reg [7:0] state=0, errstate=0;
@@ -57,7 +57,6 @@ reg [31:0] sdsbaddr=0, oecnt=0;
 reg sdsrd=0, sdswr=0;
 wire sdserror;
 reg noerror=1;
-reg [2:0] errorcode=0;
 wire [2:0] sdserror_code;
 reg [7:0] sdsdin=0, firstdin=0;
 reg sdsdin_valid=0;
@@ -165,8 +164,8 @@ always @(posedge clk or negedge rst_n) begin
                                	mr1 <= 0;
                         end else 
 				ctrlstate <= 15;
-			if(maddr1 == 0 && !first) begin
-				first <= 1;
+			if(maddr1 == 1 && first == 0) begin
+				first <= first + 1;
 				firstbyte <= mout;
 			end
 	end
@@ -289,7 +288,7 @@ sd_controller /*#(.WRITE_TIMEOUT(1))*/ sdc (
 
 endmodule
 
-module sdspibram(input wire clk, input wire [7:0] maddr, input wire [7:0] midata, input wire mw, output reg[7:0] mout);
+module sdspibram(input wire clk, input wire [31:0] maddr, input wire [7:0] midata, input wire mw, output reg[7:0] mout);
 
 reg [7:0] m[0:`SDSPI_BLOCKSIZE-1];
 integer i;
