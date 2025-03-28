@@ -12,6 +12,7 @@ module sdspi_loader (
     input  wire [2:0]   w_main_init_state,
     input  wire [7:0]   w_ctrl_state,
     output wire [7:0]	w_loader_state,
+    input  wire [31:0]  sdspi_status,
         // signals connect to SD controller
         output reg         psel,
         output reg         penable,
@@ -30,6 +31,8 @@ module sdspi_loader (
 reg [31:0] rsector=0, i=0, waddr=0;
 reg [7:0] state=0, rcnt=0;
 assign w_loader_state = state;
+wire [7:0] sdctrlstate = sdspi_status[15:8];
+wire [7:0] sdstate = sdspi_status[7:0];
 
     always @(posedge clk27mhz) begin
         if(!resetn) begin
@@ -49,7 +52,7 @@ assign w_loader_state = state;
         end else begin
             if(state == 0) begin
                 if (DONE==0)
-                    if(w_main_init_state == 3 && !sdsbusy) begin
+                    if(w_main_init_state == 3 && !sdsbusy && sdstate == 0 && sdctrlstate == 0) begin
                         //trigger start reading new sector
 			pwrite <= 1;
 			psel <= 1;
@@ -60,6 +63,7 @@ assign w_loader_state = state;
                     end
 	    end else if(state == 1) begin
 		    if(pready) begin
+			pwrite <= 0;
 			psel <= 0;
 			penable <= 0;
 			state <= 2;
@@ -68,7 +72,7 @@ assign w_loader_state = state;
 		if(sdsbusy)
 			state <= 3;
 	    end else if(state == 3) begin
-		    if(!sdsbusy) begin
+		    if(!sdsbusy && sdstate == 0 && sdctrlstate == 0) begin
 			// sector was read
 			state <= 10;
 			DATA <= 0;
@@ -97,12 +101,17 @@ assign w_loader_state = state;
 
             end else if(state == 20) begin
 		// send sector to main memory
-                if(w_ctrl_state == 0)
-                    if((i < `SDSPI_BLOCKSIZE) && ((rsector << $clog2(`SDSPI_BLOCKSIZE))+i) < `BIN_SIZE) begin
+		if(w_ctrl_state == 0) begin
                         //DATA <= {mem[i+3], mem[i+2], mem[i+1], mem[i]};
                         WE <= 1;
                         i <= i + 4;
                         state <= 21;
+		end
+            end else if(state == 21) begin
+                if(w_ctrl_state != 0) begin
+                    WE <= 0;
+		    if((i < `SDSPI_BLOCKSIZE) && ((rsector << $clog2(`SDSPI_BLOCKSIZE))+i) < `BIN_SIZE) begin
+                        state <= 10;
                     end else begin
                         i <= 0;
                         state <= 0;
@@ -110,10 +119,6 @@ assign w_loader_state = state;
                         if(waddr>=`BIN_SIZE)
                             DONE <= 1;
                     end
-            end else if(state == 21) begin
-                if(w_ctrl_state != 0) begin
-                    WE <= 0;
-                    state <= 10;
                 end
             end
         end

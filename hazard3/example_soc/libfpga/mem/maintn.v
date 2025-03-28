@@ -140,7 +140,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
                                 .prdata(m_prdata),
                                 .pready(m_pready),
                                 .pslverr(m_pslverr),
-				.sdsbusy(m_sdsbusy));
+				.sdsbusy(m_sdsbusy),
+				.sdspi_status(m_sdspi_status));
     `else
     `ifdef FAT32_SD
     sd_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader
@@ -458,8 +459,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         );
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(21'd100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {m_sdspi_status[15:0], 8'h0, w_sdspiloader_state} :
-	    		w_btnl ? {4'h1, 20'h0, 1'b0, sys_state} : w_sd_checksum;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {m_sdspi_status} :
+	    		w_btnl ? {16'h0, w_sdspiloader_state, 5'b0, r_init_state} : w_sd_checksum;
 
     `ifndef SIM_MODE
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 

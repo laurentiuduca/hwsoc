@@ -67,7 +67,7 @@ wire sdsdout_avail;
 reg sdsdout_taken=0;
 wire [1:0] state_o;
 wire [7:0] sdsfsm_o;
-assign sdspi_status = {20'd0, 1'b0, sdserror_code, 3'd0, sdserror, 3'd0, sdsbusy};
+assign sdspi_status = {8'd0, sdserror_code, sdserror, 3'd0, sdsbusy, ctrlstate[7:0], state[7:0]};
 
 `define CTRLSTATERDBLK 2
 `define CTRLSTATEWRBLK 12
