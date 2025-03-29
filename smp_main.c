@@ -345,6 +345,21 @@ void testsd()
         volatile int i, status=0;
         baddr = 0x40008200;
 
+	// read block
+	_info("read block from sd\n");
+	*(int *)(baddr - 0x200 + 0) = 4 * 512; // block id after 1MB
+	_info("wait reading \n");
+        do {
+                status = *(int *)(baddr - 0x200);
+                //_info("status=%x\n", status);
+        } while ((status & 0xff) != 0 || (status & 0x10000));
+        for(i = 10; i < 20; i++) {
+                b[i] = *(baddr+i);
+                _info("b[%d] is %x ", i, b[i]);
+        }
+	return;
+
+
         _info("writing \n");
         for(i = 10; i < 20; i++) {
                 _info("*(%x+%x)<=%x ", baddr, i, i);
@@ -367,7 +382,6 @@ void testsd()
 		//_info("status=%x\n", status);
         } while ((status & 0xff) != 0 || (status & 0x10000));
         _info("read status =%x\n", status);
-	// read from sd
 	for(i = 10; i < 20; i++) { 
 		b[i] = *(baddr+i);
 		_info("b[%d] is %x ", i, b[i]);
