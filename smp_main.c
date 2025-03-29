@@ -360,17 +360,11 @@ void testsd()
 	_info("writing to sd\n");
 	*(int *)(baddr - 0x200 + 4) = 4 * 512; // block id after 1MB 
 	// wait start writing
-	// we must wait for the sd ctrl to enter state 0 before reading the status
-	_info("wait start writing\n");
-	do {
-                status = *(int *)(baddr - 0x200);
-		_info("status=%x\n", status);
-        } while ((status & 0xff) == 0);
         // wait writing
 	_info("wait writing\n");
 	do {
 		status = *(int *)(baddr - 0x200);
-		_info("status=%x\n", status);
+		//_info("status=%x\n", status);
         } while ((status & 0xff) != 0 || (status & 0x10000));
         _info("read status =%x\n", status);
 	// read from sd
