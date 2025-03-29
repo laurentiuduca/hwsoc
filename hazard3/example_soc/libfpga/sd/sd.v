@@ -96,7 +96,7 @@ always @(posedge clk or negedge rst_n) begin
 				if(paddr - `SDSPI_DEVADDR == 0) begin
 					// read block
 					ctrlstate <= `CTRLSTATERDBLK;
-				end else begin
+				end else if(paddr - `SDSPI_DEVADDR == 4) begin
 					// write block;
 					ctrlstate <= `CTRLSTATEWRBLK;
 				end
