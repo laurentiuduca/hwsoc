@@ -44,8 +44,10 @@ wb cache is wip, use wt
 6. implementation on tang nano 20k
 comment SIM_MODE in define.vh
 make gwsynth
-copy initmem.bin to a fat32 sd card, for example
-cp ../initmem_gen2/initmem.bin /media/laur/DFEB-E0A4/
+<!-- copy initmem.bin to a fat32 sd card, for example
+cp ../initmem_gen2/initmem.bin /media/laur/DFEB-E0A4/ 
+-->
+dd if=initmem_gen2/initmem.bin of=/dev/sdb bs=512 seek=0 && sync
 openFPGALoader --board tangnano20k impl/pnr/project.fs
 
 Resource	Usage	Utilization
