@@ -345,20 +345,25 @@ void testsd()
         volatile int i, status=0;
         baddr = 0x40008200;
 
+
+#if 1
 	// read block
 	_info("read block from sd\n");
 	*(int *)(baddr - 0x200 + 0) = 4 * 512; // block id after 1MB
-	_info("wait reading \n");
+	//_info("wait reading \n");
+	//status = *(int *)(baddr - 0x200);
+	//_info("status =%x\n", status);
         do {
-                status = *(int *)(baddr - 0x200);
-                //_info("status=%x\n", status);
-        } while ((status & 0xff) != 0 || (status & 0x10000));
+                status = *(volatile int *)(baddr - 0x200);
+		//if(status & 0x100ff)
+			//_info("r status=%x\n", status);
+        } while ((status & 0x100ff));
         for(i = 10; i < 20; i++) {
                 b[i] = *(baddr+i);
                 _info("b[%d] is %x ", i, b[i]);
         }
 	return;
-
+#endif
 
         _info("writing \n");
         for(i = 10; i < 20; i++) {
@@ -374,20 +379,13 @@ void testsd()
 	// write block to sd
 	_info("writing to sd\n");
 	*(int *)(baddr - 0x200 + 4) = 4 * 512; // block id after 1MB 
-	// wait start writing
         // wait writing
-	_info("wait writing\n");
 	do {
-		status = *(int *)(baddr - 0x200);
-		//_info("status=%x\n", status);
-        } while ((status & 0xff) != 0 || (status & 0x10000));
-        _info("read status =%x\n", status);
-	for(i = 10; i < 20; i++) { 
-		b[i] = *(baddr+i);
-		_info("b[%d] is %x ", i, b[i]);
-	}
-        // finish
-        //*(volatile unsigned char *)(0x40008100) = 1;	
+                status = *(volatile int *)(baddr - 0x200);
+                //if(status & 0x100ff)
+                        //_info("w status=%x\n", status);
+        } while ((status & 0x100ff));
+        _info("w status =%x\n", status);
 	
 }
 
