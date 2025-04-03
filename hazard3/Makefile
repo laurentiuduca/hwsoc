@@ -53,12 +53,12 @@ clean:
 	rm -f init_kernel.txt fh fl fout cl ch cr impl dump.vcd
 
 veriwb:
-	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEMWB}
+	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LAURMEMWB} ${SDSPI}
 	make -j -C obj_dir -f V$(TOPMODULE).mk V$(TOPMODULE)
 	cp obj_dir/Vm_topsim simv
 	./simv
 verio:
-	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LUKEMEM}
+	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${LUKEMEM} ${SDSPI}
 	make -j -C obj_dir -f V$(TOPMODULE).mk V$(TOPMODULE)
 	cp obj_dir/Vm_topsim simv
 	./simv

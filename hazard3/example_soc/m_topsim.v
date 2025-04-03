@@ -59,6 +59,7 @@ wire pll_clk, clk_sdram;
 wire        w_rxd=1;
 wire        w_txd, uart_tx;
 assign o_tx=w_init_done ? uart_tx : w_txd;
+wire w_init_done;
 
 reg RST_X=0;
 example_soc #(.SRAM_DEPTH(1 << 21), // 2 Mwords x 4 -> 8MB

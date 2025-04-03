@@ -450,6 +450,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     /**********************************************************************************************/
 
     // debug on display
+    `ifndef SIM_MODE
     wire clkdiv;
     wire [31:0] data_vector;
     max7219 max7219(.clk(clk), .clkdiv(clkdiv), .reset_n(rst_x), .data_vector(data_vector),
@@ -462,7 +463,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {m_sdspi_status} :
 	    		w_btnl ? {w_sdloader_state} : {24'h0, 5'b0, r_init_state}; //: w_sd_checksum;
 
-    `ifndef SIM_MODE
+    
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
                         w_init_done, r_zero_done, o_init_calib_complete & !sdram_fail & !w_late_refresh} :

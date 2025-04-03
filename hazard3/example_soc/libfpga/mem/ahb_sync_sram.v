@@ -62,8 +62,30 @@ module ahb_sync_sram #(
     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
-    output wire [3:0] O_sdram_dqm        // 32/4
+    output wire [3:0] O_sdram_dqm,        // 32/4
 
+     input  wire        w_rxd,
+     output wire        w_txd,
+     output wire [5:0] w_led,
+     input wire w_btnl,
+     input wire w_btnr,
+     // when sdcard_pwr_n = 0, SDcard power on
+     output wire         sdcard_pwr_n,
+        // signals connect to SD controller
+        output wire        m_psel,
+        output wire        m_penable,
+        output wire        m_pwrite,
+        output wire [15:0] m_paddr,
+        output wire [31:0] m_pwdata,
+        input  wire [31:0] m_prdata,
+        input  wire        m_pready,
+        input  wire        m_pslverr,
+        input  wire        m_sdsbusy,
+        input  wire [31:0] m_sdspi_status,
+     // display
+     output wire MAX7219_CLK,
+     output wire MAX7219_DATA,
+     output wire MAX7219_LOAD
 );
 
 // This should be localparam but ISIM won't allow the $clog2 call for localparams
