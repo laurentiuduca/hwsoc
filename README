@@ -1,5 +1,5 @@
-Hazard3 verilator simulation using nuttx
-========================================
+HwSoC: RISC-V Hazard3 based open SoC skeleton
+====
 
 0.
 download nuttx 12.8.0 os and apps from https://nuttx.apache.org/download
