@@ -129,7 +129,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire [31:0] w_sdloader_state;
     `ifdef SDSPI
     `ifdef FAT32_SD
-    sdspi_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader
+    sdspi_file_loader sdspi_file_loader
       (.clk27mhz(clk), .resetn(rst_x),
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state), .tangled(sd_led_status), .w_reader_status(w_sdloader_state),

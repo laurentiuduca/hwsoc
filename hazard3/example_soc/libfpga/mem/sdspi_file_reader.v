@@ -364,14 +364,9 @@ always @ (posedge clk or negedge rstn) begin
 end
 
 
-sdspi_reader #(
-    .CLK_DIV    ( CLK_DIV        ),
-    .SIMULATE   ( SIMULATE       )
-) u_sd_reader (
+sdspi_reader u_sdspi_reader (
     .rstn       ( rstn           ),
     .clk        ( clk            ),
-    .card_type  ( card_type      ),
-    .card_stat  ( card_stat      ),
     .rstart     ( read_start     ),
     .rsector    ( read_sector_no ),
     .rbusy      (                ),
@@ -379,7 +374,7 @@ sdspi_reader #(
     .outen      ( rvalid         ),
     .outaddr    ( raddr          ),
     .outbyte    ( rdata          ),
-    				w_reader_status(w_reader_status),
+    				.w_reader_status(w_reader_status),
                                 // signals connect to SD controller
                                 .psel(m_psel),
                                 .penable(m_penable),
@@ -391,7 +386,6 @@ sdspi_reader #(
                                 .pslverr(m_pslverr),
                                 .sdsbusy(m_sdsbusy),
                                 .sdspi_status(m_sdspi_status));
-);
 
 
 

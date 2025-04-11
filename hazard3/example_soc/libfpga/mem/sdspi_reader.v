@@ -40,7 +40,7 @@ module sdspi_reader (
 
 reg [31:0] rsector=0, i=0, waddr=0;
 reg [7:0] state=0, rcnt=0;
-assign w_loader_status = {16'h0, firstbyte, state};
+assign w_reader_status = {16'h0, firstbyte, state};
 wire [7:0] sdctrlstate = sdspi_status[15:8];
 wire [7:0] sdstate = sdspi_status[7:0];
 reg [7:0] firstbyte=0, first=0;

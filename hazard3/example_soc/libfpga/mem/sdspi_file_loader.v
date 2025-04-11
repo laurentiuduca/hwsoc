@@ -12,7 +12,6 @@
 module sdspi_file_loader #(parameter SD_CLK_DIV = 3'd2) (
     input  wire         clk27mhz,
     input wire resetn,
-    input  wire [31:0]  sdspi_status,
     input  wire [2:0]   w_main_init_state,
     input  wire [7:0]   w_ctrl_state,
     output wire [5:0]  tangled,
@@ -37,12 +36,6 @@ module sdspi_file_loader #(parameter SD_CLK_DIV = 3'd2) (
 wire clk = clk27mhz;
 wire [8:0] led;
 
-assign sdcard_pwr_n = 1'b0;                  // keep SDcard power-on
-
-assign {sddat1, sddat2, sddat3} = 3'b111;    // Must set sddat1~3 to 1 to avoid SD card from entering SPI mode
-
-
-
 //----------------------------------------------------------------------------------------------------
 // sd_file_reader
 //----------------------------------------------------------------------------------------------------
@@ -56,11 +49,6 @@ sdspi_file_reader #(
 ) u_sd_file_reader (
     .rstn             ( resetn         ),
     .clk              ( clk            ),
-    .sdclk            ( sdclk          ),
-    .sdcmd            ( sdcmd          ),
-    .sdcmd_i	      ( sdcmd_i	       ),
-    .sdcmd_oe	      ( sdcmd_oe       ),
-    .sddat0           ( sddat0         ),
     .card_stat        ( led[3:0]       ),  // show the sdcard initialize status
     .card_type        ( led[5:4]       ),  // 0=UNKNOWN    , 1=SDv1    , 2=SDv2  , 3=SDHCv2
     .filesystem_type  ( led[7:6]       ),  // 0=UNASSIGNED , 1=UNKNOWN , 2=FAT16 , 3=FAT32 
@@ -79,7 +67,6 @@ sdspi_file_reader #(
                                 .m_pslverr(m_pslverr),
                                 .m_sdsbusy(m_sdsbusy),
                                 .m_sdspi_status(m_sdspi_status));
-);
 
     assign tangled = ~{DONE, led[8:4]};
 
