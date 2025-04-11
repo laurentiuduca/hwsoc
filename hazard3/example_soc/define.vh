@@ -1,5 +1,5 @@
 // laur
-`define SIM_MODE
+//`define SIM_MODE
 
 //`define DUMP_VCD
 
@@ -14,9 +14,9 @@
 `define SDSPI_BLOCKADDR (`SDSPI_DEVADDR + `SDSPI_BLOCKSIZE)
 `define SDSPI_ADDRUH 16'h4000
 `else
-//`define FAT32_SD
 `define SDCARD_CLK_DIV 2 // clk is between 25-50mhz
 `endif
+`define FAT32_SD
 
 `define CACHE_SIZE (32*1024)
 

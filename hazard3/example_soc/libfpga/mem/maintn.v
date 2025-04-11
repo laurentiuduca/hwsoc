@@ -126,8 +126,25 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
+    wire [31:0] w_sdloader_state;
     `ifdef SDSPI
-    wire [7:0] w_sdloader_state;
+    `ifdef FAT32_SD
+    sdspi_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader
+      (.clk27mhz(clk), .resetn(rst_x),
+        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+        .w_ctrl_state(r_sd_state), .tangled(sd_led_status), .w_reader_status(w_sdloader_state),
+				// signals connect to SD controller
+                                .m_psel(m_psel),
+                                .m_penable(m_penable),
+                                .m_pwrite(m_pwrite),
+                                .m_paddr(m_paddr),
+                                .m_pwdata(m_pwdata),
+                                .m_prdata(m_prdata),
+                                .m_pready(m_pready),
+                                .m_pslverr(m_pslverr),
+                                .m_sdsbusy(m_sdsbusy),
+                                .m_sdspi_status(m_sdspi_status));
+    `else
     sdspi_loader sdspi_loader(.clk27mhz(clk), .resetn(rst_x),
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done), 
         .w_ctrl_state(r_sd_state), .w_loader_status(w_sdloader_state),
@@ -142,16 +159,16 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
                                 .pslverr(m_pslverr),
 				.sdsbusy(m_sdsbusy),
 				.sdspi_status(m_sdspi_status));
+    `endif
     `else
     `ifdef FAT32_SD
     sd_file_loader #(.SD_CLK_DIV(`SDCARD_CLK_DIV)) sd_file_loader
-      (.clk27mhz(clk), .resetn(rst_x), 
+      (.clk27mhz(clk), .resetn(rst_x),
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
-        .w_ctrl_state(r_sd_state), 
+        .w_ctrl_state(r_sd_state),
         .tangled(sd_led_status),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), .sdcmd_i(sdcmd_i), .sdcmd_oe(sdcmd_oe),
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
-    `else
     // sd_loader includes define.vh
     sd_loader /*#(.SD_CLK_DIV(`SDCARD_CLK_DIV))*/ sd_loader(.clk27mhz(clk), .resetn(rst_x), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
