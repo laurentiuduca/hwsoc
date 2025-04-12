@@ -38,8 +38,8 @@ module sdspi_reader (
 
     );
 
-reg [31:0] rsector=0, i=0, waddr=0;
-reg [7:0] state=0, rcnt=0;
+reg [31:0] waddr=0;
+reg [7:0] state=0;
 assign w_reader_status = {16'h0, firstbyte, state};
 wire [7:0] sdctrlstate = sdspi_status[15:8];
 wire [7:0] sdstate = sdspi_status[7:0];
@@ -51,18 +51,14 @@ reg [7:0] firstbyte=0, first=0;
 	        pwrite <= 0;
 	        paddr <= 0;
 	        pwdata <= 0;
-            rsector <= 0;
             state <= 0;
-            DATA <= 0;
-            WE <= 0;
-            DONE <= 0;
-            i <= 0;
-	    rcnt <= 0;
+	    outaddr <= 0;
+	    outbyte <= 0;
 	    waddr <= 0;
         end else begin
             if(state == 0) begin
-	        if (DONE==0) begin
-                    if(w_main_init_state == 3 && !sdsbusy && sdstate == 0 && sdctrlstate == 0 && !pready) begin
+		rdone <= 0;
+	        if (rstart && !sdsbusy && sdstate == 0 && sdctrlstate == 0 && !pready) begin
                         //trigger start reading new sector
 			pwrite <= 1;
 			psel <= 1;
@@ -70,7 +66,10 @@ reg [7:0] firstbyte=0, first=0;
 			pwdata <= rsector;
 			paddr <= `SDSPI_DEVADDR; // < `SDSPI_BLOCKADDR;
 			state <= 1;
-                    end
+			waddr <= 0;
+		end
+		if(rstart) begin
+			rbusy <= 1;
 		end
 	    end else if(state == 1) begin
 		    if(pready) begin
@@ -86,12 +85,10 @@ reg [7:0] firstbyte=0, first=0;
 		    if(!sdsbusy && sdstate == 0 && sdctrlstate == 0) begin
 			// sector was read
 			state <= 10;
-			DATA <= 0;
-			rcnt <= 0;
 		    end
 	    end else if(state == 10) begin
 		    if(!pready && sdctrlstate == 0) begin
-			// read 4 bytes from sd ctrl mem
+			// read byte from sd ctrl mem
 			pwrite <= 0;
                         psel <= 1;
                         penable <= 1;
@@ -102,43 +99,25 @@ reg [7:0] firstbyte=0, first=0;
 		    if(pready) begin
 			psel <= 0;
                         penable <= 0;
-			//if(waddr < 4)
-				DATA <= {prdata[7:0], DATA[31:8]};
+			outbyte <= prdata[7:0];
+			outen <= 1;
+			outaddr <= waddr;
 			waddr <= waddr + 1;
-			if(rcnt >= 3) begin
-				rcnt <= 0;
-				state <= 20;
-			end else begin
-				rcnt <= rcnt + 1;
-				state <= 10;
-			end
+			rbusy <= 0;
 			if(waddr == 0 && first == 0) begin
 				first <= 1;
 				firstbyte <= prdata[7:0];
 			end
+			state <= 12;
 		    end
-
-            end else if(state == 20) begin
-		// send sector to main memory
-		if(w_ctrl_state == 0) begin
-                        //DATA <= {mem[i+3], mem[i+2], mem[i+1], mem[i]};
-                        WE <= 1;
-                        i <= i + 4;
-                        state <= 21;
-		end
-            end else if(state == 21) begin
-                if(w_ctrl_state != 0) begin
-                    WE <= 0;
-		    if((i < `SDSPI_BLOCKSIZE)) begin // && ((rsector << $clog2(`SDSPI_BLOCKSIZE))+i) < `BIN_SIZE) begin
-                        state <= 10;
-                    end else begin
-                        i <= 0;
-                        state <= 0;
-                        rsector <= rsector + 1;
-                        if(waddr>=`BIN_SIZE)
-                            DONE <= 1;
-                    end
-                end
+            end else if(state == 12) begin
+		    outen <= 0;
+		    if(waddr < `SDSPI_BLOCKSIZE)
+		    	state <= 10;
+		    else begin
+			    rdone <= 1;
+			    state <= 0;
+		    end
             end
         end
     end
