@@ -73,7 +73,9 @@ add_file example_soc/libfpga/mem/clkdivider.v
 
 add_file example_soc/libfpga/sd/sd.v
 add_file example_soc/libfpga/sd/sd_spi.v
-add_file example_soc/libfpga/mem/sdspi_loader.v
+add_file example_soc/libfpga/mem/sdspi_file_loader.v
+add_file example_soc/libfpga/mem/sdspi_file_reader.v
+add_file example_soc/libfpga/mem/sdspi_reader.v
 #sd-oc
 #add_file example_soc/libfpga/sd/sd-oc.v
 #add_file example_soc/libfpga/mem/sd/sdModel.v 

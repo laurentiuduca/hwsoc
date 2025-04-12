@@ -169,15 +169,19 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         .tangled(sd_led_status),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), .sdcmd_i(sdcmd_i), .sdcmd_oe(sdcmd_oe),
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
+    `else
     // sd_loader includes define.vh
     sd_loader /*#(.SD_CLK_DIV(`SDCARD_CLK_DIV))*/ sd_loader(.clk27mhz(clk), .resetn(rst_x), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), .sdcmd_i(sdcmd_i), .sdcmd_oe(sdcmd_oe),
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
+	
     `endif
     `endif
+    `ifndef FAT32_SD
     assign sd_led_status = {!w_sd_init_done, 5'b0};
+    `endif
 
     // sd state machine for copying sd to dram
     reg [7:0] r_sd_state=0;
