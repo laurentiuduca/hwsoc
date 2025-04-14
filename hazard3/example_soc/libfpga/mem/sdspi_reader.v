@@ -38,9 +38,9 @@ module sdspi_reader (
 
     );
 
-reg [31:0] waddr=0;
+reg [31:0] waddr=0, tc=0;
 reg [7:0] state=0;
-assign w_reader_status = {16'h0, firstbyte, state};
+assign w_reader_status = {rsector[15:0], tc[11:0], state[3:0]};
 wire [7:0] sdctrlstate = sdspi_status[15:8];
 wire [7:0] sdstate = sdspi_status[7:0];
 reg [7:0] firstbyte=0, first=0;
@@ -55,10 +55,11 @@ reg [7:0] firstbyte=0, first=0;
 	    outaddr <= 0;
 	    outbyte <= 0;
 	    waddr <= 0;
+	    tc <= 0;
         end else begin
             if(state == 0) begin
 		rdone <= 0;
-	        if (rstart && !sdsbusy && sdstate == 0 && sdctrlstate == 0 && !pready) begin
+	        if (rstart && !sdsbusy && sdstate == 0 && sdctrlstate == 0 && !pready && !rdone) begin
                         //trigger start reading new sector
 			pwrite <= 1;
 			psel <= 1;
@@ -68,6 +69,7 @@ reg [7:0] firstbyte=0, first=0;
 			state <= 1;
 			waddr <= 0;
 			rbusy <= 1;
+			tc <= tc+1;
 		end
 	    end else if(state == 1) begin
 		    if(pready) begin

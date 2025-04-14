@@ -46,7 +46,8 @@ module sdspi_file_reader #(
         input  wire [31:0] m_sdspi_status
 );
 
-
+assign card_stat = 0;
+assign card_type = 0;
 
 function  [7:0] toUpperCase;
     input [7:0] in;
