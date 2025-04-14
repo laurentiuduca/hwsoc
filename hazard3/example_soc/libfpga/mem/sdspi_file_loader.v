@@ -55,7 +55,7 @@ sdspi_file_reader #(
     .file_found       ( led[  8]       ),  // 0=file not found, 1=file found
     .outen            ( outen          ),
     .outbyte          ( outbyte        ),
-    				.w_reader_status(w_reader_status),
+    				.w_reader_status(w_reader_status_orig),
                                 // signals connect to SD controller
                                 .m_psel(m_psel),
                                 .m_penable(m_penable),
@@ -126,4 +126,7 @@ sdspi_file_reader #(
         end
     end
 
+// laur
+wire [31:0] w_reader_status_orig;
+assign w_reader_status = {i[23:0], w_reader_status_orig[7:0]};
 endmodule

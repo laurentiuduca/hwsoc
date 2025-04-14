@@ -73,6 +73,7 @@ reg [7:0] firstbyte=0, first=0;
 		end
 	    end else if(state == 1) begin
 		    if(pready) begin
+			// command was taken
 			pwrite <= 0;
 			psel <= 0;
 			penable <= 0;
@@ -92,7 +93,7 @@ reg [7:0] firstbyte=0, first=0;
 			pwrite <= 0;
                         psel <= 1;
                         penable <= 1;
-                        paddr <= `SDSPI_BLOCKADDR + (waddr & (`SDSPI_BLOCKSIZE-1));
+                        paddr <= `SDSPI_BLOCKADDR + waddr;
 			state <= 11;
 		    end
 	    end else if(state == 11) begin

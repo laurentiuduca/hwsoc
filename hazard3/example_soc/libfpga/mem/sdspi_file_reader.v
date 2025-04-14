@@ -375,7 +375,7 @@ sdspi_reader u_sdspi_reader (
     .outen      ( rvalid         ),
     .outaddr    ( raddr          ),
     .outbyte    ( rdata          ),
-    				.w_reader_status(w_reader_status),
+    				.w_reader_status(w_reader_status_orig),
                                 // signals connect to SD controller
                                 .psel(m_psel),
                                 .penable(m_penable),
@@ -482,6 +482,7 @@ always @ (posedge clk or negedge rstn) begin
                 if(islongok_t && longvalid_t || isshort_t) begin
                     fready <= 1'b1;
                     fnamelen <= file_namelen;
+		    laurfnamelen <= file_namelen;
                     for(i=0;i<52;i=i+1) fname[i] <= (i<file_namelen) ? file_name[i] : 8'h0;
                     fcluster <= file_1st_cluster_t;
                     fsize <= file_1st_size_t;
@@ -583,5 +584,18 @@ always @ (posedge clk or negedge rstn)
             {outen,outbyte} <= 0;
     end
 
+// laur
+reg foundafile=0;
+reg [7:0] laurfnamelen=0;
+wire [31:0] w_reader_status_orig;
+assign w_reader_status = {w_reader_status_orig[31:16], laurfnamelen, 6'd0, file_found, foundafile};
+always @ (posedge clk or negedge rstn) begin
+    if(~rstn) begin
+        foundafile <= 0;
+    end else begin
+	if(fready)
+	    foundafile <= 1;
+    end
+end
 
 endmodule
