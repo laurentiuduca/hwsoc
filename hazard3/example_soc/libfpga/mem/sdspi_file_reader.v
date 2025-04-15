@@ -208,6 +208,7 @@ always @ (posedge clk or negedge rstn)
         read_start <= 1'b0;
         
         if (read_done) begin
+	    read_start <= 1'b0;
             case(filesystem_state)
             SEARCH_MBR :    if(is_boot_sector) begin
                                 filesystem_state <= SEARCH_DBR;
@@ -482,7 +483,6 @@ always @ (posedge clk or negedge rstn) begin
                 if(islongok_t && longvalid_t || isshort_t) begin
                     fready <= 1'b1;
                     fnamelen <= file_namelen;
-		    laurfnamelen <= file_namelen;
                     for(i=0;i<52;i=i+1) fname[i] <= (i<file_namelen) ? file_name[i] : 8'h0;
                     fcluster <= file_1st_cluster_t;
                     fsize <= file_1st_size_t;
@@ -585,17 +585,7 @@ always @ (posedge clk or negedge rstn)
     end
 
 // laur
-reg foundafile=0;
-reg [7:0] laurfnamelen=0;
 wire [31:0] w_reader_status_orig;
-assign w_reader_status = {w_reader_status_orig[31:16], laurfnamelen, 6'd0, file_found, foundafile};
-always @ (posedge clk or negedge rstn) begin
-    if(~rstn) begin
-        foundafile <= 0;
-    end else begin
-	if(fready)
-	    foundafile <= 1;
-    end
-end
+assign w_reader_status = {file_size[23:0], 1'b0, filesystem_state, 3'd0, file_found};
 
 endmodule

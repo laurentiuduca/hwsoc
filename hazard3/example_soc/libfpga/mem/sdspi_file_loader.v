@@ -128,5 +128,5 @@ sdspi_file_reader #(
 
 // laur
 wire [31:0] w_reader_status_orig;
-assign w_reader_status = {i[23:0], w_reader_status_orig[7:0]};
+assign w_reader_status = w_reader_status_orig; //{i[23:0], w_reader_status_orig[7:0]};
 endmodule

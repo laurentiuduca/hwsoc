@@ -121,6 +121,11 @@ reg [7:0] firstbyte=0, first=0;
 			    rdone <= 1;
 			    state <= 0;
 		    end
+            end else if(state == 14) begin
+		    if(!rstart) begin
+			rdone <= 0;
+                        state <= 0;
+		    end
             end
         end
     end
