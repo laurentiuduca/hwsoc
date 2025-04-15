@@ -208,7 +208,6 @@ always @ (posedge clk or negedge rstn)
         read_start <= 1'b0;
         
         if (read_done) begin
-	    read_start <= 1'b0;
             case(filesystem_state)
             SEARCH_MBR :    if(is_boot_sector) begin
                                 filesystem_state <= SEARCH_DBR;
@@ -551,7 +550,7 @@ always @ (posedge clk or negedge rstn)
         file_cluster <= 0;
         file_size <= 0;
     end else begin
-        if (fready && fnamelen==FILE_NAME_LEN) begin
+        if (fready && fnamelen==FILE_NAME_LEN && !file_found) begin
             file_found <= 1'b1;
             file_cluster <= fcluster;
             file_size <= fsize;
@@ -586,6 +585,7 @@ always @ (posedge clk or negedge rstn)
 
 // laur
 wire [31:0] w_reader_status_orig;
-assign w_reader_status = {file_size[23:0], 1'b0, filesystem_state, 3'd0, file_found};
+assign w_reader_status = {w_reader_status_orig[31:8], //file_size[23:0], 
+			  1'b0, filesystem_state, 3'd0, file_found};
 
 endmodule

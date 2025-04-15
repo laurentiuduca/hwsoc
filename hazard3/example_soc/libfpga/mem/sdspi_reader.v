@@ -38,9 +38,9 @@ module sdspi_reader (
 
     );
 
-reg [31:0] waddr=0, tc=0;
+reg [31:0] waddr=0;
 reg [7:0] state=0;
-assign w_reader_status = {rsector[15:0], tc[11:0], state[3:0]};
+assign w_reader_status = {firstbyte[3:0], first[3:0], 24'h0};
 wire [7:0] sdctrlstate = sdspi_status[15:8];
 wire [7:0] sdstate = sdspi_status[7:0];
 reg [7:0] firstbyte=0, first=0;
@@ -55,10 +55,10 @@ reg [7:0] firstbyte=0, first=0;
 	    outaddr <= 0;
 	    outbyte <= 0;
 	    waddr <= 0;
-	    tc <= 0;
+	    rdone <= 0;
+	    rbusy <= 0;
         end else begin
             if(state == 0) begin
-		rdone <= 0;
 	        if (rstart && !sdsbusy && sdstate == 0 && sdctrlstate == 0 && !pready && !rdone) begin
                         //trigger start reading new sector
 			pwrite <= 1;
@@ -69,7 +69,6 @@ reg [7:0] firstbyte=0, first=0;
 			state <= 1;
 			waddr <= 0;
 			rbusy <= 1;
-			tc <= tc+1;
 		end
 	    end else if(state == 1) begin
 		    if(pready) begin
@@ -111,6 +110,8 @@ reg [7:0] firstbyte=0, first=0;
 			end
 			state <= 12;
 		    end
+		    if(first < 10)
+			    first <= first + 1;
             end else if(state == 12) begin
 		    outen <= 0;
 		    state <= 13;
@@ -118,16 +119,23 @@ reg [7:0] firstbyte=0, first=0;
 		    if(waddr < `SDSPI_BLOCKSIZE)
 		    	state <= 10;
 		    else begin
-			    rdone <= 1;
-			    state <= 0;
+			rdone <= 1;
+			state <= 14;
 		    end
             end else if(state == 14) begin
+		    rdone <= 0;
 		    if(!rstart) begin
-			rdone <= 0;
-                        state <= 0;
+                        state <= 15;
 		    end
+            end else if(state == 15) begin
+                    if(rstart) begin
+                        state <= 0;
+                    end
             end
-        end
+	    if (!rstart && first >= 10) begin
+               	    firstbyte <= state;
+            end
+	end	
     end
 
 endmodule
