@@ -29,13 +29,12 @@ module sdspi_reader (
     // user read sector command interface (sync with clk)
     input  wire         rstart,
     input  wire [31:0]  rsector,
-    output reg         rbusy,
     output reg         rdone,
     // sector data output interface (sync with clk)
     output reg          outen,             // when outen=1, a byte of sector content is read out from outbyte
     output reg  [ 8:0]  outaddr,           // outaddr from 0 to 511, because the sector size is 512
-    output reg  [ 7:0]  outbyte            // a byte of sector content
-
+    output reg  [ 7:0]  outbyte,           // a byte of sector content
+    input wire		frbusy
     );
 
 reg [31:0] waddr=0, pauser=0;
@@ -56,7 +55,6 @@ reg [7:0] firstbyte=0, first=0;
 	    outbyte <= 0;
 	    waddr <= 0;
 	    rdone <= 0;
-	    rbusy <= 0;
 	    pauser <= 0;
         end else begin
             if(state == 0) begin
@@ -69,7 +67,6 @@ reg [7:0] firstbyte=0, first=0;
 			paddr <= `SDSPI_DEVADDR; // < `SDSPI_BLOCKADDR;
 			state <= 1;
 			waddr <= 0;
-			rbusy <= 1;
 		end
 	    end else if(state == 1) begin
 		    if(pready) begin
@@ -104,7 +101,6 @@ reg [7:0] firstbyte=0, first=0;
 			outen <= 1;
 			outaddr <= waddr;
 			waddr <= waddr + 1;
-			rbusy <= 0;
 			if(waddr == 0 && first == 0) begin
 				first <= 1;
 				firstbyte <= prdata[7:0];
@@ -119,11 +115,8 @@ reg [7:0] firstbyte=0, first=0;
 		    state <= 13;
 	    end else if(state == 13) begin
 		    if(waddr < `SDSPI_BLOCKSIZE) begin
-			if(pauser > 400) begin
-				pauser <= 0;
+			    if(!frbusy)
 		    		state <= 10;
-			end else 
-				pauser <= pauser + 1;
 		    end else begin
 			rdone <= 1;
 			state <= 14;

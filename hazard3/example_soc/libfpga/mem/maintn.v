@@ -129,11 +129,17 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
     wire [31:0] w_sdloader_state;
     `ifdef SDSPI
     `ifdef FAT32_SD
-    sdspi_file_loader sdspi_file_loader
-      (.clk27mhz(clk), .resetn(rst_x),
-        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
-        .w_ctrl_state(r_sd_state), .tangled(sd_led_status), .w_reader_status(w_sdloader_state),
-				// signals connect to SD controller
+    sdspi_file_reader #(
+        .FILE_NAME_LEN    ( 11      ),         
+        .FILE_NAME        ( "initmem.bin"  )  
+    ) u_sd_file_reader (
+    .rstn             ( rst_x         ),
+    .clk              ( clk            ),
+    .filesystem_type  ( filesystem_type      ),  // 0=UNASSIGNED , 1=UNKNOWN , 2=FAT16 , 3=FAT32 
+    .file_found       ( file_found        ),  // 0=file not found, 1=file found
+    .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .BOOTDONE(w_sd_init_done), .w_ctrl_state(r_sd_state),
+                                .w_reader_status(w_sdloader_state),
+                                // signals connect to SD controller
                                 .m_psel(m_psel),
                                 .m_penable(m_penable),
                                 .m_pwrite(m_pwrite),
@@ -144,6 +150,9 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
                                 .m_pslverr(m_pslverr),
                                 .m_sdsbusy(m_sdsbusy),
                                 .m_sdspi_status(m_sdspi_status));
+	wire file_found;
+	wire [1:0] filesystem_type;
+	wire [5:0] sd_led_status = ~{w_sd_init_done, file_found, filesystem_type, 2'b00};
     `else
     sdspi_loader sdspi_loader(.clk27mhz(clk), .resetn(rst_x),
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done), 

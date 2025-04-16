@@ -34,6 +34,12 @@ module sdspi_file_reader #(
     // file content data output (sync with clk)
     output reg        outen,             // when outen=1, a byte of file content is read out from outbyte
     output reg  [7:0] outbyte,            // a byte of file content
+    input  wire [2:0]   w_main_init_state,
+    input  wire [7:0]   w_ctrl_state,
+    output reg  [31:0]  DATA,
+    output reg          WE,
+    output reg          BOOTDONE,
+    output wire		frbusy,
         output wire [31:0]  w_reader_status,
         // signals connect to SD controller
         output wire        m_psel,
@@ -372,11 +378,11 @@ sdspi_reader u_sdspi_reader (
     .clk        ( clk            ),
     .rstart     ( read_start     ),
     .rsector    ( read_sector_no ),
-    .rbusy      (                ),
     .rdone      ( read_done      ),
     .outen      ( rvalid         ),
     .outaddr    ( raddr          ),
     .outbyte    ( rdata          ),
+    .frbusy   ( frbusy       ),
     				.w_reader_status(w_reader_status_orig),
                                 // signals connect to SD controller
                                 .psel(m_psel),
@@ -572,17 +578,64 @@ always @ (posedge clk or negedge rstn)
 // output file content
 //----------------------------------------------------------------------------------------------------------------------
 reg [31:0] fptr = 0;
+reg [7:0] mw[0:3];
 
 always @ (posedge clk or negedge rstn)
     if(~rstn) begin
         fptr <= 0;
         {outen,outbyte} <= 0;
+	send <= 0;
     end else begin
+	send <= 0;
         if(rvalid && filesystem_state==READ_A_FILE && ~search_fat && fptr<file_size) begin
             fptr <= fptr + 1;
             {outen,outbyte} <= {1'b1,rdata};
+	    mw[fptr[1:0]] <= outbyte;
+            if(fptr[1:0] == 2'b11) begin
+                    DATA <= {outbyte, mw[2], mw[1], mw[0]};
+		    send <= 1;
+            end
         end else
             {outen,outbyte} <= 0;
+    end
+
+    reg [7:0] state=0;
+    reg [3:0] senti;
+    reg send=0;
+    assign frbusy = fptr[2:0] == 3'd4 && !(state == 22 && (w_ctrl_state == 0));
+    always @(posedge clk or negedge rstn) begin
+        if(!rstn) begin
+            state <= 0;
+            WE <= 0;
+            BOOTDONE <= 0;
+            senti <= 0;
+        end else begin
+            if(state == 0) begin
+                if (BOOTDONE==0) begin
+                    if(frbusy && send) begin
+                        state <= 20;
+                    end
+                end
+            end else if(state == 20) begin
+                if(w_ctrl_state == 0)
+                    if(senti < `BIN_SIZE) begin
+                        WE <= 1;
+                        senti <= senti + 4;
+                        state <= 21;
+                    end
+            end else if(state == 21) begin
+                if(w_ctrl_state != 0) begin
+                    WE <= 0;
+                    state <= 22;
+                    if(senti>=`BIN_SIZE)
+                        BOOTDONE <= 1;
+                end
+            end else if(state == 22) begin
+                if(w_ctrl_state == 0) begin
+                    state <= 0;
+                end
+            end
+        end
     end
 
 // laur
