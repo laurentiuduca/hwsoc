@@ -9,6 +9,8 @@
 //           Support FileSystem : FAT16 or FAT32
 //--------------------------------------------------------------------------------------------------------
 
+`include "define.vh"
+
 module sdspi_file_reader #(
     parameter            FILE_NAME_LEN = 11           , // length of FILE_NAME (in bytes). Since the length of "example.txt" is 11, so here is 11.
     parameter [52*8-1:0] FILE_NAME     = "example.txt", // file name to read, ignore upper and lower case
@@ -302,7 +304,7 @@ always @ (posedge clk or negedge rstn)
                                         read_sector_no <= first_data_sector_no_t + cluster_size_t * curr_cluster_t + cluster_sector_offset_t;
                                     end
                                 end else begin
-                                    if(target_cluster=='h0FFF_FFFF || target_cluster=='h0FFF_FFF8 || target_cluster=='hFFFF_FFFF || target_cluster<2) begin
+                                    if(target_cluster=='h0FFF_FFFF || target_cluster=='h0FFF_FFF8 || target_cluster=='hFFFF_FFFF || target_cluster<2 || fptr>=`BIN_SIZE) begin
                                         filesystem_state <= DONE;   // read to the end of file, done
                                     end else begin
                                         curr_cluster_t = target_cluster;
@@ -585,7 +587,7 @@ always @ (posedge clk or negedge rstn)
 
 // laur
 wire [31:0] w_reader_status_orig;
-assign w_reader_status = {w_reader_status_orig[31:8], //file_size[23:0], 
+assign w_reader_status = {fptr[23:0], //file_size[23:0], 
 			  1'b0, filesystem_state, 3'd0, file_found};
 
 endmodule

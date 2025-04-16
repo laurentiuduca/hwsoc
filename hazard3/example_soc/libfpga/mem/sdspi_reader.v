@@ -38,7 +38,7 @@ module sdspi_reader (
 
     );
 
-reg [31:0] waddr=0;
+reg [31:0] waddr=0, pauser=0;
 reg [7:0] state=0;
 assign w_reader_status = {firstbyte[3:0], first[3:0], 24'h0};
 wire [7:0] sdctrlstate = sdspi_status[15:8];
@@ -57,6 +57,7 @@ reg [7:0] firstbyte=0, first=0;
 	    waddr <= 0;
 	    rdone <= 0;
 	    rbusy <= 0;
+	    pauser <= 0;
         end else begin
             if(state == 0) begin
 	        if (rstart && !sdsbusy && sdstate == 0 && sdctrlstate == 0 && !pready && !rdone) begin
@@ -114,11 +115,16 @@ reg [7:0] firstbyte=0, first=0;
 			    first <= first + 1;
             end else if(state == 12) begin
 		    outen <= 0;
+		    pauser <= 0;
 		    state <= 13;
 	    end else if(state == 13) begin
-		    if(waddr < `SDSPI_BLOCKSIZE)
-		    	state <= 10;
-		    else begin
+		    if(waddr < `SDSPI_BLOCKSIZE) begin
+			if(pauser > 400) begin
+				pauser <= 0;
+		    		state <= 10;
+			end else 
+				pauser <= pauser + 1;
+		    end else begin
 			rdone <= 1;
 			state <= 14;
 		    end
