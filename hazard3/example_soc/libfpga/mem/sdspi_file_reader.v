@@ -600,9 +600,9 @@ always @ (posedge clk or negedge rstn)
     end
 
     reg [7:0] state=0;
-    reg [3:0] senti;
+    reg [3:0] senti=0;
     reg send=0;
-    assign frbusy = fptr[2:0] == 3'd4 && !(state == 22 && (w_ctrl_state == 0));
+    assign frbusy = w_main_init_state != 3 || (fptr[2:0] == 3'd4 && !(state == 22 && (w_ctrl_state == 0)));
     always @(posedge clk or negedge rstn) begin
         if(!rstn) begin
             state <= 0;
@@ -627,13 +627,13 @@ always @ (posedge clk or negedge rstn)
                 if(w_ctrl_state != 0) begin
                     WE <= 0;
                     state <= 22;
-                    if(senti>=`BIN_SIZE)
-                        BOOTDONE <= 1;
                 end
             end else if(state == 22) begin
                 if(w_ctrl_state == 0) begin
                     state <= 0;
                 end
+		if(senti>=`BIN_SIZE)
+                        BOOTDONE <= 1;
             end
         end
     end

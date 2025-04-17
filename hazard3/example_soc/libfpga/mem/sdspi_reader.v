@@ -85,7 +85,7 @@ reg [7:0] firstbyte=0, first=0;
 			state <= 10;
 		    end
 	    end else if(state == 10) begin
-		    if(!pready && sdctrlstate == 0) begin
+		    if(!pready && sdctrlstate == 0 && !frbusy) begin
 			// read byte from sd ctrl mem
 			pwrite <= 0;
                         psel <= 1;
@@ -115,8 +115,7 @@ reg [7:0] firstbyte=0, first=0;
 		    state <= 13;
 	    end else if(state == 13) begin
 		    if(waddr < `SDSPI_BLOCKSIZE) begin
-			    if(!frbusy)
-		    		state <= 10;
+		    	state <= 10;
 		    end else begin
 			rdone <= 1;
 			state <= 14;

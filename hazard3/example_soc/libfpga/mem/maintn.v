@@ -490,8 +490,8 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         );
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(21'd100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {m_sdspi_status} :
-	    		w_btnl ? {w_sdloader_state} : w_sd_checksum; // {24'h0, 5'b0, r_init_state}; 
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {5'b0, r_init_state[2:0], r_initaddr3[23:0]} : w_btnr ? w_sd_checksum :
+	    		w_btnl ? {w_sdloader_state} : {m_sdspi_status}; // {24'h0, 5'b0, r_init_state}; 
 
     
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
