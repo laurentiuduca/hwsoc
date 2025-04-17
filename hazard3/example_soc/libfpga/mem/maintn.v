@@ -194,7 +194,7 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
 
     // sd state machine for copying sd to dram
     reg [7:0] r_sd_state=0;
-
+    reg [31:0] diff1=0, diff2=0, setdiff=0;
     always @ (posedge clk) begin
             if(r_sd_state == 0) begin
                 if(w_sd_init_we && !w_dram_busy) begin
@@ -206,11 +206,16 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
             end else if(r_sd_state == 1) begin
                 if(w_dram_busy) begin
                     r_sd_init_we <= 0;
+		    r_initaddr3 <= r_initaddr3 + 4;
                     r_sd_state <= 2;
                 end
             end else if(r_sd_state == 2) begin
                 if(!w_dram_busy) begin
-                    r_initaddr3 <= r_initaddr3 + 4;
+ 		    if ((w_sdloader_state[31:10] != r_initaddr3[23:2]) && !setdiff) begin
+	                diff1 <= w_sdloader_state;
+			diff2 <= r_initaddr3;
+			setdiff <= 1;
+		    end
                     r_sd_state <= 0;
                 end
             end
@@ -490,8 +495,9 @@ module m_maintn #(parameter PRELOAD_FILE = "") (
         );
     clkdivider cd(.clk(clk), .reset_n(rst_x), .n(21'd100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? {5'b0, r_init_state[2:0], r_initaddr3[23:0]} : w_btnr ? w_sd_checksum :
-	    		w_btnl ? {w_sdloader_state} : {m_sdspi_status}; // {24'h0, 5'b0, r_init_state}; 
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_sdloader_state : //{5'b0, r_init_state[2:0], r_initaddr3[23:0]} 
+    			w_btnr ? diff2 : //w_sd_checksum :
+	    		w_btnl ? diff1 : {m_sdspi_status}; // {24'h0, 5'b0, r_init_state}; 
 
     
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 

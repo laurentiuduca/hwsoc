@@ -586,7 +586,6 @@ always @ (posedge clk or negedge rstn)
         {outen,outbyte} <= 0;
 	send <= 0;
     end else begin
-	send <= 0;
         if(rvalid && filesystem_state==READ_A_FILE && ~search_fat && fptr<file_size) begin
             fptr <= fptr + 1;
             {outen,outbyte} <= {1'b1,rdata};
@@ -594,15 +593,18 @@ always @ (posedge clk or negedge rstn)
             if(fptr[1:0] == 2'b11) begin
                     DATA <= {rdata, mw[2], mw[1], mw[0]};
 		    send <= 1;
-            end
-        end else
+            end else
+		    send <= 0;
+         end else begin
             {outen,outbyte} <= 0;
+	    send <= 0;
+	 end
     end
 
     reg [7:0] state=0;
     reg [31:0] senti=0;
     reg send=0;
-    assign frbusy = w_main_init_state != 3 || (fptr[2:0] == 3'd4 && !(state == 22 && (w_ctrl_state == 0)));
+    assign frbusy = (w_main_init_state != 3) || (fptr[2:0] == 3'd4 && !(state == 22 && (w_ctrl_state == 0)));
     always @(posedge clk or negedge rstn) begin
         if(!rstn) begin
             state <= 0;
@@ -612,7 +614,7 @@ always @ (posedge clk or negedge rstn)
         end else begin
             if(state == 0) begin
                 if (BOOTDONE==0) begin
-                    if(frbusy && send) begin
+                    if(send) begin
                         state <= 20;
                     end
                 end
