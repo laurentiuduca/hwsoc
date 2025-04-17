@@ -36,6 +36,7 @@ make
 
 4. simulate in verilator
 cd ../hazard3
+set SIM_MODE in define.vh
 ./run-nuttx2.sh
 
 5. notes
