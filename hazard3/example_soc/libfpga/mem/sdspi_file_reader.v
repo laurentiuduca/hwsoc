@@ -382,7 +382,7 @@ sdspi_reader u_sdspi_reader (
     .outen      ( rvalid         ),
     .outaddr    ( raddr          ),
     .outbyte    ( rdata          ),
-    .frbusy   ( frbusy       ),
+    .frbusy     ( frbusy       ),
     				.w_reader_status(w_reader_status_orig),
                                 // signals connect to SD controller
                                 .psel(m_psel),
@@ -590,9 +590,9 @@ always @ (posedge clk or negedge rstn)
         if(rvalid && filesystem_state==READ_A_FILE && ~search_fat && fptr<file_size) begin
             fptr <= fptr + 1;
             {outen,outbyte} <= {1'b1,rdata};
-	    mw[fptr[1:0]] <= outbyte;
+	    mw[fptr[1:0]] <= rdata;
             if(fptr[1:0] == 2'b11) begin
-                    DATA <= {outbyte, mw[2], mw[1], mw[0]};
+                    DATA <= {rdata, mw[2], mw[1], mw[0]};
 		    send <= 1;
             end
         end else
@@ -600,7 +600,7 @@ always @ (posedge clk or negedge rstn)
     end
 
     reg [7:0] state=0;
-    reg [3:0] senti=0;
+    reg [31:0] senti=0;
     reg send=0;
     assign frbusy = w_main_init_state != 3 || (fptr[2:0] == 3'd4 && !(state == 22 && (w_ctrl_state == 0)));
     always @(posedge clk or negedge rstn) begin
@@ -638,7 +638,6 @@ always @ (posedge clk or negedge rstn)
         end
     end
 
-// laur
 wire [31:0] w_reader_status_orig;
 assign w_reader_status = {fptr[23:0], //file_size[23:0], 
 			  1'b0, filesystem_state, 3'd0, file_found};
