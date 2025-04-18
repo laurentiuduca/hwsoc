@@ -181,8 +181,7 @@ wire [N_PORTS-1:0] mast_in_dphase = buf_valid | mast_gnt_d;
 // There are two reasons to report ready:
 // - the master is currently not in data phase with the arbiter (IDLE)
 // - the master is in data phase with both arbiter and slave, and slave is ready
-// laur
-assign src_hready_resp = /*~mast_in_dphase |*/ (mast_gnt_d & {N_PORTS{dst_hready_resp}});
+assign src_hready_resp = ~mast_in_dphase | (mast_gnt_d & {N_PORTS{dst_hready_resp}});
 assign src_hresp = mast_gnt_d & {N_PORTS{dst_hresp}};
 assign src_hrdata = {N_PORTS{dst_hrdata}};
 
