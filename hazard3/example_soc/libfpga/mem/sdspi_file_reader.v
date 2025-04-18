@@ -1,3 +1,6 @@
+// modified by laurentiu cristian duca, 20250417
+// spdx license identifier apache2
+// works with sdspi_reader
 
 //--------------------------------------------------------------------------------------------------------
 // Module  : sd_file_reader

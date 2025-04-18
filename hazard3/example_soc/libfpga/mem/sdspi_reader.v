@@ -1,5 +1,6 @@
-// modified by Laurentiu-Cristian Duca, 2023-09-12
-// used to copy linux from microsd to ram
+// modified by Laurentiu-Cristian Duca, 2025-04-12
+// spdx license identifier apache2
+// used to copy nuttx from spi-microsd to ram
 // adapted from https://github.com/WangXuan95/FPGA-SDcard-Reader
 //--------------------------------------------------------------------------------------------------------
 

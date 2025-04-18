@@ -1,3 +1,6 @@
+// author laurentiu cristian duca
+// spdx license identifier apache
+// sd driver
 
 `include "define.vh"
 
