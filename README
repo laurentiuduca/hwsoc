@@ -48,7 +48,7 @@ make gwsynth
 if FAT32_SD is in define.vh
   cp initmem_gen2/initmem.bin /media/sdfolder
 else
-  // here /dev/sdb is your sd block
+  // here /dev/sdb is your sd device node
   dd if=initmem_gen2/initmem.bin of=/dev/sdb bs=512 seek=0 && sync
 openFPGALoader --board tangnano20k impl/pnr/project.fs
 
