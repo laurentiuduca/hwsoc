@@ -8,6 +8,8 @@ cd nuttx
 patch -p1 <../nuttx-patch-12.8.0.patch
 cd ../apps
 patch -p1 < ../nuttx-apps-patch-12.8.0.patch
+note - this patches were generated
+with instructions similar to the rlsoc-nuttx repository
 
 1. config nuttx
 cd -
