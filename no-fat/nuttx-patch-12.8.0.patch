@@ -1,0 +1,453 @@
+diff -Naur nuttx-12.8.0/arch/risc-v/src/common/riscv_mtimer.c nuttx/arch/risc-v/src/common/riscv_mtimer.c
+--- nuttx-12.8.0/arch/risc-v/src/common/riscv_mtimer.c	2025-01-24 11:45:28.344708848 +0200
++++ nuttx/arch/risc-v/src/common/riscv_mtimer.c	2025-02-24 15:46:24.647568824 +0200
+@@ -121,6 +121,7 @@
+   else
+ #endif
+     {
++      // hazard3 has timer
+       putreg32(UINT32_MAX, priv->mtimecmp + 4);
+       putreg32(value, priv->mtimecmp);
+       putreg32(value >> 32, priv->mtimecmp + 4);
+@@ -324,6 +325,7 @@
+   return 0;
+ }
+ 
++int tints=0;
+ static int riscv_mtimer_interrupt(int irq, void *context, void *arg)
+ {
+   struct riscv_mtimer_lowerhalf_s *priv = arg;
+@@ -333,6 +335,10 @@
+       priv->callback(&priv->lower, priv->arg);
+     }
+ 
++  //_info("$");
++  //*(int*)(0x4000400c) = '$';
++  tints++;
++
+   return 0;
+ }
+ 
+@@ -340,6 +346,8 @@
+  * Public Functions
+  ****************************************************************************/
+ 
++
++//extern int tints;
+ struct oneshot_lowerhalf_s *
+ riscv_mtimer_initialize(uintreg_t mtime, uintreg_t mtimecmp,
+                         int irq, uint64_t freq)
+@@ -358,6 +366,8 @@
+       riscv_mtimer_set_mtimecmp(priv, priv->alarm);
+       irq_attach(irq, riscv_mtimer_interrupt, priv);
+       up_enable_irq(irq);
++      //_info("enabled timer irq %d\n", irq);
++      //tints += 1000000000;
+     }
+ 
+   return (struct oneshot_lowerhalf_s *)priv;
+diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h
+--- nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h	2025-01-24 11:45:28.358707919 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h	2025-02-24 15:15:08.008934335 +0200
+@@ -28,8 +28,8 @@
+  ****************************************************************************/
+ 
+ #define QEMU_RV_CLINT_MSIP      (QEMU_RV_CLINT_BASE + 0x0000)
+-#define QEMU_RV_CLINT_MTIMECMP  (QEMU_RV_CLINT_BASE + 0x4000)
+-#define QEMU_RV_CLINT_MTIME     (QEMU_RV_CLINT_BASE + 0xbff8)
++#define QEMU_RV_CLINT_MTIMECMP  (QEMU_RV_CLINT_BASE + 0x0010) 
++#define QEMU_RV_CLINT_MTIME     (QEMU_RV_CLINT_BASE + 0x0008) 
+ 
+ #define QEMU_RV_ACLINT_SSIP     (QEMU_RV_ACLINT_BASE + 0x0000)
+ 
+diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h
+--- nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h	2025-01-24 11:45:28.358707919 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h	2025-02-21 15:26:21.270658843 +0200
+@@ -32,22 +32,22 @@
+ #ifdef CONFIG_ARCH_CHIP_QEMU_RV_PLIC
+ #  define QEMU_RV_PLIC_BASE    CONFIG_ARCH_CHIP_QEMU_RV_PLIC
+ #else
+-#  define QEMU_RV_PLIC_BASE    0xc000000
++#  define QEMU_RV_PLIC_BASE    0x50000000
+ #endif
+ 
+ #ifdef CONFIG_ARCH_CHIP_QEMU_RV_CLINT
+ #  define QEMU_RV_CLINT_BASE   CONFIG_ARCH_CHIP_QEMU_RV_CLINT
+ #else
+-#  define QEMU_RV_CLINT_BASE   0x2000000
++#  define QEMU_RV_CLINT_BASE   0x40000000
+ #endif
+ 
+ #ifdef CONFIG_ARCH_CHIP_QEMU_RV_ACLINT
+ #  define QEMU_RV_ACLINT_BASE  CONFIG_ARCH_CHIP_QEMU_RV_ACLINT
+ #else
+-#  define QEMU_RV_ACLINT_BASE  0x2f00000
++#  define QEMU_RV_ACLINT_BASE  #define QEMU_RV_ACLINT_BASE  0x40000000
+ #endif
+ 
+-#define   QEMU_RV_RESET_BASE   0x100000
++#define   QEMU_RV_RESET_BASE   0x00000000 /*0x100000*/
+ 
+ #ifdef CONFIG_ARCH_USE_S_MODE
+ #  define QEMU_RV_APLIC_BASE   0x0d000000
+diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_head.S nuttx/arch/risc-v/src/qemu-rv/qemu_rv_head.S
+--- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_head.S	2025-01-24 11:45:28.357707986 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_head.S	2025-02-21 15:26:21.270658843 +0200
+@@ -44,10 +44,17 @@
+   .global __start
+ 
+ __start:
++   lui     t3,0x40000
++   li      t4,0x31
++   sw      t4,0xc(t3)
++
+ #else
+   .global __start_s
+ 
+ __start_s:
++   lui     t3,0x40008
++   li      t4,0x31
++   sw      t4,0(t3)
+ #endif
+ 
+   /* Preserve a1 as it contains the pointer to DTB */
+diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_irq.c nuttx/arch/risc-v/src/qemu-rv/qemu_rv_irq.c
+--- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_irq.c	2025-01-24 11:45:28.358707919 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_irq.c	2025-02-21 15:26:21.271658814 +0200
+@@ -237,6 +237,9 @@
+ {
+   int extirq;
+ 
++  _info("up_enable_irq %d RISCV_IRQ_SOFT=%d RISCV_IRQ_TIMER=%d RISCV_IRQ_EXT=%d \n", 
++		  irq, RISCV_IRQ_SOFT, RISCV_IRQ_TIMER, RISCV_IRQ_EXT);
++
+   if (irq == RISCV_IRQ_SOFT)
+     {
+       /* Read m/sstatus & set machine software interrupt enable in m/sie */
+diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_start.c nuttx/arch/risc-v/src/qemu-rv/qemu_rv_start.c
+--- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_start.c	2025-01-24 11:45:28.358707919 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_start.c	2025-02-21 15:26:21.270658843 +0200
+@@ -219,7 +219,7 @@
+ #endif
+ 
+   /* Call nx_start() */
+-
++  _info("nx start ...\n");
+   nx_start();
+ 
+ cpux:
+diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c nuttx/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c
+--- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c	2025-01-24 11:45:28.358707919 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c	2025-02-21 15:26:21.271658814 +0200
+@@ -48,8 +48,8 @@
+  * Pre-processor Definitions
+  ****************************************************************************/
+ 
+-#define MTIMER_FREQ 10000000
+-#define TICK_COUNT (10000000 / TICK_PER_SEC)
++#define MTIMER_FREQ 27000000
++#define TICK_COUNT (27000000 / TICK_PER_SEC)
+ 
+ /****************************************************************************
+  * Public Functions
+diff -Naur nuttx-12.8.0/drivers/serial/uart_16550.c nuttx/drivers/serial/uart_16550.c
+--- nuttx-12.8.0/drivers/serial/uart_16550.c	2025-01-24 11:45:28.649688621 +0200
++++ nuttx/drivers/serial/uart_16550.c	2025-02-21 15:26:22.858612388 +0200
+@@ -645,10 +645,12 @@
+ static inline uart_datawidth_t u16550_serialin(FAR struct u16550_s *priv,
+                                                int offset)
+ {
++  return 0;
++
+   /* Get correct offset */
+ 
+-  offset *= (priv->regincr * sizeof(uart_datawidth_t));
+-  return priv->ops->getreg(priv, offset);
++  //offset *= (priv->regincr * sizeof(uart_datawidth_t));
++  //return priv->ops->getreg(priv, offset);
+ }
+ 
+ /****************************************************************************
+@@ -660,8 +662,8 @@
+ {
+   /* Get correct offset */
+ 
+-  offset *= (priv->regincr * sizeof(uart_datawidth_t));
+-  priv->ops->putreg(priv, offset, value);
++  //offset *= (priv->regincr * sizeof(uart_datawidth_t));
++  //priv->ops->putreg(priv, offset, value);
+ }
+ 
+ #ifdef CONFIG_16550_WAIT_LCR
+@@ -682,6 +684,8 @@
+ 
+ static int u16550_wait(FAR struct u16550_s *priv)
+ {
++  return OK;
++#if 0
+   int i;
+ 
+   for (i = 0; i < UART_TIMEOUT_MS; i++)
+@@ -698,6 +702,7 @@
+ 
+   _err("UART timeout\n");
+   return ERROR;
++#endif
+ }
+ #endif /* CONFIG_16550_WAIT_LCR */
+ 
+@@ -1702,12 +1707,19 @@
+  *
+  ****************************************************************************/
+ 
++void console_putchar(int ch)
++{
++  *(volatile int *) 0x4000400c = ch;
++}
++
+ #ifdef HAVE_16550_CONSOLE
+ void up_putc(int ch)
+ {
+-  FAR struct u16550_s *priv = (FAR struct u16550_s *)CONSOLE_DEV.priv;
++  console_putchar(ch);
++
++  //FAR struct u16550_s *priv = (FAR struct u16550_s *)CONSOLE_DEV.priv;
+ 
+-  u16550_putc(priv, ch);
++  //u16550_putc(priv, ch);
+ }
+ #endif
+ 
+diff -Naur nuttx-12.8.0/sched/clock/clock_initialize.c nuttx/sched/clock/clock_initialize.c
+--- nuttx-12.8.0/sched/clock/clock_initialize.c	2025-01-24 11:45:28.739682653 +0200
++++ nuttx/sched/clock/clock_initialize.c	2025-02-21 15:26:23.414596123 +0200
+@@ -207,7 +207,7 @@
+     !defined(CONFIG_SUPPRESS_TIMER_INTS) && \
+     !defined(CONFIG_SYSTEMTICK_EXTCLK)
+   /* Initialize the system timer interrupt */
+-
++  _info("up_timer_initialize start\n");
+   up_timer_initialize();
+ #endif
+ 
+@@ -215,20 +215,22 @@
+   /* Initialize the internal RTC hardware.  Initialization of external RTC
+    * must be deferred until the system has booted.
+    */
+-
++  _info("up_rtc start\n");
+   up_rtc_initialize();
+ 
+ #if !defined(CONFIG_RTC_EXTERNAL)
+   /* Initialize the time value to match the RTC */
+-
++  _info("inittime start\n");
+   clock_inittime(NULL);
+ #endif
+ 
+ #endif
+ 
++  _info("perf start\n");
+   perf_init();
+ 
+ #ifdef CONFIG_SCHED_CPULOAD_SYSCLK
++  _info("cpu load start\n");
+   cpuload_init();
+ #endif
+ 
+diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
+--- nuttx-12.8.0/sched/init/nx_start.c	2025-01-24 11:45:28.750681923 +0200
++++ nuttx/sched/init/nx_start.c	2025-02-21 15:26:23.451595040 +0200
+@@ -501,6 +501,15 @@
+  * Public Functions
+  ****************************************************************************/
+ 
++int riscv_ext_int_1(int irq, void *c, void *arg)
++{
++	// interrupt ack
++	*(int *) 0x3ffffffc = 1;
++        //_info("ext int\n");
++
++        return 0;
++}
++
+ /****************************************************************************
+  * Name: nx_start
+  *
+@@ -521,7 +530,7 @@
+ {
+   int i;
+ 
+-  sinfo("Entry\n");
++  _info("Entry\n");
+ 
+   /* Boot up is complete */
+ 
+@@ -530,10 +539,12 @@
+   /* Initialize task list table *********************************************/
+ 
+   tasklist_initialize();
++  _info("tasklist initialize done");
+ 
+   /* Initialize the IDLE task TCB *******************************************/
+ 
+   idle_task_initialize();
++  _info("task initialize done");
+ 
+   /* Task lists are initialized */
+ 
+@@ -542,8 +553,11 @@
+   /* Initialize RTOS Data ***************************************************/
+ 
+   drivers_early_initialize();
++  _info("drivers early done");
++
+ 
+   sched_trace_begin();
++  _info("sched trace done");
+ 
+   /* Initialize RTOS facilities *********************************************/
+ 
+@@ -552,6 +566,7 @@
+    */
+ 
+   nxsem_initialize();
++  _info("nxsem initialize done");
+ 
+ #if defined(MM_KERNEL_USRHEAP_INIT) || defined(CONFIG_MM_KERNEL_HEAP) || \
+     defined(CONFIG_MM_PGALLOC)
+@@ -568,15 +583,17 @@
+ 
+       up_allocate_heap(&heap_start, &heap_size);
+       kumm_initialize(heap_start, heap_size);
++      _info("kumm initialize done");
+ #endif
+ 
+ #ifdef CONFIG_MM_KERNEL_HEAP
+       /* Get the kernel-mode heap from the platform specific code and
+        * configure the kernel-mode memory allocator.
+        */
+-
++      _info("before up allocate k");
+       up_allocate_kheap(&heap_start, &heap_size);
+       kmm_initialize(heap_start, heap_size);
++      _info("kmm initialize done");
+ #endif
+ 
+ #ifdef CONFIG_MM_PGALLOC
+@@ -584,29 +601,33 @@
+        * heap information from the platform-specific code and configure the
+        * page allocator.
+        */
+-
++      _info("before up allocate pg");
+       up_allocate_pgheap(&heap_start, &heap_size);
+       mm_pginitialize(heap_start, heap_size);
++      _info("mm pginitialize done");
+ #endif
+     }
+ #endif
+ 
+ #ifdef CONFIG_MM_KMAP
+   /* Initialize the kernel dynamic mapping module */
+-
++  _info("before kmm map");
+   kmm_map_initialize();
++  _info("kmm map done");
+ #endif
+ 
+ #ifdef CONFIG_ARCH_HAVE_EXTRA_HEAPS
+   /* Initialize any extra heap. */
+ 
+   up_extraheaps_init();
++  _info("up extraheaps done");
+ #endif
+ 
+ #ifdef CONFIG_MM_IOB
+   /* Initialize IO buffering */
+ 
+   iob_initialize();
++  _info("iob done");
+ #endif
+ 
+   /* Initialize the logic that determine unique process IDs. */
+@@ -616,9 +637,11 @@
+     {
+       i <<= 1;
+     }
++  _info("nx_start while smp done");
+ 
+   g_pidhash = kmm_zalloc(sizeof(*g_pidhash) * i);
+   DEBUGASSERT(g_pidhash);
++  _info("kmm zalloc done");
+ 
+   g_npidhash = i;
+ 
+@@ -635,7 +658,7 @@
+   /* Initialize tasking data structures */
+ 
+   task_initialize();
+-
++  _info("task init done");
+   /* Initialize the instrument function */
+ 
+   instrument_initialize();
+@@ -646,14 +669,20 @@
+ 
+   /* Initialize the interrupt handling subsystem (if included) */
+ 
++  _info("irq initialize");
+   irq_initialize();
++  _info("irq initialize done");
+ 
+   /* Initialize the POSIX timer facility (if included in the link) */
+ 
++  _info("clc ");
+   clock_initialize();
++  _info("clock initialize done");
+ 
+ #ifndef CONFIG_DISABLE_POSIX_TIMERS
++  _info("before timer initialize");
+   timer_initialize();
++  _info("timer done");
+ #endif
+ 
+   /* Initialize the signal facility (if in link) */
+@@ -747,6 +776,8 @@
+ #endif /* CONFIG_SMP */
+ 
+   /* Bring Up the System ****************************************************/
++  //  int ret = irq_attach(RISCV_IRQ_EXT+1, riscv_ext_int_1, NULL);
++  //_info("irq_attach %x returns %d\n", RISCV_IRQ_EXT+1, ret);
+ 
+   /* The OS is fully initialized and we are beginning multi-tasking */
+ 
+@@ -755,7 +786,7 @@
+   /* Create initial tasks and bring-up the system */
+ 
+   DEBUGVERIFY(nx_bringup());
+-
++  _info("nx bringup done");
+   /* Enter to idleloop */
+ 
+   g_nx_initstate = OSINIT_IDLELOOP;
+@@ -763,6 +794,7 @@
+   /* Let other threads have access to the memory manager */
+ 
+   sched_trace_end();
++  _info("sched trace end");
+   sched_unlock();
+ 
+   /* The IDLE Loop **********************************************************/
+diff -Naur nuttx-12.8.0/sched/irq/irq_attach_thread.c nuttx/sched/irq/irq_attach_thread.c
+--- nuttx-12.8.0/sched/irq/irq_attach_thread.c	2025-01-24 11:45:28.746682189 +0200
++++ nuttx/sched/irq/irq_attach_thread.c	2025-02-21 15:26:23.438595421 +0200
+@@ -148,6 +148,8 @@
+ int irq_attach_thread(int irq, xcpt_t isr, xcpt_t isrthread, FAR void *arg,
+                       int priority, int stack_size)
+ {
++  //_info("irq attach thread irq=%x", irq);
++
+ #if NR_IRQS > 0
+   FAR char *argv[5];
+   char arg1[32];  /* irq */

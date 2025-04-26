@@ -1,6 +1,6 @@
 diff -Naur nuttx-12.8.0/arch/risc-v/src/common/riscv_mtimer.c nuttx/arch/risc-v/src/common/riscv_mtimer.c
 --- nuttx-12.8.0/arch/risc-v/src/common/riscv_mtimer.c	2025-01-24 11:45:28.344708848 +0200
-+++ nuttx/arch/risc-v/src/common/riscv_mtimer.c	2025-02-24 15:46:24.647568824 +0200
++++ nuttx/arch/risc-v/src/common/riscv_mtimer.c	2025-02-24 17:44:46.670295998 +0200
 @@ -121,6 +121,7 @@
    else
  #endif
@@ -48,7 +48,7 @@ diff -Naur nuttx-12.8.0/arch/risc-v/src/common/riscv_mtimer.c nuttx/arch/risc-v/
    return (struct oneshot_lowerhalf_s *)priv;
 diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h
 --- nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h	2025-01-24 11:45:28.358707919 +0200
-+++ nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h	2025-02-24 15:15:08.008934335 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h	2025-02-24 17:44:46.671295975 +0200
 @@ -28,8 +28,8 @@
   ****************************************************************************/
  
@@ -62,7 +62,7 @@ diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_clint.h nuttx/a
  
 diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h
 --- nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h	2025-01-24 11:45:28.358707919 +0200
-+++ nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h	2025-02-21 15:26:21.270658843 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h	2025-02-24 17:44:46.671295975 +0200
 @@ -32,22 +32,22 @@
  #ifdef CONFIG_ARCH_CHIP_QEMU_RV_PLIC
  #  define QEMU_RV_PLIC_BASE    CONFIG_ARCH_CHIP_QEMU_RV_PLIC
@@ -92,12 +92,12 @@ diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/hardware/qemu_rv_memorymap.h nut
  #  define QEMU_RV_APLIC_BASE   0x0d000000
 diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_head.S nuttx/arch/risc-v/src/qemu-rv/qemu_rv_head.S
 --- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_head.S	2025-01-24 11:45:28.357707986 +0200
-+++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_head.S	2025-02-21 15:26:21.270658843 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_head.S	2025-03-15 12:40:56.767590465 +0200
 @@ -44,10 +44,17 @@
    .global __start
  
  __start:
-+   lui     t3,0x40000
++   lui     t3,0x40004
 +   li      t4,0x31
 +   sw      t4,0xc(t3)
 +
@@ -113,20 +113,20 @@ diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_head.S nuttx/arch/risc-v
    /* Preserve a1 as it contains the pointer to DTB */
 diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_irq.c nuttx/arch/risc-v/src/qemu-rv/qemu_rv_irq.c
 --- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_irq.c	2025-01-24 11:45:28.358707919 +0200
-+++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_irq.c	2025-02-21 15:26:21.271658814 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_irq.c	2025-03-15 10:17:48.080641800 +0200
 @@ -237,6 +237,9 @@
  {
    int extirq;
  
-+  _info("up_enable_irq %d RISCV_IRQ_SOFT=%d RISCV_IRQ_TIMER=%d RISCV_IRQ_EXT=%d \n", 
-+		  irq, RISCV_IRQ_SOFT, RISCV_IRQ_TIMER, RISCV_IRQ_EXT);
++  //_info("up_enable_irq %d RISCV_IRQ_SOFT=%d RISCV_IRQ_TIMER=%d RISCV_IRQ_EXT=%d \n", 
++  //		  irq, RISCV_IRQ_SOFT, RISCV_IRQ_TIMER, RISCV_IRQ_EXT);
 +
    if (irq == RISCV_IRQ_SOFT)
      {
        /* Read m/sstatus & set machine software interrupt enable in m/sie */
 diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_start.c nuttx/arch/risc-v/src/qemu-rv/qemu_rv_start.c
 --- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_start.c	2025-01-24 11:45:28.358707919 +0200
-+++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_start.c	2025-02-21 15:26:21.270658843 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_start.c	2025-02-24 17:44:46.672295952 +0200
 @@ -219,7 +219,7 @@
  #endif
  
@@ -138,7 +138,7 @@ diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_start.c nuttx/arch/risc-
  cpux:
 diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c nuttx/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c
 --- nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c	2025-01-24 11:45:28.358707919 +0200
-+++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c	2025-02-21 15:26:21.271658814 +0200
++++ nuttx/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c	2025-02-24 17:44:46.672295952 +0200
 @@ -48,8 +48,8 @@
   * Pre-processor Definitions
   ****************************************************************************/
@@ -150,9 +150,749 @@ diff -Naur nuttx-12.8.0/arch/risc-v/src/qemu-rv/qemu_rv_timerisr.c nuttx/arch/ri
  
  /****************************************************************************
   * Public Functions
+diff -Naur nuttx-12.8.0/drivers/mmcsd/CMakeLists.txt nuttx/drivers/mmcsd/CMakeLists.txt
+--- nuttx-12.8.0/drivers/mmcsd/CMakeLists.txt	2025-01-24 11:45:28.637689417 +0200
++++ nuttx/drivers/mmcsd/CMakeLists.txt	2025-04-24 14:42:25.916964536 +0300
+@@ -33,6 +33,10 @@
+     list(APPEND SRCS mmcsd_spi.c mmcsd_debug.c)
+   endif()
+ 
++  if(CONFIG_MMCSD_SPI)
++    list(APPEND SRCS mmcsd_hwsoc.c)
++  endif()
++
+   if(CONFIG_MMCSD_PROCFS)
+     list(APPEND SRCS mmcsd_procfs.c)
+   endif()
+diff -Naur nuttx-12.8.0/drivers/mmcsd/Kconfig nuttx/drivers/mmcsd/Kconfig
+--- nuttx-12.8.0/drivers/mmcsd/Kconfig	2025-01-24 11:45:28.637689417 +0200
++++ nuttx/drivers/mmcsd/Kconfig	2025-04-24 14:39:59.449282773 +0300
+@@ -87,6 +87,10 @@
+ 	default y
+ 	depends on SPI
+ 
++config MMCSD_HWSOC
++        bool "MMC/SD HWSoC transfer support"
++        default n	
++
+ if MMCSD_SPI
+ 
+ config MMCSD_SPICLOCK
+diff -Naur nuttx-12.8.0/drivers/mmcsd/Make.defs nuttx/drivers/mmcsd/Make.defs
+--- nuttx-12.8.0/drivers/mmcsd/Make.defs	2025-01-24 11:45:28.637689417 +0200
++++ nuttx/drivers/mmcsd/Make.defs	2025-04-24 14:41:54.289877969 +0300
+@@ -32,6 +32,10 @@
+ CSRCS += mmcsd_spi.c mmcsd_debug.c
+ endif
+ 
++ifeq ($(CONFIG_MMCSD_HWSOC),y)
++CSRCS += mmcsd_hwsoc.c
++endif
++
+ ifeq ($(CONFIG_MMCSD_PROCFS),y)
+ CSRCS += mmcsd_procfs.c
+ endif
+diff -Naur nuttx-12.8.0/drivers/mmcsd/mmcsd_hwsoc.c nuttx/drivers/mmcsd/mmcsd_hwsoc.c
+--- nuttx-12.8.0/drivers/mmcsd/mmcsd_hwsoc.c	1970-01-01 02:00:00.000000000 +0200
++++ nuttx/drivers/mmcsd/mmcsd_hwsoc.c	2025-04-26 11:46:05.902351439 +0300
+@@ -0,0 +1,694 @@
++/****************************************************************************
++ * drivers/mmcsd/mmcsd_hwsoc.c
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Licensed to the Apache Software Foundation (ASF) under one or more
++ * contributor license agreements.  See the NOTICE file distributed with
++ * this work for additional information regarding copyright ownership.  The
++ * ASF licenses this file to you under the Apache License, Version 2.0 (the
++ * "License"); you may not use this file except in compliance with the
++ * License.  You may obtain a copy of the License at
++ *
++ *   http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
++ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
++ * License for the specific language governing permissions and limitations
++ * under the License.
++ *
++ ****************************************************************************/
++
++/****************************************************************************
++ * Included Files
++ ****************************************************************************/
++
++#include <nuttx/config.h>
++
++#if defined (CONFIG_MMCSD) && defined (CONFIG_MMCSD_HWSOC)
++
++#include <sys/types.h>
++
++#include <inttypes.h>
++#include <stdint.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <string.h>
++#include <time.h>
++#include <assert.h>
++#include <errno.h>
++#include <debug.h>
++#include <unistd.h>
++
++#include <nuttx/arch.h>
++#include <nuttx/clock.h>
++#include <nuttx/mutex.h>
++#include <nuttx/signal.h>
++#include <nuttx/spi/spi.h>
++#include <nuttx/fs/fs.h>
++#include <nuttx/mmcsd.h>
++
++#include "mmcsd.h"
++
++/****************************************************************************
++ * Pre-processor Definitions
++ ****************************************************************************/
++
++/* Configuration ************************************************************/
++
++#if !defined(CONFIG_MMCSD_READONLY)
++#  define MMCSD_MODE 0666
++#else
++#  define MMCSD_MODE 0444
++#endif
++
++#ifndef CONFIG_MMCSD_SECTOR512
++#  define CONFIG_MMCSD_SECTOR512          /* Force 512 byte sectors on all cards */
++#endif
++
++/* Slot struct info *********************************************************/
++
++/* Slot status definitions */
++
++#define MMCSD_SLOTSTATUS_NOTREADY    0x01 /* Card not initialized */
++#define MMCSD_SLOTSTATUS_NODISK      0x02 /* No card in the slot */
++#define MMCSD_SLOTSTATUS_WRPROTECT   0x04 /* Card is write protected */
++#define MMCSD_SLOTSTATUS_MEDIACHGD   0x08 /* Media changed in slot */
++
++/* HWSOC */
++#define MMCSD_HWSOC_BADDR ((volatile unsigned char *) 0x40008200)
++
++/* Values in the MMC/SD command table ***************************************/
++
++#ifdef CONFIG_MMCSD_SECTOR512
++#  define SECTORSIZE(s)              (512)
++#else
++#  define SECTORSIZE(s)              ((s)->sectorsize)
++#endif
++
++/* Time delays in units of the system clock. CLK_TCK is the number of clock
++ * ticks per second.
++ */
++
++#define MMCSD_DELAY_10MS             (CLK_TCK/100  + 1)
++#define MMCSD_DELAY_50MS             (CLK_TCK/20   + 1)
++#define MMCSD_DELAY_100MS            (CLK_TCK/10   + 1)
++#define MMCSD_DELAY_250MS            (CLK_TCK/4    + 1)
++#define MMCSD_DELAY_500MS            (CLK_TCK/2    + 1)
++#define MMCSD_DELAY_1SEC             (CLK_TCK      + 1)
++#define MMCSD_DELAY_10SEC            (10 * CLK_TCK + 1)
++
++#define ELAPSED_TIME(t)              (clock_systime_ticks()-(t))
++#define START_TIME                   (clock_systime_ticks())
++
++/****************************************************************************
++ * Private Types
++ ****************************************************************************/
++
++/* This structure represents the state of one card slot */
++
++struct mmcsd_slot_s
++{
++  FAR struct spi_dev_s *spi; /* SPI port bound to this slot */
++  mutex_t  lock;             /* Assures mutually exclusive access to card and SPI */
++  uint8_t  state;            /* State of the slot (see MMCSD_SLOTSTATUS_* definitions) */
++  uint8_t  type;             /* Disk type */
++  uint8_t  csd[16];          /* Copy of card CSD */
++#ifndef CONFIG_MMCSD_SECTOR512
++  uint16_t sectorsize;       /* Media block size (in bytes) */
++#endif
++  uint32_t nsectors;         /* Number of blocks on the media */
++  uint32_t taccess;          /* Card access time */
++  uint32_t twrite;           /* Card write time */
++  uint32_t ocr;              /* Last 4 bytes of OCR (R3) */
++  uint32_t r7;               /* Last 4 bytes of R7 */
++  uint32_t spispeed;         /* Speed to use for SPI in data mode */
++};
++
++struct mmcsd_cmdinfo_s
++{
++  uint8_t  cmd;
++  uint8_t  resp;
++  uint8_t  chksum;
++};
++
++/****************************************************************************
++ * Private Function Prototypes
++ ****************************************************************************/
++
++/* Misc *********************************************************************/
++
++static int      mmcsd_lock(FAR struct mmcsd_slot_s *slot);
++static void     mmcsd_unlock(FAR struct mmcsd_slot_s *slot);
++
++/* Block driver interfaces **************************************************/
++
++static int       mmcsd_open(FAR struct inode *inode);
++static int       mmcsd_close(FAR struct inode *inode);
++static ssize_t   mmcsd_read(FAR struct inode *inode,
++                            FAR unsigned char *buffer,
++                            blkcnt_t start_sector, unsigned int nsectors);
++#if !defined(CONFIG_MMCSD_READONLY)
++static ssize_t   mmcsd_write(FAR struct inode *inode,
++                             FAR const unsigned char *buffer,
++                             blkcnt_t start_sector,
++                             unsigned int nsectors);
++#endif
++static int       mmcsd_geometry(FAR struct inode *inode,
++                                FAR struct geometry *geometry);
++
++/****************************************************************************
++ * Private Data
++ ****************************************************************************/
++
++/* Driver state *************************************************************/
++
++/* These are the lock driver methods supported by this file */
++
++static const struct block_operations g_bops =
++{
++  mmcsd_open,     /* open     */
++  mmcsd_close,    /* close    */
++  mmcsd_read,     /* read     */
++#if !defined(CONFIG_MMCSD_READONLY)
++  mmcsd_write,    /* write    */
++#else
++  NULL,           /* write    */
++#endif
++  mmcsd_geometry, /* geometry */
++  NULL            /* ioctl    */
++};
++
++/* A slot structure allocated for each configured slot */
++
++static struct mmcsd_slot_s g_mmcsdslot[CONFIG_MMCSD_NSLOTS];
++
++/* Timing *******************************************************************/
++// the mmcsd clock frequency is board clock / 2
++
++/****************************************************************************
++ * Private Functions
++ ****************************************************************************/
++
++/****************************************************************************
++ * Name: mmcsd_lock
++ ****************************************************************************/
++
++static int mmcsd_lock(FAR struct mmcsd_slot_s *slot)
++{
++  int ret;
++
++  /* Get exclusive access to the MMC/SD device (possibly unnecessary if
++   * SPI_LOCK is also implemented as a mutex).
++   */
++
++  ret = nxmutex_lock(&slot->lock);
++  if (ret < 0)
++    {
++      return ret;
++    }
++
++  return ret;
++}
++
++/****************************************************************************
++ * Name: mmcsd_unlock
++ ****************************************************************************/
++
++static void mmcsd_unlock(FAR struct mmcsd_slot_s *slot)
++{
++  nxmutex_unlock(&slot->lock);
++}
++
++/****************************************************************************
++ * Name: mmcsd_waitready
++ *
++ * Description:
++ *   Wait until the card is no longer busy
++ *
++ * Assumptions:
++ *   MMC/SD card already selected
++ *
++ ****************************************************************************/
++
++/*
++static int mmcsd_waitready(FAR struct mmcsd_slot_s *slot)
++{
++  nxsig_usleep(10000);
++  return 0;//-EBUSY;
++}
++*/
++
++/****************************************************************************
++ * Name: mmcsd_getcardinfo
++ *
++ * Description:
++ *   Read CSD or CID  registers
++ *
++ * Assumptions:
++ *   MMC/SD card already selected
++ *
++ ****************************************************************************/
++
++/****************************************************************************
++ * Block Driver Operations
++ ****************************************************************************/
++
++/****************************************************************************
++ * Name: mmcsd_open
++ *
++ * Description: Open the block device
++ *
++ ****************************************************************************/
++
++static int mmcsd_open(FAR struct inode *inode)
++{
++  FAR struct mmcsd_slot_s *slot;
++  int ret;
++
++  _info("Entry\n");
++
++#ifdef CONFIG_DEBUG_FEATURES
++  if (!inode || !inode->i_private)
++    {
++      _info("ERROR: Internal confusion\n");
++      return -EIO;
++    }
++#endif
++
++  /* Extract our private data from the inode structure */
++
++  slot = inode->i_private;
++
++  ret = mmcsd_lock(slot);
++  if (ret < 0)
++    {
++      return ret;
++    }
++
++  /* Verify that an MMC/SD card has been inserted */
++  ret = 0; //-ENODEV;
++
++  mmcsd_unlock(slot);
++  return ret;
++}
++
++/****************************************************************************
++ * Name: mmcsd_close
++ *
++ * Description: close the block device
++ *
++ ****************************************************************************/
++
++static int mmcsd_close(FAR struct inode *inode)
++{
++  _info("Entry\n");
++  return OK;
++}
++
++/****************************************************************************
++ * Name: mmcsd_read
++ *
++ * Description:  Read the specified number of sectors
++ *
++ ****************************************************************************/
++
++#define wait_not_busy(baddr, status) \
++          do { \
++                nxsig_usleep(10); \
++                status = *(volatile int *)(baddr - 0x200); \
++                /*if(status & 0x100ff) _info("r status=%x\n", status);*/ \
++          } while ((status & 0x100ff))
++
++static ssize_t mmcsd_read(FAR struct inode *inode, FAR unsigned char *buffer,
++                          blkcnt_t start_sector, unsigned int nsectors)
++{
++  FAR struct mmcsd_slot_s *slot;
++  size_t nbytes;
++  off_t offset;
++  volatile unsigned int i, j, status;
++  int ret;
++  volatile unsigned char *baddr=MMCSD_HWSOC_BADDR;
++
++  _info("start_sector=%" PRIuOFF " nsectors=%u\n", start_sector, nsectors);
++
++#ifdef CONFIG_DEBUG_FEATURES
++  if (!buffer)
++    {
++      _info("ERROR: Invalid parameters\n");
++      return -EINVAL;
++    }
++
++  if (!inode || !inode->i_private)
++    {
++      _info("ERROR: Internal confusion\n");
++      return -EIO;
++    }
++#endif
++
++  /* Extract our private data from the inode structure */
++
++  slot = inode->i_private;
++
++  /* Verify that card is available */
++
++  /* Do nothing on zero-length transfer */
++
++  if (nsectors < 1)
++    {
++      return 0;
++    }
++
++  /* Convert sector and nsectors to nbytes and byte offset */
++
++  nbytes = nsectors * SECTORSIZE(slot);
++  UNUSED(nbytes);
++
++      offset = start_sector;
++      _info("nbytes=%zu sector offset=%" PRIdOFF "\n", nbytes, offset);
++
++  /* Select the slave */
++
++  ret = mmcsd_lock(slot);
++  if (ret < 0)
++    {
++      return (ssize_t)ret;
++    }
++
++  /* Single or multiple block read? */
++  wait_not_busy(baddr, status);
++
++  if (nsectors == 1)
++    {
++      // tell hw what sector to read
++      *(volatile int *)(baddr - 0x200 + 0) = offset;
++      // wait for the hardware to fill its buffer
++      wait_not_busy(baddr, status);
++      for(i=0; i<0x200; i++)
++        buffer[i] = *(volatile unsigned char *)(baddr + i);
++    }
++  else
++    {
++      /* Receive each block */
++      for (j = 0; j < nsectors; j++)
++        {
++          // tell hw what sector to read
++          *(volatile int *)(baddr - 0x200 + 0) = offset+j;
++          // wait for the hardware to fill its buffer
++          wait_not_busy(baddr, status);
++          for(i=0; i<0x200; i++)
++            buffer[(j<<9)+i] = *(volatile unsigned char *)(baddr + i);
++        }
++    }
++
++  /* On success, return the number of sectors transfer */
++
++  mmcsd_unlock(slot);
++
++  _info("Read %zu bytes:\n", nbytes);
++  mmcsd_dumpbuffer("Read buffer", buffer, nbytes);
++  return nsectors;
++
++}
++
++/****************************************************************************
++ * Name: mmcsd_write
++ *
++ * Description:
++ *   Write the specified number of sectors
++ *
++ ****************************************************************************/
++
++#if !defined(CONFIG_MMCSD_READONLY)
++static ssize_t mmcsd_write(FAR struct inode *inode,
++                           FAR const unsigned char *buffer,
++                           blkcnt_t start_sector, unsigned int nsectors)
++{
++  FAR struct mmcsd_slot_s *slot;
++  size_t nbytes;
++  off_t offset;
++  volatile unsigned int i, j, status;
++  int ret;
++  volatile unsigned char *baddr=MMCSD_HWSOC_BADDR;
++
++  _info("start_sector=%" PRIuOFF " nsectors=%u\n", start_sector, nsectors);
++
++#ifdef CONFIG_DEBUG_FEATURES
++  if (!buffer)
++    {
++      _info("ERROR: Invalid parameters\n");
++      return -EINVAL;
++    }
++
++  if (!inode || !inode->i_private)
++    {
++      _info("ERROR: Internal confusion\n");
++      return -EIO;
++    }
++#endif
++
++  /* Extract our private data from the inode structure */
++
++  slot = inode->i_private;
++
++  /* Verify that card is available */
++
++  /* Verify that the card is write enabled */
++
++  /* Do nothing on zero-length transfer */
++
++  if (nsectors < 1)
++    {
++      return 0;
++    }
++
++  /* Convert sector and nsectors to nbytes and byte offset */
++
++  nbytes = nsectors * SECTORSIZE(slot);
++  UNUSED(nbytes);
++
++      offset = start_sector;
++      _info("nbytes=%zu sector offset=%" PRIdOFF "\n", nbytes, offset);
++
++  mmcsd_dumpbuffer("Write buffer", buffer, nbytes);
++
++  /* Select the slave */
++
++  ret = mmcsd_lock(slot);
++  if (ret < 0)
++    {
++      return (ssize_t)ret;
++    }
++
++  /* Single or multiple block transfer? */
++  wait_not_busy(baddr, status);
++
++  if (nsectors == 1)
++    {
++      // fill hw buffer with user data
++      for(i = 0; i < 0x200; i++) {
++                *(volatile unsigned char*)(baddr+i) = buffer[i];
++        }
++      /* Then transfer the sector */
++      *(volatile int *)(baddr - 0x200 + 4) = offset;
++      // wait writing
++      wait_not_busy(baddr, status);
++    }
++  else
++    {
++      for(j=0; j < nsectors; j++) {
++        // fill hw buffer with user data
++        for(i = 0; i < 0x200; i++) {
++                *(volatile unsigned char*)(baddr+i) = buffer[(j<<9)+i];
++        }
++        /* Then transfer the sector */
++        *(volatile int *)(baddr - 0x200 + 4) = offset+j;
++        // wait writing
++        wait_not_busy(baddr, status);
++      }
++    }
++
++  /* Wait until the card is no longer busy */
++  mmcsd_unlock(slot);
++
++  /* The success return value is the number of sectors written */
++
++  return nsectors;
++}
++#endif
++
++/****************************************************************************
++ * Name: mmcsd_geometry
++ *
++ * Description:
++ *   Return device geometry
++ *
++ ****************************************************************************/
++
++// we use only 8GB cards, so 16*2**30/2**10=16M of 512 byte blocks.
++// nsectors must be equal to partition total sectors
++// else modify fs/fat/fs_fat32util.c  if (!fs->fs_fattotsec || fs->fs_fattotsec > fs->fs_hwnsectors)
++int real_geometry_nsectors=16*1024*1024; //15562744;
++void set_real_geometry_nsectors(int nsectors)
++{
++  _info("set real_geometry_nsectors to %d\n", nsectors);
++  real_geometry_nsectors = nsectors;
++}
++
++static int mmcsd_geometry(FAR struct inode *inode,
++                          FAR struct geometry *geometry)
++{
++  FAR struct mmcsd_slot_s *slot;
++  int ret;
++
++#ifdef CONFIG_DEBUG_FEATURES
++  if (!geometry)
++    {
++      _info("ERROR: Invalid parameters\n");
++      return -EINVAL;
++    }
++
++  if (!inode || !inode->i_private)
++    {
++      _info("ERROR: Internal confusion\n");
++      return -EIO;
++    }
++#endif
++
++  /* Extract our private data from the inode structure */
++
++  slot = inode->i_private;
++
++  /* Re-sample the CSD */
++
++  ret = mmcsd_lock(slot);
++  if (ret < 0)
++    {
++      return ret;
++    }
++
++  /* Then return the card geometry */
++
++  memset(geometry, 0, sizeof(*geometry));
++
++  // we boot from this card
++  geometry->geo_available = 1;
++  geometry->geo_mediachanged = ((slot->state & MMCSD_SLOTSTATUS_MEDIACHGD) != 0);
++  geometry->geo_nsectors   =  real_geometry_nsectors;
++#if !defined(CONFIG_MMCSD_READONLY)
++  geometry->geo_writeenabled = 1;
++#else
++  geometry->geo_writeenabled = false;
++#endif
++  geometry->geo_sectorsize = SECTORSIZE(slot);
++
++  /* After reporting mediachanged, clear the indication so that it is not
++   * reported again.
++   */
++  slot->state &= ~MMCSD_SLOTSTATUS_MEDIACHGD;
++
++  mmcsd_unlock(slot);
++
++  finfo("geo_available:     %d\n", geometry->geo_available);
++  finfo("geo_mediachanged:  %d\n", geometry->geo_mediachanged);
++  finfo("geo_writeenabled:  %d\n", geometry->geo_writeenabled);
++  finfo("geo_nsectors:      %" PRIuOFF "\n", geometry->geo_nsectors);
++  finfo("geo_sectorsize:    %" PRIi16 "\n", geometry->geo_sectorsize);
++
++  return OK;
++}
++
++/****************************************************************************
++ * Public Functions
++ ****************************************************************************/
++
++/****************************************************************************
++ * Name: mmcsd_spislotinitialize
++ *
++ * Description:
++ *   Initialize one slot for operation using the SPI MMC/SD interface
++ *
++ * Input Parameters:
++ *   minor - The MMC/SD minor device number.  The MMC/SD device will be
++ *     registered as /dev/mmcsdN where N is the minor number
++ *   slotno - The slot number to use.  This is only meaningful for
++ *     architectures that support multiple MMC/SD slots.  This value must be
++ *     in the range {0, ..., CONFIG_MMCSD_NSLOTS}.
++ *   spi - And instance of an SPI interface obtained by called the
++ *     appropriate xyz_spibus_initialize() function for the MCU "xyz" with
++ *     the appropriate port number.
++ *
++ ****************************************************************************/
++
++int mmcsd_spislotinitialize(int minor, int slotno, FAR struct spi_dev_s *spi)
++{
++  struct mmcsd_slot_s *slot;
++  char devname[16];
++  int ret;
++
++#ifdef CONFIG_DEBUG_FEATURES
++  if ((unsigned)slotno >= CONFIG_MMCSD_NSLOTS || (unsigned)minor > 255)
++    {
++      _info("ERROR: Invalid arguments\n");
++      return -EINVAL;
++    }
++#endif
++
++  /* Select the slot structure */
++
++  slot = &g_mmcsdslot[slotno];
++  memset(slot, 0, sizeof(struct mmcsd_slot_s));
++  nxmutex_init(&slot->lock);
++
++  /* Bind the SPI port to the slot */
++  // not using spi directly
++
++  /* Get exclusive access to the SPI bus and make sure that SPI is properly
++   * configured for the MMC/SD card
++   */
++
++  ret = mmcsd_lock(slot);
++  if (ret < 0)
++    {
++      return ret;
++    }
++
++  /* Initialize for the media in the slot (if any) */
++
++  ret = 0; //mmcsd_mediainitialize(slot);
++  mmcsd_unlock(slot);
++  if (ret == 0)
++    {
++      _info("mmcsd_mediainitialize returned OK\n");
++      slot->state |= MMCSD_SLOTSTATUS_MEDIACHGD;
++    }
++
++  /* Create a MMC/SD device name */
++
++  snprintf(devname, sizeof(devname), "/dev/mmcsd%d", minor);
++  _info("devname=%s", devname);
++
++  /* Register the driver, even on a failure condition.  A
++   * card may be inserted later, for example.
++   */
++
++  ret = register_blockdriver(devname, &g_bops, MMCSD_MODE, slot);
++  if (ret < 0)
++    {
++      _info("ERROR: register_blockdriver failed: %d\n", -ret);
++      nxmutex_destroy(&slot->lock);
++      return ret;
++    }
++
++  /* Register a media change callback to handle insertion and
++   * removal of cards.
++   */
++
++  //SPI_REGISTERCALLBACK(spi, mmcsd_mediachanged, slot);
++  _info("mmcsd_spislotinitialize ok");
++
++  return OK;
++}
++
++#endif /* defined (CONFIG_MMCSD) && defined (CONFIG_MMCSD_HWSOC) */
 diff -Naur nuttx-12.8.0/drivers/serial/uart_16550.c nuttx/drivers/serial/uart_16550.c
 --- nuttx-12.8.0/drivers/serial/uart_16550.c	2025-01-24 11:45:28.649688621 +0200
-+++ nuttx/drivers/serial/uart_16550.c	2025-02-21 15:26:22.858612388 +0200
++++ nuttx/drivers/serial/uart_16550.c	2025-02-24 17:44:46.672295952 +0200
 @@ -645,10 +645,12 @@
  static inline uart_datawidth_t u16550_serialin(FAR struct u16550_s *priv,
                                                 int offset)
@@ -218,9 +958,58 @@ diff -Naur nuttx-12.8.0/drivers/serial/uart_16550.c nuttx/drivers/serial/uart_16
  }
  #endif
  
+diff -Naur nuttx-12.8.0/fs/fat/fs_fat32util.c nuttx/fs/fat/fs_fat32util.c
+--- nuttx-12.8.0/fs/fat/fs_fat32util.c	2025-01-24 11:45:29.406638382 +0200
++++ nuttx/fs/fat/fs_fat32util.c	2025-04-26 10:57:28.890111866 +0300
+@@ -48,6 +48,8 @@
+  * Private Functions
+  ****************************************************************************/
+ 
++extern void set_real_geometry_nsectors(int nsectors);
++
+ /****************************************************************************
+  * Name: fat_checkfsinfo
+  *
+@@ -169,13 +171,23 @@
+       fs->fs_fattotsec = FBR_GETTOTSEC32(fs->fs_buffer);
+     }
+ 
+-  if (!fs->fs_fattotsec || fs->fs_fattotsec > fs->fs_hwnsectors)
++  // laur
++  if (!fs->fs_fattotsec)
++    {
++       fwarn("WARNING: fs_fattotsec %" PRId32
++            "\n",
++            fs->fs_fattotsec);
++      return -EINVAL;
++    }
++  if (fs->fs_fattotsec != fs->fs_hwnsectors)
+     {
+       fwarn("WARNING: fs_fattotsec %" PRId32
+-            " fs_hwnsectors: %" PRIdOFF "\n",
++            " fs_hwnsectors: %" PRIdOFF "... setting hwnsectors to fattotsec\n",
+             fs->fs_fattotsec, fs->fs_hwnsectors);
+-
+-      return -EINVAL;
++      // laur
++      //return -EINVAL;
++      fs->fs_hwnsectors = fs->fs_fattotsec;
++      set_real_geometry_nsectors(fs->fs_fattotsec);
+     }
+ 
+   /* Get the total number of reserved sectors */
+@@ -540,6 +552,8 @@
+    */
+ 
+   ret = fat_checkbootrecord(fs);
++  // laur
++  geo.geo_nsectors = fs->fs_fattotsec;
+   if (ret != OK)
+     {
+       /* The contents of sector 0 is not a boot record.  It could be have
 diff -Naur nuttx-12.8.0/sched/clock/clock_initialize.c nuttx/sched/clock/clock_initialize.c
 --- nuttx-12.8.0/sched/clock/clock_initialize.c	2025-01-24 11:45:28.739682653 +0200
-+++ nuttx/sched/clock/clock_initialize.c	2025-02-21 15:26:23.414596123 +0200
++++ nuttx/sched/clock/clock_initialize.c	2025-02-24 17:44:46.673295929 +0200
 @@ -207,7 +207,7 @@
      !defined(CONFIG_SUPPRESS_TIMER_INTS) && \
      !defined(CONFIG_SYSTEMTICK_EXTCLK)
@@ -257,7 +1046,7 @@ diff -Naur nuttx-12.8.0/sched/clock/clock_initialize.c nuttx/sched/clock/clock_i
  
 diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
 --- nuttx-12.8.0/sched/init/nx_start.c	2025-01-24 11:45:28.750681923 +0200
-+++ nuttx/sched/init/nx_start.c	2025-02-21 15:26:23.451595040 +0200
++++ nuttx/sched/init/nx_start.c	2025-03-13 12:41:02.337644209 +0200
 @@ -501,6 +501,15 @@
   * Public Functions
   ****************************************************************************/
@@ -279,7 +1068,7 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
    int i;
  
 -  sinfo("Entry\n");
-+  _info("Entry\n");
++  //_info("Entry\n");
  
    /* Boot up is complete */
  
@@ -287,12 +1076,12 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
    /* Initialize task list table *********************************************/
  
    tasklist_initialize();
-+  _info("tasklist initialize done");
++  //_info("tasklist initialize done");
  
    /* Initialize the IDLE task TCB *******************************************/
  
    idle_task_initialize();
-+  _info("task initialize done");
++  //_info("task initialize done");
  
    /* Task lists are initialized */
  
@@ -300,11 +1089,11 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
    /* Initialize RTOS Data ***************************************************/
  
    drivers_early_initialize();
-+  _info("drivers early done");
++  //_info("drivers early done");
 +
  
    sched_trace_begin();
-+  _info("sched trace done");
++  //_info("sched trace done");
  
    /* Initialize RTOS facilities *********************************************/
  
@@ -312,7 +1101,7 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
     */
  
    nxsem_initialize();
-+  _info("nxsem initialize done");
++  //_info("nxsem initialize done");
  
  #if defined(MM_KERNEL_USRHEAP_INIT) || defined(CONFIG_MM_KERNEL_HEAP) || \
      defined(CONFIG_MM_PGALLOC)
@@ -320,7 +1109,7 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
  
        up_allocate_heap(&heap_start, &heap_size);
        kumm_initialize(heap_start, heap_size);
-+      _info("kumm initialize done");
++      //_info("kumm initialize done");
  #endif
  
  #ifdef CONFIG_MM_KERNEL_HEAP
@@ -328,7 +1117,7 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
         * configure the kernel-mode memory allocator.
         */
 -
-+      _info("before up allocate k");
++      //_info("before up allocate k");
        up_allocate_kheap(&heap_start, &heap_size);
        kmm_initialize(heap_start, heap_size);
 +      _info("kmm initialize done");
@@ -340,10 +1129,10 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
         * page allocator.
         */
 -
-+      _info("before up allocate pg");
++      //_info("before up allocate pg");
        up_allocate_pgheap(&heap_start, &heap_size);
        mm_pginitialize(heap_start, heap_size);
-+      _info("mm pginitialize done");
++      //_info("mm pginitialize done");
  #endif
      }
  #endif
@@ -351,23 +1140,23 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
  #ifdef CONFIG_MM_KMAP
    /* Initialize the kernel dynamic mapping module */
 -
-+  _info("before kmm map");
++  //_info("before kmm map");
    kmm_map_initialize();
-+  _info("kmm map done");
++  //_info("kmm map done");
  #endif
  
  #ifdef CONFIG_ARCH_HAVE_EXTRA_HEAPS
    /* Initialize any extra heap. */
  
    up_extraheaps_init();
-+  _info("up extraheaps done");
++  //_info("up extraheaps done");
  #endif
  
  #ifdef CONFIG_MM_IOB
    /* Initialize IO buffering */
  
    iob_initialize();
-+  _info("iob done");
++  //_info("iob done");
  #endif
  
    /* Initialize the logic that determine unique process IDs. */
@@ -375,11 +1164,11 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
      {
        i <<= 1;
      }
-+  _info("nx_start while smp done");
++  //_info("nx_start while smp done");
  
    g_pidhash = kmm_zalloc(sizeof(*g_pidhash) * i);
    DEBUGASSERT(g_pidhash);
-+  _info("kmm zalloc done");
++  //_info("kmm zalloc done");
  
    g_npidhash = i;
  
@@ -388,7 +1177,7 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
  
    task_initialize();
 -
-+  _info("task init done");
++  //_info("task init done");
    /* Initialize the instrument function */
  
    instrument_initialize();
@@ -398,18 +1187,18 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
  
 +  _info("irq initialize");
    irq_initialize();
-+  _info("irq initialize done");
++  //_info("irq initialize done");
  
    /* Initialize the POSIX timer facility (if included in the link) */
  
-+  _info("clc ");
++  //_info("clc ");
    clock_initialize();
-+  _info("clock initialize done");
++  //_info("clock initialize done");
  
  #ifndef CONFIG_DISABLE_POSIX_TIMERS
-+  _info("before timer initialize");
++  //_info("before timer initialize");
    timer_initialize();
-+  _info("timer done");
++  //_info("timer done");
  #endif
  
    /* Initialize the signal facility (if in link) */
@@ -435,13 +1224,13 @@ diff -Naur nuttx-12.8.0/sched/init/nx_start.c nuttx/sched/init/nx_start.c
    /* Let other threads have access to the memory manager */
  
    sched_trace_end();
-+  _info("sched trace end");
++  //_info("sched trace end");
    sched_unlock();
  
    /* The IDLE Loop **********************************************************/
 diff -Naur nuttx-12.8.0/sched/irq/irq_attach_thread.c nuttx/sched/irq/irq_attach_thread.c
 --- nuttx-12.8.0/sched/irq/irq_attach_thread.c	2025-01-24 11:45:28.746682189 +0200
-+++ nuttx/sched/irq/irq_attach_thread.c	2025-02-21 15:26:23.438595421 +0200
++++ nuttx/sched/irq/irq_attach_thread.c	2025-02-24 17:44:46.697295382 +0200
 @@ -148,6 +148,8 @@
  int irq_attach_thread(int irq, xcpt_t isr, xcpt_t isrthread, FAR void *arg,
                        int priority, int stack_size)
