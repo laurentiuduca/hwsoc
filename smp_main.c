@@ -338,55 +338,64 @@ One_Fifty   *Int_Par_Ref;
 } /* Proc_2 */
 
 
+#define wait_not_busy(baddr, status) \
+          do { \
+                nxsig_usleep(10); \
+                status = *(volatile int *)(baddr - 0x200); \
+                /*if(status & 0x100ff) _info("r status=%x\n", status);*/ \
+          } while ((status & 0x100ff))
 volatile unsigned char *baddr;
 unsigned char b[512]={0};
 void testsd()
 {
         volatile int i, status=0;
         baddr = 0x40008200;
+	int sector=4096, match=1;
 
-
-#if 1
-	// read block
-	_info("read block from sd\n");
-	*(int *)(baddr - 0x200 + 0) = 4 * 512; // block id after 1MB
-	//_info("wait reading \n");
-	//status = *(int *)(baddr - 0x200);
-	//_info("status =%x\n", status);
-        do {
-                status = *(volatile int *)(baddr - 0x200);
-		//if(status & 0x100ff)
-			//_info("r status=%x\n", status);
-        } while ((status & 0x100ff));
-        for(i = 10; i < 20; i++) {
-                b[i] = *(baddr+i);
-                _info("b[%d] is %x ", i, b[i]);
+      for(i = 0; i < 0x200; i++)
+	      b[i] = i;
+      // fill hw buffer with user data
+      for(i = 0; i < 0x200; i++) {
+                *(volatile unsigned char*)(baddr+i) = b[i];
         }
-	return;
-#endif
+      /* Then transfer the sector */
+      *(volatile int *)(baddr - 0x200 + 4) = sector;
+      // wait writing
+      wait_not_busy(baddr, status);
 
-        _info("writing \n");
-        for(i = 10; i < 20; i++) {
-                _info("*(%x+%x)<=%x ", baddr, i, i);
-                *(baddr+i) = i;
-        }
-        _info("reading \n");
-        for(i = 10; i < 20; i++)
-                _info("*(%x+%x) is %x ", baddr, i, *(baddr+i));
-        _info("\n");
-        _info("read status =%x\n", *(int *)(baddr - 0x200));
+      // read block 0 
+      sector = 0;
+      // tell hw what sector to read
+      *(volatile int *)(baddr - 0x200 + 0) = sector;
+      // wait for the hardware to fill its buffer
+      wait_not_busy(baddr, status);
+      for(i=0; i<0x200; i++)
+        b[i] = *(volatile unsigned char *)(baddr + i);
+      //_info("\nsector %d: ", sector);
+      //for(i=0; i<0x200; i++)
+      //       _info("b[%d]=%d ", i, b[i]);
 
-	// write block to sd
-	_info("writing to sd\n");
-	*(int *)(baddr - 0x200 + 4) = 4 * 512; // block id after 1MB 
-        // wait writing
-	do {
-                status = *(volatile int *)(baddr - 0x200);
-                //if(status & 0x100ff)
-                        //_info("w status=%x\n", status);
-        } while ((status & 0x100ff));
-        _info("w status =%x\n", status);
-	
+      // read block 4096
+      sector = 4096;
+      // tell hw what sector to read
+      *(volatile int *)(baddr - 0x200 + 0) = sector;
+      // wait for the hardware to fill its buffer
+      wait_not_busy(baddr, status);
+      for(i=0; i<0x200; i++)
+        b[i] = *(volatile unsigned char *)(baddr + i);
+
+      // check b[i]
+      //_info("\nsector %d: ", sector);
+      //for(i=0; i<0x200; i++)
+      //        _info("b[%d]=%d ", i, b[i]);
+      match = 1;
+      for(i=0; i<0x200; i++)
+	if(b[i] != (unsigned char)i)
+		match = 0;
+      if(match)
+	     	_info("block match\n");
+      else
+		_info("block unmatch\n");
 }
 
 int sdc_main(void);
@@ -584,6 +593,7 @@ int main(int argc, FAR char *argv[])
   _info("Microseconds for one run through Dhrystone: %ld\n", Microseconds);
   _info("Dhrystones per Second:                      %ld\n", Dhrystones_Per_Second);
 
+  //int tints=0;
   _info("tints=%d\n", tints);
 
   core_main(0, 0);
