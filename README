@@ -1,6 +1,12 @@
 HwSoC: RISC-V Hazard3 based open SoC skeleton
 ====
 
+-1.
+Download the latest RISCV GCC toolchain prebuilt by xPack for nuttx
+RUN mkdir riscv-none-elf-gcc && \
+curl -s -L "https://github.com/xpack-dev-tools/riscv-none-elf-gcc-xpack/releases/download/v13.2.0-2/xpack-riscv-none-elf-gcc-13.2.0-2-linux-x64.tar.gz" \
+| tar -C riscv-none-elf-gcc --strip-components 1 -xz
+
 0.
 download nuttx 12.8.0 os and apps from https://nuttx.apache.org/download
 extract archives
