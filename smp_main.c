@@ -406,7 +406,7 @@ int main(int argc, FAR char *argv[])
 {
 
 	//sdc_main();
-	testsd();
+	//testsd();
 
 #if 0
   float a=1.5, b=2.6;
