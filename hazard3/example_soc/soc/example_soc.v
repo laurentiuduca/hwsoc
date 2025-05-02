@@ -413,7 +413,8 @@ wire               bridge_hmastlock;
 wire [W_DATA-1:0]  bridge_hwdata;
 wire [W_DATA-1:0]  bridge_hrdata;
 
-`ifndef laur0
+`define USECROSS
+`ifndef USECROSS
 ahbl_splitter #(
 	.N_PORTS     (2),
 	.ADDR_MAP    (64'h40000000_00000000),
@@ -451,7 +452,7 @@ ahbl_splitter #(
 );
 `else
 ahbl_crossbar #(
-        .N_MASTERS(2),
+        .N_MASTERS(1),
         .N_SLAVES(2),
         .W_ADDR(32),
         .W_DATA(32),
@@ -464,18 +465,18 @@ ahbl_crossbar #(
         .d_pc            (d_pc),
 
         // From masters; function as slave ports
-        .src_hready_resp ({sd_hready, proc_hready}),
-        //.src_hready      ({sd_hready, proc_hready}),
-        .src_hresp       ({sd_hresp, proc_hresp}),
-        .src_haddr       ({sd_haddr, proc_haddr}),
-        .src_hwrite      ({sd_hwrite, proc_hwrite}),
-        .src_htrans      ({sd_htrans/*2'b0*/, proc_htrans}),
-        .src_hsize       ({sd_hsize, proc_hsize}),
-        .src_hburst      ({sd_hburst, proc_hburst}),
-        .src_hprot       ({sd_hprot, proc_hprot}),
-        .src_hmastlock   ({sd_hmastlock, proc_hmastlock}),
-        .src_hwdata      ({sd_hwdata, proc_hwdata}),
-        .src_hrdata      ({sd_hrdata, proc_hrdata}), 
+        .src_hready_resp ({/*sd_hready, */proc_hready}),
+        //.src_hready    ({/*sd_hready, */proc_hready}),
+        .src_hresp       ({/*sd_hresp, */proc_hresp}),
+        .src_haddr       ({/*sd_haddr, */proc_haddr}),
+        .src_hwrite      ({/*sd_hwrite, */proc_hwrite}),
+        .src_htrans      ({/*sd_htrans, */proc_htrans}),
+        .src_hsize       ({/*sd_hsize, */proc_hsize}),
+        .src_hburst      ({/*sd_hburst, */proc_hburst}),
+        .src_hprot       ({/*sd_hprot, */proc_hprot}),
+        .src_hmastlock   ({/*sd_hmastlock, */proc_hmastlock}),
+        .src_hwdata      ({/*sd_hwdata, */proc_hwdata}),
+        .src_hrdata      ({/*sd_hrdata, */proc_hrdata}), 
 
         // To slaves; function as master ports
 	.dst_hready_resp ({bridge_hready_resp , sram0_hready_resp}),
