@@ -92,7 +92,6 @@ reg [N_PORTS-1:0]        actual_hmastlock;
 always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
 		if (buf_valid[i]) begin
-
 			actual_haddr     [i * W_ADDR +: W_ADDR] = buf_haddr     [i];
 			actual_hwrite    [i]                    = buf_hwrite    [i];
 			actual_htrans    [i * 2 +: 2]           = buf_htrans    [i];

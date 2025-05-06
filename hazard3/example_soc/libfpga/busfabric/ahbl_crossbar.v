@@ -42,7 +42,6 @@ module ahbl_crossbar #(
 	// Global signals
 	input wire                         clk,
 	input wire                         rst_n,
-	input wire [W_ADDR-1:0]		   d_pc,
 
 	// From masters; function as slave ports
 	output wire [N_MASTERS-1:0]        src_hready_resp,
@@ -156,7 +155,6 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 	) split (
 		.clk             (clk),
 		.rst_n           (rst_n),
-		.d_pc		 (d_pc),
 		.src_hready      (src_hready_resp[i]),	// HREADY_RESP tied -> HREADY at master level
 		.src_hready_resp (src_hready_resp[i]),
 		.src_hresp       (src_hresp[i]),
@@ -191,7 +189,6 @@ endgenerate
 
 generate
 for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
-	wire [N_MASTERS-1:0]         arb_mwin;
 	wire [N_MASTERS-1:0]         arb_hready;
 	wire [N_MASTERS-1:0]         arb_hready_resp;
 	wire [N_MASTERS-1:0]         arb_hresp;
