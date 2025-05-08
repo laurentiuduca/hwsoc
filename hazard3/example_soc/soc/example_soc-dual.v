@@ -80,7 +80,7 @@ module example_soc #(
         wire [7:0]         i_hmaster, d_hmaster; // exclusive access signaling
         wire               i_hready, d_hready;
         wire               i_hresp, d_hresp;
-        wire               i_hexokay=1, d_hexokay=1; // exclusive access signaling
+        wire               i_hexokay, d_hexokay; // exclusive access signaling
         wire [W_DATA-1:0]  i_hwdata, d_hwdata;
         wire [W_DATA-1:0]  i_hrdata, d_hrdata;
 	// The address phase of an
@@ -162,6 +162,11 @@ hazard3_2cpu #(
         .i_hexokay(i_hexokay),
         .i_hwdata(i_hwdata),
         .i_hrdata(i_hrdata),
+	// exclusive transfers
+	.i_hexcl(i_hexcl),
+	.i_hmaster(i_hmaster),
+	.i_hexokay(i_hexokay),
+
 
         // Core 1 bus (named D for consistency with 1-core 2-port tb)
 	.d_haddr(d_haddr),
@@ -178,6 +183,10 @@ hazard3_2cpu #(
 	.d_hexokay(d_hexokay),
 	.d_hwdata(d_hwdata),
 	.d_hrdata(d_hrdata),
+        // exclusive transfers
+        .d_hexcl(d_hexcl),
+        .d_hmaster(d_hmaster),
+        .d_hexokay(d_hexokay),
 
         // Level-sensitive interrupt sources
         .irq(irq),       // -> mip.meip
@@ -206,6 +215,10 @@ wire [3:0]         sram0_hprot;
 wire               sram0_hmastlock;
 wire [W_DATA-1:0]  sram0_hwdata;
 wire [W_DATA-1:0]  sram0_hrdata;
+// exclusive access signaling
+wire               sram0_hexcl;
+wire [7:0]         sram0_hmaster;
+wire               sram0_hexokay;
 
 wire               bridge_hready_resp;
 wire               bridge_hready;
@@ -219,6 +232,10 @@ wire [3:0]         bridge_hprot;
 wire               bridge_hmastlock;
 wire [W_DATA-1:0]  bridge_hwdata;
 wire [W_DATA-1:0]  bridge_hrdata;
+// exclusive access signaling
+wire               bridge_hexcl;
+wire [7:0]         bridge_hmaster;
+wire               bridge_hexokay=1;
 
 ahbl_crossbar #(
         .N_MASTERS(1),
@@ -246,6 +263,10 @@ ahbl_crossbar #(
         .src_hmastlock   ({sd_hmastlock, i_hmastlock}),
         .src_hwdata      ({d_hwdata, i_hwdata}),
         .src_hrdata      ({d_hrdata, i_hrdata}), 
+        // exclusive access signaling
+	.src_hexcl	 ({d_hexcl, i_hexcl}),
+        .src_hmaster     ({d_hmaster, i_hmaster}),
+        .src_hexokay     ({d_hexokay, i_hexokay}),
 
         // To slaves; function as master ports
 	.dst_hready_resp ({bridge_hready_resp , sram0_hready_resp}),
@@ -259,7 +280,11 @@ ahbl_crossbar #(
         .dst_hprot       ({bridge_hprot       , sram0_hprot      }),
         .dst_hmastlock   ({bridge_hmastlock   , sram0_hmastlock  }),
         .dst_hwdata      ({bridge_hwdata      , sram0_hwdata     }),
-        .dst_hrdata      ({bridge_hrdata      , sram0_hrdata     })
+        .dst_hrdata      ({bridge_hrdata      , sram0_hrdata     }),
+        // exclusive access signaling
+        .dst_hexcl       ({bridge_hexcl	      , sram0_hexcl}),
+        .dst_hmaster     ({bridge_hmaster     , sram0_hmaster}),
+        .dst_hexokay     ({bridge_hexokay     , sram0_hexokay})
 );
 
 // APB layer
@@ -384,6 +409,10 @@ ahb_sync_sram #(
 	.ahbls_hmastlock   (sram0_hmastlock),
 	.ahbls_hwdata      (sram0_hwdata),
 	.ahbls_hrdata      (sram0_hrdata),
+	// exclusive access signaling
+	.ahbls_hexcl	   (sram0_hexcl),
+	.ahbls_hmaster     (sram0_hmaster),
+	.ahbls_hexokay     (sram0_hexokay),
 
     // tang nano 20k SDRAM
     .O_sdram_clk(O_sdram_clk),

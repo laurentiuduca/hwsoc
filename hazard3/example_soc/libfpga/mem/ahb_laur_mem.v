@@ -34,6 +34,10 @@ module ahb_sync_sram #(
 	input  wire               ahbls_hmastlock,
 	input  wire [W_DATA-1:0]  ahbls_hwdata,
 	output wire [W_DATA-1:0]  ahbls_hrdata,
+	// exclusive access signaling
+        input  wire               ahbls_hexcl,
+        input wire [7:0]          ahbls_hmaster,
+        output wire               ahbls_hexokay,
 
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
@@ -102,6 +106,8 @@ integer i=0, j=0, k=0, l=0, m=0, lj=0;
 
     wire [6:0] w_cache_state;
     wire w_c_oe;
+    wire w_cache_mask;
+    assign w_cache_mask = (state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask);
 
 task check_new_req;
 			if (ahb_read_aphase) begin
@@ -136,7 +142,9 @@ always @ (posedge clk or negedge rst_n) begin
 		r_dram_wr <= 0;
 		r_ahbls_hrdata <= 0;
 		r_ahbls_hwdata <= 0;
+		r_ahbls_hexokay <= 1;
 	end else begin
+		r_ahbls_hexokay <= 1;
 		if(state == 0) begin
 			check_new_req;
 			check_debug;
@@ -172,13 +180,13 @@ end
 // ----------------------------------------------------------------------------
 // AHBL hookup
 
-
 assign ahbls_hresp = 1'b0;
 assign ahbls_hready_resp = (state == 0) ? !w_dram_busy : 
 			   (state == 22 || state == 20) ? 0 :
 			   (state == 21) ? !w_dram_busy : 0;
 assign ahbls_hrdata = w_dram_odata;
 
+assign ahbls_hexokay = r_ahbls_hexokay;
 // ----------------------------------------------------------------------------
 
     cache_ctrl #(.PRELOAD_FILE(PRELOAD_FILE), .ADDR_WIDTH(32))
@@ -197,7 +205,7 @@ assign ahbls_hrdata = w_dram_odata;
                .i_data(r_ahbls_hwdata),
                .o_data(w_dram_odata),
                .o_busy(w_dram_busy),
-               .i_mask((state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask),
+               .i_mask(w_cache_mask),
 
 	       .state(w_cache_state),
 	       .c_oe(w_c_oe),
