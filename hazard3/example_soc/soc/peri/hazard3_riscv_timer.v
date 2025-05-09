@@ -11,7 +11,8 @@
 // TICK_IS_NRZ = 0: tick is a level-sensitive signal that is synchronous to clk.
 
 module hazard3_riscv_timer #(
-	parameter TICK_IS_NRZ = 0
+	parameter TICK_IS_NRZ = 0,
+	`include "hazard3_config.vh"
 ) (
 	input  wire               clk,
 	input  wire               rst_n,
@@ -28,7 +29,8 @@ module hazard3_riscv_timer #(
 	input  wire               dbg_halt,
 	input  wire               tick,
 
-	output reg                timer_irq
+	output reg [N_HARTS-1:0]  soft_irq,
+	output reg [N_HARTS-1:0]  timer_irq
 );
 
 localparam ADDR_CTRL      = 16'h0000;
@@ -87,9 +89,11 @@ wire bus_read = !pwrite && psel && penable;
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		ctrl_en <= 1'b1;
+		soft_irq <= 0;
 	end else if (bus_write && paddr == ADDR_CTRL) begin
 		// laur - nuttx sends ipi at this addr
 		//ctrl_en <= pwdata[0];
+		soft_irq <= 0;
 	end
 end
 

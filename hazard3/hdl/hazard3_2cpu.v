@@ -55,8 +55,9 @@ module hazard3_2cpu #(
 
 	// Level-sensitive interrupt sources
 	input wire [NUM_IRQS-1:0] irq,       // -> mip.meip
-	input wire [1:0]          soft_irq,  // -> mip.msip
-	input wire [1:0]          timer_irq  // -> mip.mtip
+	input wire [N_HARTS-1:0]          soft_irq,  // -> mip.msip
+	input wire [N_HARTS-1:0]          timer_irq,  // -> mip.mtip
+	output wire [N_HARTS-1:0]         hart_halted
 );
 
 // JTAG-DTM IDCODE, selected after TAP reset, would normally be a
@@ -118,7 +119,6 @@ wire [N_HARTS-1:0]        hart_reset_done;
 wire [N_HARTS-1:0]        hart_req_halt;
 wire [N_HARTS-1:0]        hart_req_halt_on_reset;
 wire [N_HARTS-1:0]        hart_req_resume;
-wire [N_HARTS-1:0]        hart_halted;
 wire [N_HARTS-1:0]        hart_running;
 
 wire [N_HARTS*XLEN-1:0]   hart_data0_rdata;

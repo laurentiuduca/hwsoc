@@ -1,6 +1,8 @@
 // laur
 `define SIM_MODE
 
+`define NCORES 2
+
 //`define DUMP_VCD
 
 `define TN_DRAM_REFRESH // for tang nano

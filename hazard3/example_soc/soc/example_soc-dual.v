@@ -90,8 +90,9 @@ module example_soc #(
         
 	// Level-sensitive interrupt sources
         wire [NUM_IRQS-1:0] irq=0;       // -> mip.meip
-        wire [1:0]          soft_irq;    // -> mip.msip
-        wire [1:0]          timer_irq;   // -> mip.mtip
+        wire [N_HARTS-1:0]          soft_irq;    // -> mip.msip
+        wire [N_HARTS-1:0]          timer_irq;   // -> mip.mtip
+	wire [N_HARTS-1:0]	    hart_halted;
 
 hazard3_2cpu #(
         // These must have the values given here for you to end up with a useful SoC:
@@ -194,7 +195,8 @@ hazard3_2cpu #(
         // Level-sensitive interrupt sources
         .irq(irq),       // -> mip.meip
         .soft_irq(soft_irq),  // -> mip.msip
-        .timer_irq(timer_irq)  // -> mip.mtip	
+        .timer_irq(timer_irq),  // -> mip.mtip	
+	.hart_halted(hart_halted)
 );
 
 // ----------------------------------------------------------------------------
