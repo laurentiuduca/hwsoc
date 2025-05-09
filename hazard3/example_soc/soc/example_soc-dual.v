@@ -151,19 +151,16 @@ hazard3_2cpu #(
     .tdo(tdo),
 
         // Core 0 bus (named I for consistency with 1-core 2-port tb)
-	.d_pc(i_d_pc),
+	.i_d_pc(i_d_pc),
         .i_haddr(i_haddr),
         .i_hwrite(i_hwrite),
         .i_htrans(i_htrans),
-        .i_hexcl(i_hexcl),
         .i_hsize(i_hsize),
         .i_hburst(i_hburst),
         .i_hprot(i_hprot),
         .i_hmastlock(i_hmastlock),
-        .i_hmaster(i_hmaster),
         .i_hready(i_hready),
         .i_hresp(i_hresp),
-        .i_hexokay(i_hexokay),
         .i_hwdata(i_hwdata),
         .i_hrdata(i_hrdata),
 	// exclusive transfers
@@ -173,19 +170,16 @@ hazard3_2cpu #(
 
 
         // Core 1 bus (named D for consistency with 1-core 2-port tb)
-	.d_pc(d_d_pc),
+	.d_d_pc(d_d_pc),
 	.d_haddr(d_haddr),
 	.d_hwrite(d_hwrite),
 	.d_htrans(d_htrans),
-	.d_hexcl(d_hexcl),
 	.d_hsize(d_hsize),
 	.d_hburst(d_hburst),
 	.d_hprot(d_hprot),
 	.d_hmastlock(d_hmastlock),
-	.d_hmaster(d_hmaster),
 	.d_hready(d_hready),
 	.d_hresp(d_hresp),
-	.d_hexokay(d_hexokay),
 	.d_hwdata(d_hwdata),
 	.d_hrdata(d_hrdata),
         // exclusive transfers
@@ -270,7 +264,7 @@ ahbl_crossbar #(
         .src_hsize       ({d_hsize, i_hsize}),
         .src_hburst      ({d_hburst, i_hburst}),
         .src_hprot       ({d_hprot, i_hprot}),
-        .src_hmastlock   ({sd_hmastlock, i_hmastlock}),
+        .src_hmastlock   ({d_hmastlock, i_hmastlock}),
         .src_hwdata      ({d_hwdata, i_hwdata}),
         .src_hrdata      ({d_hrdata, i_hrdata}),
         .src_d_pc	 ({d_d_pc, i_d_pc}),
@@ -467,6 +461,7 @@ ahb_sync_sram #(
 
 );
 
+wire uart_irq;
 uart_mini uart_u (
 	.clk          (clk),
 	.rst_n        (rst_n),

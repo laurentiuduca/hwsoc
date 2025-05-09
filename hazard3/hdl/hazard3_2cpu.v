@@ -217,10 +217,12 @@ hazard3_reset_sync cpu1_reset_sync (
 assign sys_reset_done = rst_n_cpu0 && rst_n_cpu1;
 assign hart_reset_done = {rst_n_cpu1, rst_n_cpu0};
 
+`ifdef laur0
 `ifndef CONFIG_HEADER
 `define CONFIG_HEADER "config_default.vh"
 `endif
 `include `CONFIG_HEADER
+`endif
 
 wire pwrup_req_cpu0;
 wire pwrup_req_cpu1;

@@ -255,7 +255,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 	wire [N_MASTERS*W_DATA-1:0]  arb_hwdata;
 	wire [N_MASTERS*W_DATA-1:0]  arb_hrdata;
 	wire [N_MASTERS*W_ADDR-1:0]  arb_d_pc;
-	wire [N_MASTERS*W_ADDR-1:0]  arb_harid;
+	wire [N_MASTERS*W_ADDR-1:0]  arb_hartid;
 	// exclusive access signaling
 	wire [N_MASTERS-1:0]         arb_hexcl;
 	wire [N_MASTERS*8-1:0]       arb_hmaster;
@@ -328,7 +328,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 		// exclusive access signaling
 		.dst_hexcl       (dst_hexcl[j]),
                 .dst_hmaster     (dst_hmaster[8 * j +: 8]),
-                .dst_hexokay     (dst_hexokay[j]),
+                .dst_hexokay     (dst_hexokay[j])
 	);
 end
 endgenerate

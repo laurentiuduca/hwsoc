@@ -90,7 +90,9 @@ reg [5:0] state, ostate;
 reg [W_ADDR-1:0]  r_ahbls_haddr;
 reg [3:0]         r_mask;
 reg [W_DATA-1:0]  r_ahbls_hrdata, r_ahbls_hwdata;
+reg r_ahbls_hexokay;
 integer i=0, j=0, k=0, l=0, m=0, lj=0;
+
 
 // RAM 
     reg r_dram_le, r_dram_wr;
@@ -108,7 +110,7 @@ integer i=0, j=0, k=0, l=0, m=0, lj=0;
     wire [6:0] w_cache_state;
     wire w_c_oe;
     wire w_cache_mask;
-    assign w_cache_mask = (state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask);
+    assign w_cache_mask = (state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask;
 
 task check_new_req;
 			if (ahb_read_aphase) begin

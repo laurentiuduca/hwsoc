@@ -14,6 +14,8 @@
 parameter pc_trace_start = 32'h2c5c,
 parameter pc_trace_stop = 32'h2c68,
 
+parameter N_HARTS = 2,
+
 // ----------------------------------------------------------------------------
 // Reset state configuration
 

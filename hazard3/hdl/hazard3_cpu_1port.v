@@ -83,7 +83,7 @@ module hazard3_cpu_1port #(
 // ----------------------------------------------------------------------------
 // Processor core
 
-assign hartid = M_HARTID_VAL;
+assign hartid = MHARTID_VAL;
 
 // Instruction fetch signals
 wire              core_aph_req_i;

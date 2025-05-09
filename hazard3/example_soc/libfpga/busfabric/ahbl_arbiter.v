@@ -243,7 +243,7 @@ onehot_mux #(
 onehot_mux #(
         .W_INPUT(W_ADDR),
         .N_INPUTS(N_PORTS)
-) mux_haddr (
+) mux_dst_d_pc (
         .in(actual_d_pc),
         .sel(mast_gnt_a),
         .out(dst_d_pc)
@@ -252,7 +252,7 @@ onehot_mux #(
 onehot_mux #(
         .W_INPUT(W_DATA),
         .N_INPUTS(N_PORTS)
-) mux_haddr (
+) mux_dst_hartid (
         .in(actual_hartid),
         .sel(mast_gnt_a),
         .out(dst_hartid)
@@ -270,7 +270,7 @@ onehot_mux #(
 onehot_mux #(
         .W_INPUT(8),
         .N_INPUTS(N_PORTS)
-) mux_hexcl (
+) mux_hmaster (
         .in(actual_hmaster),
         .sel(mast_gnt_a),
         .out(dst_hmaster)
