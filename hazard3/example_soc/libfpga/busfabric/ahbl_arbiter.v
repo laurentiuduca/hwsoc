@@ -187,7 +187,7 @@ always @ (posedge clk or negedge rst_n) begin
 			buf_hprot[i]     <= 3'h0;
 			buf_hmastlock[i] <= 1'b0;
 			buf_hexcl[i]     <= 1'b0;
-			buf_hmaster[i]   <= 8'b0;
+			buf_hmaster[i]   <= 8'd0;
 			buf_hexokay[i]   <= 1'b0;
 		end
 	end else begin
