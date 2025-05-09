@@ -20,7 +20,7 @@
 
 module ahbl_crossbar #(
 	parameter N_MASTERS = 2,
-	parameter N_SLAVES = 3,
+	parameter N_SLAVES = 2,
 	parameter W_ADDR = 32,
 	parameter W_DATA = 32,
 
@@ -61,7 +61,7 @@ module ahbl_crossbar #(
 	// exclusive access signaling
 	input  wire [N_MASTERS-1:0]        src_hexcl,
 	input  wire [N_MASTERS*8-1:0]      src_hmaster,
-	output wire [N_MASTERS-1:0]       src_hexokay,
+	output wire [N_MASTERS-1:0]        src_hexokay,
 
 	// To slaves; function as master ports
 	output wire [N_SLAVES-1:0]         dst_hready,
@@ -195,8 +195,8 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 	) split (
 		.clk             (clk),
 		.rst_n           (rst_n),
-		.src_d_pc        (src_d_pc[i]),
-		.src_hartid      (src_hartid[i]),
+		.src_d_pc        (src_d_pc[W_ADDR * i +: W_ADDR]),
+		.src_hartid      (src_hartid[W_DATA * i +: W_DATA]),
 		.src_hready      (src_hready_resp[i]),	// HREADY_RESP tied -> HREADY at master level
 		.src_hready_resp (src_hready_resp[i]),
 		.src_hresp       (src_hresp[i]),
