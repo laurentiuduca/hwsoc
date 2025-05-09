@@ -40,6 +40,7 @@ module ahbl_arbiter #(
 	input wire                       rst_n,
 
 	// From masters; function as slave ports
+	input  wire [N_PORTS*W_ADDR-1:0] src_d_pc,
 	input  wire [N_PORTS-1:0]        src_hready,
 	output wire [N_PORTS-1:0]        src_hready_resp,
 	output wire [N_PORTS-1:0]        src_hresp,
@@ -52,8 +53,13 @@ module ahbl_arbiter #(
 	input  wire [N_PORTS-1:0]        src_hmastlock,
 	input  wire [N_PORTS*W_DATA-1:0] src_hwdata,
 	output wire [N_PORTS*W_DATA-1:0] src_hrdata,
+        // exclusive access signaling
+        input  wire [N_PORTS-1:0]       src_hexcl,
+        input  wire [N_PORTS*8-1:0]     src_hmaster,
+        output wire [N_PORTS-1:0]       src_hexokay,
 
 	// To slave; functions as master port
+	output wire [W_ADDR-1:0] 	 dst_d_pc,
 	output wire                      dst_hready,
 	input  wire                      dst_hready_resp,
 	input  wire                      dst_hresp,
@@ -65,7 +71,11 @@ module ahbl_arbiter #(
 	output wire [3:0]                dst_hprot,
 	output wire                      dst_hmastlock,
 	output wire [W_DATA-1:0]         dst_hwdata,
-	input  wire [W_DATA-1:0]         dst_hrdata
+	input  wire [W_DATA-1:0]         dst_hrdata,
+        // exclusive access signaling   
+        output wire        		 dst_hexcl,
+        output wire [7:0]     		 dst_hmaster,
+        input wire        		 dst_hexokay
 );
 
 integer i;
@@ -73,6 +83,7 @@ integer i;
 // "actual" is a mux between the buffered signal, if valid, else the live signal on the port
 
 reg [N_PORTS-1:0]        buf_valid;
+reg [W_ADDR-1:0]         buf_d_pc       [0:N_PORTS-1];
 reg [W_ADDR-1:0]         buf_haddr      [0:N_PORTS-1];
 reg                      buf_hwrite     [0:N_PORTS-1];
 reg [1:0]                buf_htrans     [0:N_PORTS-1];
@@ -80,7 +91,12 @@ reg [2:0]                buf_hsize      [0:N_PORTS-1];
 reg [2:0]                buf_hburst     [0:N_PORTS-1];
 reg [3:0]                buf_hprot      [0:N_PORTS-1];
 reg                      buf_hmastlock  [0:N_PORTS-1];
+// exclusive access signaling
+reg 			 buf_hexcl	[0:N_PORTS-1];
+reg [7:0]     		 buf_hmaster	[0:N_PORTS-1];
+reg       		 buf_hexokay	[0:N_PORTS-1];
 
+reg [N_PORTS*W_ADDR-1:0] actual_d_pc;
 reg [N_PORTS*W_ADDR-1:0] actual_haddr;
 reg [N_PORTS-1:0]        actual_hwrite;
 reg [N_PORTS*2-1:0]      actual_htrans;
@@ -88,10 +104,15 @@ reg [N_PORTS*3-1:0]      actual_hsize;
 reg [N_PORTS*3-1:0]      actual_hburst;
 reg [N_PORTS*4-1:0]      actual_hprot;
 reg [N_PORTS-1:0]        actual_hmastlock;
+// exclusive access signaling
+reg [N_PORTS-1:0]       actual_hexcl;
+reg [N_PORTS*8-1:0]     actual_hmaster;
+reg [N_PORTS-1:0]       actual_hexokay;
 
 always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
 		if (buf_valid[i]) begin
+			actual_d_pc      [i * W_ADDR +: W_ADDR] = buf_d_pc      [i];
 			actual_haddr     [i * W_ADDR +: W_ADDR] = buf_haddr     [i];
 			actual_hwrite    [i]                    = buf_hwrite    [i];
 			actual_htrans    [i * 2 +: 2]           = buf_htrans    [i];
@@ -99,7 +120,11 @@ always @ (*) begin
 			actual_hburst    [i * 3 +: 3]           = buf_hburst    [i];
 			actual_hprot     [i * 4 +: 4]           = buf_hprot     [i];
 			actual_hmastlock [i]                    = buf_hmastlock [i];
+			actual_hexcl     [i]			= buf_hexcl     [i];
+			actual_hmaster   [i * 8 +: 8]		= buf_hmaster	[i];
+			actual_hexokay   [i]			= buf_hexokay   [i];
 		end else begin
+			actual_d_pc      [i * W_ADDR +: W_ADDR] = src_d_pc      [i * W_ADDR +: W_ADDR];
 			actual_haddr     [i * W_ADDR +: W_ADDR] = src_haddr     [i * W_ADDR +: W_ADDR];
 			actual_hwrite    [i]                    = src_hwrite    [i];
 			actual_htrans    [i * 2 +: 2]           = src_htrans    [i * 2 +: 2];
@@ -107,6 +132,9 @@ always @ (*) begin
 			actual_hburst    [i * 3 +: 3]           = src_hburst    [i * 3 +: 3];
 			actual_hprot     [i * 4 +: 4]           = src_hprot     [i * 4 +: 4];
 			actual_hmastlock [i]                    = src_hmastlock [i];
+                        actual_hexcl     [i]                    = src_hexcl     [i];
+                        actual_hmaster   [i * 8 +: 8]           = src_hmaster   [i * 8 +: 8];
+                        actual_hexokay   [i]                    = src_hexokay   [i];			
 		end
 	end
 end
@@ -144,12 +172,16 @@ always @ (posedge clk or negedge rst_n) begin
 		for (i = 0; i < N_PORTS; i = i + 1) begin
 			buf_valid[i]     <= 1'b0;
 			buf_htrans[i]    <= 2'h0;
+			buf_d_pc[i]	 <= {W_ADDR{1'b0}};
 			buf_haddr[i]     <= {W_ADDR{1'b0}};
 			buf_hwrite[i]    <= 1'b0;
 			buf_hsize[i]     <= 3'h0;
 			buf_hburst[i]    <= 3'h0;
 			buf_hprot[i]     <= 3'h0;
 			buf_hmastlock[i] <= 1'b0;
+			buf_hexcl[i]     <= 1'b0;
+			buf_hmaster[i]   <= 8'b0;
+			buf_hexokay[i]   <= 1'b0;
 		end
 	end else begin
 		if (dst_hready) begin
@@ -160,12 +192,16 @@ always @ (posedge clk or negedge rst_n) begin
 			if (buf_wen[i]) begin
 				buf_valid    [i] <= 1'b1;
 				buf_htrans   [i] <= src_htrans   [i * 2 +: 2];
+				buf_haddr    [i] <= src_d_pc     [i * W_ADDR +: W_ADDR];
 				buf_haddr    [i] <= src_haddr    [i * W_ADDR +: W_ADDR];
 				buf_hwrite   [i] <= src_hwrite   [i];
 				buf_hsize    [i] <= src_hsize    [i * 3 +: 3];
 				buf_hburst   [i] <= src_hburst   [i * 3 +: 3];
 				buf_hprot    [i] <= src_hprot    [i * 4 +: 4];
 				buf_hmastlock[i] <= src_hmastlock[i];
+                        	buf_hexcl    [i] <= src_hexcl    [i];
+                        	buf_hmaster  [i] <= src_hmaster  [i * 8 +: 8];
+                        	buf_hexokay  [i] <= src_hexokay  [i];				
 			end
 		end
 	end
@@ -183,6 +219,7 @@ wire [N_PORTS-1:0] mast_in_dphase = buf_valid | mast_gnt_d;
 assign src_hready_resp = ~mast_in_dphase | (mast_gnt_d & {N_PORTS{dst_hready_resp}});
 assign src_hresp = mast_gnt_d & {N_PORTS{dst_hresp}};
 assign src_hrdata = {N_PORTS{dst_hrdata}};
+assign src_hexokay = {N_PORTS{dst_hexokay}};
 
 onehot_mux #(
 	.W_INPUT(W_DATA),
@@ -194,6 +231,33 @@ onehot_mux #(
 );
 
 // Pass through address-phase signals based on grant
+
+onehot_mux #(
+        .W_INPUT(W_ADDR),
+        .N_INPUTS(N_PORTS)
+) mux_haddr (
+        .in(actual_d_pc),
+        .sel(mast_gnt_a),
+        .out(dst_d_pc)
+);
+
+onehot_mux #(
+        .W_INPUT(1),
+        .N_INPUTS(N_PORTS)
+) mux_hexcl (
+        .in(actual_hexcl),
+        .sel(mast_gnt_a),
+        .out(dst_hexcl)
+);
+
+onehot_mux #(
+        .W_INPUT(8),
+        .N_INPUTS(N_PORTS)
+) mux_hexcl (
+        .in(actual_hmaster),
+        .sel(mast_gnt_a),
+        .out(dst_hmaster)
+);
 
 onehot_mux #(
 	.W_INPUT(W_ADDR),

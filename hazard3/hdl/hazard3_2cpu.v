@@ -20,6 +20,7 @@ module hazard3_2cpu #(
     output wire               tdo,
 
 	// Core 0 bus (named I for consistency with 1-core 2-port tb)
+	output wire [W_ADDR-1:0]  i_d_pc,
 	output wire [W_ADDR-1:0]  i_haddr,
 	output wire               i_hwrite,
 	output wire [1:0]         i_htrans,
@@ -36,6 +37,7 @@ module hazard3_2cpu #(
 	input  wire [W_DATA-1:0]  i_hrdata,
 
 	// Core 1 bus (named D for consistency with 1-core 2-port tb)
+	output wire [W_ADDR-1:0]  d_d_pc,
 	output wire [W_ADDR-1:0]  d_haddr,
 	output wire               d_hwrite,
 	output wire [1:0]         d_htrans,
@@ -233,6 +235,8 @@ hazard3_cpu_1port #(
 	.clk_always_on              (clk),
 	.rst_n                      (rst_n_cpu0),
 
+        .d_pc(i_d_pc),
+
 	.pwrup_req                  (pwrup_req_cpu0),
 	.pwrup_ack                  (pwrup_req_cpu0),
 	.clk_en                     (),
@@ -293,6 +297,8 @@ hazard3_cpu_1port #(
 	.clk                        (clk),
 	.clk_always_on              (clk),
 	.rst_n                      (rst_n_cpu1),
+
+        .d_pc(d_d_pc),
 
 	.pwrup_req                  (pwrup_req_cpu1),
 	.pwrup_ack                  (pwrup_req_cpu1),

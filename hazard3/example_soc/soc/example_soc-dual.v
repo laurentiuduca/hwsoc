@@ -69,6 +69,7 @@ module example_soc #(
 // ----------------------------------------------------------------------------
 // Processor dual core
 
+	wire [W_ADDR-1:0]  i_d_pc, d_d_pc;
         wire [W_ADDR-1:0]  i_haddr, d_haddr;
         wire               i_hwrite, d_hwrite;
         wire [1:0]         i_htrans, d_htrans;
@@ -148,6 +149,7 @@ hazard3_2cpu #(
     .tdo(tdo),
 
         // Core 0 bus (named I for consistency with 1-core 2-port tb)
+	.d_pc(i_d_pc),
         .i_haddr(i_haddr),
         .i_hwrite(i_hwrite),
         .i_htrans(i_htrans),
@@ -169,6 +171,7 @@ hazard3_2cpu #(
 
 
         // Core 1 bus (named D for consistency with 1-core 2-port tb)
+	.d_pc(d_d_pc),
 	.d_haddr(d_haddr),
 	.d_hwrite(d_hwrite),
 	.d_htrans(d_htrans),
@@ -248,7 +251,7 @@ ahbl_crossbar #(
         // Global signals
         .clk             (clk),
         .rst_n           (rst_n),
-        .d_pc            (d_pc),
+        .d_pc            ({d_d_pc, i_d_pc}),
 
         // From masters; function as slave ports
         .src_hready_resp ({d_hready, i_hready}),
@@ -394,7 +397,7 @@ ahb_sync_sram #(
 	.rst_n             (rst_n),
 	.clk_sdram         (clk_sdram),
 
-	.d_pc              (d_pc),
+	.d_pc              ({d_d_pc, i_d_pc}),
         .w_init_done(w_init_done),
 
 	.ahbls_hready_resp (sram0_hready_resp),

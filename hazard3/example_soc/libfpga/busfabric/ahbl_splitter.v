@@ -53,6 +53,10 @@ module ahbl_splitter #(
 	input  wire                      src_hmastlock,
 	input  wire [W_DATA-1:0]         src_hwdata,
 	output wire [W_DATA-1:0]         src_hrdata,
+	// exlusive access signaling
+	input  wire 			 src_hexcl,
+	input  wire [7:0]		 src_hmaster,
+	output wire 			 src_hexokay,
 
 	// To slaves; function as master ports
 	output wire [N_PORTS-1:0]        dst_hready,
@@ -66,7 +70,11 @@ module ahbl_splitter #(
 	output wire [N_PORTS*4-1:0]      dst_hprot,
 	output wire [N_PORTS-1:0]        dst_hmastlock,
 	output wire [N_PORTS*W_DATA-1:0] dst_hwdata,
-	input  wire [N_PORTS*W_DATA-1:0] dst_hrdata
+	input  wire [N_PORTS*W_DATA-1:0] dst_hrdata,
+	// exlusive access signaling
+	output wire [N_PORTS-1:0]        dst_hexcl,
+	output wire [N_PORTS*8-1:0]      dst_hmaster,
+	input wire  [N_PORTS-1:0]        dst_hexokay
 );
 
 localparam HTRANS_IDLE = 2'b00;
@@ -108,6 +116,8 @@ assign dst_hsize     = {N_PORTS{src_hsize}};
 assign dst_hburst    = {N_PORTS{src_hburst}};
 assign dst_hprot     = {N_PORTS{src_hprot}};
 assign dst_hmastlock = {N_PORTS{src_hmastlock}};
+assign dst_hexcl     = {N_PORTS{src_hexcl}};
+assign dst_hmaster   = {N_PORTS{src_hmaster}};
 
 always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
@@ -161,6 +171,7 @@ onehot_mux #(
 assign src_hready_resp = (!slave_sel_d && (err_ph1 || !decode_err_d)) ||
 	|(slave_sel_d & dst_hready_resp);
 assign src_hresp = decode_err_d || |(slave_sel_d & dst_hresp);
+assign src_hexokay = |(slave_sel_d & dst_hexokay);
 
 `ifdef SIM_MODE
 integer f;
