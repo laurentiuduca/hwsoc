@@ -113,29 +113,41 @@ always @ (posedge clk or negedge rst_n) begin
 end
 
 // mtimecmp is stored inverted for minor LUT savings on iCE40
-reg  [63:0] mtimecmp;
-wire [64:0] cmp_diff = {1'b0, mtime} + {1'b0, mtimecmp} + 65'd1;
+reg  [63:0] mtimecmp0, mtimecmp1;
+wire [64:0] cmp_diff0 = {1'b0, mtime} + {1'b0, mtimecmp0} + 65'd1;
+wire [64:0] cmp_diff1 = {1'b0, mtime} + {1'b0, mtimecmp1} + 65'd1;
 
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
-		mtimecmp <= 64'h0;
+		mtimecmp0 <= 64'h0;
+		mtimecmp1 <= 64'h0;
 		timer_irq <= 1'b0;
 	end else begin
 		if (bus_write && paddr == ADDR_MTIMECMP)
-			mtimecmp[31:0] <= ~pwdata;
-		if (bus_write && paddr == ADDR_MTIMECMPH)
-			mtimecmp[63:32] <= ~pwdata;
-		timer_irq <= cmp_diff[64];
+			mtimecmp0[31:0] <= ~pwdata;
+		else if (bus_write && paddr == ADDR_MTIMECMPH)
+			mtimecmp0[63:32] <= ~pwdata;
+		if (bus_write && paddr == ADDR_MTIMECMP+8) begin
+                        mtimecmp1[31:0] <= ~pwdata;
+			$display("ADDR_MTIMECMP+8");
+		end else if (bus_write && paddr == ADDR_MTIMECMPH+12) begin
+                        mtimecmp1[63:32] <= ~pwdata;
+			$display("ADDR_MTIMECMP+c");
+		end
+
+		timer_irq <= {cmp_diff1[64], cmp_diff0[64]};
 	end
 end
 
 always @ (*) begin
 	case (paddr)
-	ADDR_CTRL:      prdata = {31'h0, ctrl_en};
+	ADDR_CTRL:      prdata = 0; //{31'h0, ctrl_en};
 	ADDR_MTIME:     prdata = mtime[31:0];
 	ADDR_MTIMEH:    prdata = mtime[63:32];
-	ADDR_MTIMECMP:  prdata = ~mtimecmp[31:0];
-	ADDR_MTIMECMPH: prdata = ~mtimecmp[63:32];
+	ADDR_MTIMECMP:  prdata = ~mtimecmp0[31:0];
+	ADDR_MTIMECMPH: prdata = ~mtimecmp0[63:32];
+        ADDR_MTIMECMP+8:  prdata = ~mtimecmp1[31:0];
+        ADDR_MTIMECMPH+12: prdata = ~mtimecmp1[63:32];	
 	default:        prdata = 32'h0;
 	endcase
 end
