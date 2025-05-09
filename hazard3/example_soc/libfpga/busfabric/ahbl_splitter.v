@@ -197,8 +197,8 @@ always @(posedge clk) begin
                 osrc_haddr <= src_haddr;
                 odst_hrdata[W_DATA-1:0] <= dst_hrdata[W_DATA-1:0];
 		if(j < 20 || (src_d_pc >= pc_trace_start && src_d_pc <= pc_trace_stop && li < 25))
-                $display("d_pc=%x src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x %08d", 
-			src_d_pc, src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp, $time);
+                $display("src_d_pc=%x hartid=%1x src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x %08d", 
+			src_d_pc, src_hartid, src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp, $time);
 		if(!closed && src_haddr > 0)
 			$fwrite(f, "src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x\n",
                         src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp);
