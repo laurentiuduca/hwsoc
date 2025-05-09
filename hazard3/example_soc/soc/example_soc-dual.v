@@ -93,6 +93,7 @@ module example_soc #(
         wire [N_HARTS-1:0]          soft_irq;    // -> mip.msip
         wire [N_HARTS-1:0]          timer_irq;   // -> mip.mtip
 	wire [N_HARTS-1:0]	    hart_halted;
+	wire [N_HARTS*W_DATA-1:0]   hartid;
 
 hazard3_2cpu #(
         // These must have the values given here for you to end up with a useful SoC:
@@ -196,7 +197,8 @@ hazard3_2cpu #(
         .irq(irq),       // -> mip.meip
         .soft_irq(soft_irq),  // -> mip.msip
         .timer_irq(timer_irq),  // -> mip.mtip	
-	.hart_halted(hart_halted)
+	.hart_halted(hart_halted),
+	.hartid(hartid)
 );
 
 // ----------------------------------------------------------------------------
@@ -220,6 +222,8 @@ wire [3:0]         sram0_hprot;
 wire               sram0_hmastlock;
 wire [W_DATA-1:0]  sram0_hwdata;
 wire [W_DATA-1:0]  sram0_hrdata;
+wire [W_ADDR-1:0]  sram0_d_pc;
+wire [W_DATA-1:0]  sram0_hartid;
 // exclusive access signaling
 wire               sram0_hexcl;
 wire [7:0]         sram0_hmaster;
@@ -237,6 +241,8 @@ wire [3:0]         bridge_hprot;
 wire               bridge_hmastlock;
 wire [W_DATA-1:0]  bridge_hwdata;
 wire [W_DATA-1:0]  bridge_hrdata;
+wire [W_ADDR-1:0]  bridge_d_pc;
+wire [W_DATA-1:0]  bridge_hartid;
 // exclusive access signaling
 wire               bridge_hexcl;
 wire [7:0]         bridge_hmaster;
@@ -253,7 +259,6 @@ ahbl_crossbar #(
         // Global signals
         .clk             (clk),
         .rst_n           (rst_n),
-        .d_pc            ({d_d_pc, i_d_pc}),
 
         // From masters; function as slave ports
         .src_hready_resp ({d_hready, i_hready}),
@@ -267,7 +272,9 @@ ahbl_crossbar #(
         .src_hprot       ({d_hprot, i_hprot}),
         .src_hmastlock   ({sd_hmastlock, i_hmastlock}),
         .src_hwdata      ({d_hwdata, i_hwdata}),
-        .src_hrdata      ({d_hrdata, i_hrdata}), 
+        .src_hrdata      ({d_hrdata, i_hrdata}),
+        .src_d_pc	 ({d_d_pc, i_d_pc}),
+	.src_hartid	 (hartid),
         // exclusive access signaling
 	.src_hexcl	 ({d_hexcl, i_hexcl}),
         .src_hmaster     ({d_hmaster, i_hmaster}),
@@ -286,6 +293,8 @@ ahbl_crossbar #(
         .dst_hmastlock   ({bridge_hmastlock   , sram0_hmastlock  }),
         .dst_hwdata      ({bridge_hwdata      , sram0_hwdata     }),
         .dst_hrdata      ({bridge_hrdata      , sram0_hrdata     }),
+	.dst_d_pc	 ({bridge_d_pc	      , sram0_d_pc	 }),
+	.dst_hartid      ({bridge_hartid      , sram0_hartid     }),
         // exclusive access signaling
         .dst_hexcl       ({bridge_hexcl	      , sram0_hexcl}),
         .dst_hmaster     ({bridge_hmaster     , sram0_hmaster}),
@@ -399,7 +408,8 @@ ahb_sync_sram #(
 	.rst_n             (rst_n),
 	.clk_sdram         (clk_sdram),
 
-	.d_pc              ({d_d_pc, i_d_pc}),
+	.d_pc              (sram0_d_pc),
+	.hartid		   (sram0_hartid),
         .w_init_done(w_init_done),
 
 	.ahbls_hready_resp (sram0_hready_resp),

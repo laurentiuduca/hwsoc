@@ -76,11 +76,14 @@ module hazard3_cpu_1port #(
 	// Level-sensitive interrupt sources
 	input wire [NUM_IRQS-1:0] irq,       // -> mip.meip
 	input wire                soft_irq,  // -> mip.msip
-	input wire                timer_irq  // -> mip.mtip
+	input wire                timer_irq,  // -> mip.mtip
+	output wire [W_DATA-1:0]  hartid
 );
 
 // ----------------------------------------------------------------------------
 // Processor core
+
+assign hartid = M_HARTID_VAL;
 
 // Instruction fetch signals
 wire              core_aph_req_i;

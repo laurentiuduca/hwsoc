@@ -38,7 +38,8 @@ module ahbl_splitter #(
 	input wire                       clk,
 	input wire                       rst_n,
 
-	input wire [W_ADDR-1:0]		 d_pc,
+	input wire [W_ADDR-1:0]		 src_d_pc,
+	input wire [W_DATA-1:0]          src_hartid,
 
 	// From master; functions as slave port
 	input  wire                      src_hready,
@@ -71,6 +72,8 @@ module ahbl_splitter #(
 	output wire [N_PORTS-1:0]        dst_hmastlock,
 	output wire [N_PORTS*W_DATA-1:0] dst_hwdata,
 	input  wire [N_PORTS*W_DATA-1:0] dst_hrdata,
+	output wire [N_PORTS*W_ADDR-1:0] dst_d_pc,
+	output wire [N_PORTS*W_DATA-1:0] dst_hartid,
 	// exlusive access signaling
 	output wire [N_PORTS-1:0]        dst_hexcl,
 	output wire [N_PORTS*8-1:0]      dst_hmaster,
@@ -118,6 +121,8 @@ assign dst_hprot     = {N_PORTS{src_hprot}};
 assign dst_hmastlock = {N_PORTS{src_hmastlock}};
 assign dst_hexcl     = {N_PORTS{src_hexcl}};
 assign dst_hmaster   = {N_PORTS{src_hmaster}};
+assign dst_d_pc      = {N_PORTS{src_d_pc}};
+assign dst_hartid    = {N_PORTS{src_hartid}};
 
 always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
@@ -185,15 +190,15 @@ always @(posedge clk) begin
         (osrc_haddr!= src_haddr || odst_hrdata[W_DATA-1:0] != dst_hrdata[W_DATA-1:0] || 
 		osrc_hready != src_hready || osrc_hwrite != src_hwrite)) begin
                 j <= j + 1;
-		if(d_pc >= pc_trace_start && d_pc <= pc_trace_stop)
+		if(src_d_pc >= pc_trace_start && src_d_pc <= pc_trace_stop)
 			li <= li + 1; 
 		osrc_hwrite <= src_hwrite;
 		osrc_hready <= src_hready;
                 osrc_haddr <= src_haddr;
                 odst_hrdata[W_DATA-1:0] <= dst_hrdata[W_DATA-1:0];
-		if(j < 20 || (d_pc >= pc_trace_start && d_pc <= pc_trace_stop && li < 25))
+		if(j < 20 || (src_d_pc >= pc_trace_start && src_d_pc <= pc_trace_stop && li < 25))
                 $display("d_pc=%x src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x %08d", 
-			d_pc, src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp, $time);
+			src_d_pc, src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp, $time);
 		if(!closed && src_haddr > 0)
 			$fwrite(f, "src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x\n",
                         src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp);

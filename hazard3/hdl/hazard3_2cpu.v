@@ -57,7 +57,8 @@ module hazard3_2cpu #(
 	input wire [NUM_IRQS-1:0] irq,       // -> mip.meip
 	input wire [N_HARTS-1:0]          soft_irq,  // -> mip.msip
 	input wire [N_HARTS-1:0]          timer_irq,  // -> mip.mtip
-	output wire [N_HARTS-1:0]         hart_halted
+	output wire [N_HARTS-1:0]         hart_halted,
+	output wire [N_HARTS*W_DATA-1:0]  hartid
 );
 
 // JTAG-DTM IDCODE, selected after TAP reset, would normally be a
@@ -108,7 +109,7 @@ hazard3_jtag_dtm #(
 	.dmi_pslverr      (dmi_pslverr)
 );
 
-localparam N_HARTS = 2;
+//localparam N_HARTS = 2;
 localparam XLEN = 32;
 
 wire                      sys_reset_req;
@@ -286,7 +287,8 @@ hazard3_cpu_1port #(
 
 	.irq                        (irq),
 	.soft_irq                   (soft_irq[0]),
-	.timer_irq                  (timer_irq[0])
+	.timer_irq                  (timer_irq[0]),
+	.hartid			    (hartid[W_DATA-1:0])
 );
 
 hazard3_cpu_1port #(
@@ -348,7 +350,8 @@ hazard3_cpu_1port #(
 
 	.irq                        (irq),
 	.soft_irq                   (soft_irq[1]),
-	.timer_irq                  (timer_irq[1])
+	.timer_irq                  (timer_irq[1]),
+	.hartid                     (hartid[2*W_DATA-1:W_DATA])
 );
 
 

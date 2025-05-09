@@ -41,6 +41,7 @@ module ahbl_arbiter #(
 
 	// From masters; function as slave ports
 	input  wire [N_PORTS*W_ADDR-1:0] src_d_pc,
+	input  wire [N_PORTS*W_DATA-1:0] src_hartid,
 	input  wire [N_PORTS-1:0]        src_hready,
 	output wire [N_PORTS-1:0]        src_hready_resp,
 	output wire [N_PORTS-1:0]        src_hresp,
@@ -60,6 +61,7 @@ module ahbl_arbiter #(
 
 	// To slave; functions as master port
 	output wire [W_ADDR-1:0] 	 dst_d_pc,
+	output wire [W_DATA-1:0]         dst_hartid,
 	output wire                      dst_hready,
 	input  wire                      dst_hready_resp,
 	input  wire                      dst_hresp,
@@ -84,6 +86,7 @@ integer i;
 
 reg [N_PORTS-1:0]        buf_valid;
 reg [W_ADDR-1:0]         buf_d_pc       [0:N_PORTS-1];
+reg [W_DATA-1:0]         buf_hartid     [0:N_PORTS-1];
 reg [W_ADDR-1:0]         buf_haddr      [0:N_PORTS-1];
 reg                      buf_hwrite     [0:N_PORTS-1];
 reg [1:0]                buf_htrans     [0:N_PORTS-1];
@@ -97,6 +100,7 @@ reg [7:0]     		 buf_hmaster	[0:N_PORTS-1];
 reg       		 buf_hexokay	[0:N_PORTS-1];
 
 reg [N_PORTS*W_ADDR-1:0] actual_d_pc;
+reg [N_PORTS*W_DATA-1:0] actual_hartid;
 reg [N_PORTS*W_ADDR-1:0] actual_haddr;
 reg [N_PORTS-1:0]        actual_hwrite;
 reg [N_PORTS*2-1:0]      actual_htrans;
@@ -113,6 +117,7 @@ always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
 		if (buf_valid[i]) begin
 			actual_d_pc      [i * W_ADDR +: W_ADDR] = buf_d_pc      [i];
+			actual_hartid    [i * W_DATA +: W_DATA] = buf_hartid    [i];
 			actual_haddr     [i * W_ADDR +: W_ADDR] = buf_haddr     [i];
 			actual_hwrite    [i]                    = buf_hwrite    [i];
 			actual_htrans    [i * 2 +: 2]           = buf_htrans    [i];
@@ -125,6 +130,7 @@ always @ (*) begin
 			actual_hexokay   [i]			= buf_hexokay   [i];
 		end else begin
 			actual_d_pc      [i * W_ADDR +: W_ADDR] = src_d_pc      [i * W_ADDR +: W_ADDR];
+			actual_hartid    [i * W_DATA +: W_DATA] = src_hartid    [i * W_DATA +: W_DATA];
 			actual_haddr     [i * W_ADDR +: W_ADDR] = src_haddr     [i * W_ADDR +: W_ADDR];
 			actual_hwrite    [i]                    = src_hwrite    [i];
 			actual_htrans    [i * 2 +: 2]           = src_htrans    [i * 2 +: 2];
@@ -173,6 +179,7 @@ always @ (posedge clk or negedge rst_n) begin
 			buf_valid[i]     <= 1'b0;
 			buf_htrans[i]    <= 2'h0;
 			buf_d_pc[i]	 <= {W_ADDR{1'b0}};
+			buf_hartid[i]    <= {W_DATA{1'b0}};
 			buf_haddr[i]     <= {W_ADDR{1'b0}};
 			buf_hwrite[i]    <= 1'b0;
 			buf_hsize[i]     <= 3'h0;
@@ -192,7 +199,8 @@ always @ (posedge clk or negedge rst_n) begin
 			if (buf_wen[i]) begin
 				buf_valid    [i] <= 1'b1;
 				buf_htrans   [i] <= src_htrans   [i * 2 +: 2];
-				buf_haddr    [i] <= src_d_pc     [i * W_ADDR +: W_ADDR];
+				buf_d_pc     [i] <= src_d_pc     [i * W_ADDR +: W_ADDR];
+				buf_hartid   [i] <= src_hartid   [i * W_DATA +: W_DATA];
 				buf_haddr    [i] <= src_haddr    [i * W_ADDR +: W_ADDR];
 				buf_hwrite   [i] <= src_hwrite   [i];
 				buf_hsize    [i] <= src_hsize    [i * 3 +: 3];
@@ -239,6 +247,15 @@ onehot_mux #(
         .in(actual_d_pc),
         .sel(mast_gnt_a),
         .out(dst_d_pc)
+);
+
+onehot_mux #(
+        .W_INPUT(W_DATA),
+        .N_INPUTS(N_PORTS)
+) mux_haddr (
+        .in(actual_hartid),
+        .sel(mast_gnt_a),
+        .out(dst_hartid)
 );
 
 onehot_mux #(

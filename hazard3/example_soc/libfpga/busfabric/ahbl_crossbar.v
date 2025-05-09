@@ -56,6 +56,7 @@ module ahbl_crossbar #(
 	input  wire [N_MASTERS*W_DATA-1:0] src_hwdata,
 	output wire [N_MASTERS*W_DATA-1:0] src_hrdata,
 	input  wire [N_MASTERS*W_ADDR-1:0] src_d_pc,
+	input  wire [N_MASTERS*W_DATA-1:0] src_hartid,
 
 	// exclusive access signaling
 	input  wire [N_MASTERS-1:0]        src_hexcl,
@@ -75,7 +76,8 @@ module ahbl_crossbar #(
 	output wire [N_SLAVES-1:0]         dst_hmastlock,
 	output wire [N_SLAVES*W_DATA-1:0]  dst_hwdata,
 	input  wire [N_SLAVES*W_DATA-1:0]  dst_hrdata,
-	input  wire [N_SLAVES*W_ADDR-1:0]  dst_d_pc,
+	output wire [N_SLAVES*W_ADDR-1:0]  dst_d_pc,
+	output wire [N_SLAVES*W_DATA-1:0]  dst_hartid,
         // exclusive access signaling
         output wire [N_SLAVES-1:0]        dst_hexcl,
         output wire [N_SLAVES*8-1:0]      dst_hmaster,
@@ -100,6 +102,7 @@ wire              xbar_hmastlock   [0:N_MASTERS-1][0:N_SLAVES-1];
 wire [W_DATA-1:0] xbar_hwdata      [0:N_MASTERS-1][0:N_SLAVES-1];
 wire [W_DATA-1:0] xbar_hrdata      [0:N_MASTERS-1][0:N_SLAVES-1];
 wire [W_ADDR-1:0] xbar_d_pc        [0:N_MASTERS-1][0:N_SLAVES-1];
+wire [W_DATA-1:0] xbar_hartid      [0:N_MASTERS-1][0:N_SLAVES-1];
 
 // exclusive access signaling
 wire              xbar_hexcl       [0:N_MASTERS-1][0:N_SLAVES-1];
@@ -129,6 +132,7 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 	wire [N_SLAVES*W_DATA-1:0]  split_hwdata;
 	wire [N_SLAVES*W_DATA-1:0]  split_hrdata;
 	wire [N_SLAVES*W_ADDR-1:0]  split_d_pc;
+	wire [N_SLAVES*W_DATA-1:0]  split_hartid;
         // exclusive access signaling
         wire [N_SLAVES-1:0]         split_hexcl;
         wire [N_SLAVES*8-1:0]       split_hmaster;
@@ -146,6 +150,7 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 			assign xbar_hmastlock[i][j]               = split_hmastlock[j];
 			assign xbar_hwdata[i][j]                  = split_hwdata[W_DATA * j +: W_DATA];
 			assign xbar_d_pc[i][j]			  = split_d_pc[W_ADDR * j +: W_ADDR];
+			assign xbar_hartid[i][j]                  = split_hartid[W_DATA * j +: W_DATA];
         		// exclusive access signaling
         		assign xbar_hexcl[i][j]        		  = split_hexcl[j];
 			assign xbar_hmaster[i][j]                 = split_hmaster[8*j];
@@ -167,6 +172,7 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 			assign xbar_hmastlock[i][j]               = 1'b0;
 			assign xbar_hwdata[i][j]                  = {W_DATA{1'b0}};
 			assign xbar_d_pc[i][j]                    = {W_ADDR{1'b0}};
+			assign xbar_hartid[i][j]                  = {W_DATA{1'b0}};
 			// exclusive access signaling
                         assign xbar_hexcl[i][j]                   = 1'b0;
                         assign xbar_hmaster[i][j]                 = {W_ADDR{1'b0}};
@@ -189,7 +195,8 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 	) split (
 		.clk             (clk),
 		.rst_n           (rst_n),
-		.d_pc		 (src_d_pc[i]),
+		.src_d_pc        (src_d_pc[i]),
+		.src_hartid      (src_hartid[i]),
 		.src_hready      (src_hready_resp[i]),	// HREADY_RESP tied -> HREADY at master level
 		.src_hready_resp (src_hready_resp[i]),
 		.src_hresp       (src_hresp[i]),
@@ -219,6 +226,8 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 		.dst_hmastlock   (split_hmastlock),
 		.dst_hwdata      (split_hwdata),
 		.dst_hrdata      (split_hrdata),
+		.dst_d_pc	 (split_d_pc),
+		.dst_hartid	 (split_hartid),
 		// exclusive access signaling
                 .dst_hexcl	 (split_hexcl),
                 .dst_hmaster	 (split_hmaster),
@@ -246,6 +255,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 	wire [N_MASTERS*W_DATA-1:0]  arb_hwdata;
 	wire [N_MASTERS*W_DATA-1:0]  arb_hrdata;
 	wire [N_MASTERS*W_ADDR-1:0]  arb_d_pc;
+	wire [N_MASTERS*W_ADDR-1:0]  arb_harid;
 	// exclusive access signaling
 	wire [N_MASTERS-1:0]         arb_hexcl;
 	wire [N_MASTERS*8-1:0]       arb_hmaster;
@@ -262,6 +272,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 		assign arb_hmastlock[i]                 = xbar_hmastlock[i][j];
 		assign arb_hwdata[W_DATA * i +: W_DATA] = xbar_hwdata[i][j];
 		assign arb_d_pc[W_ADDR * i +: W_ADDR]   = xbar_d_pc[i][j];
+		assign arb_hartid[W_DATA * i +: W_DATA] = xbar_hartid[i][j];
 		// exclusive access signaling
 		assign arb_hexcl[i]			= xbar_hexcl[i][j];
 		assign arb_hmaster[8 * i +: 8]		= xbar_hmaster[i][j];
@@ -281,7 +292,8 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 	) arb (
 		.clk             (clk),
 		.rst_n           (rst_n),
-		.d_pc		 (arb_d_pc),
+		.src_d_pc	 (arb_d_pc),
+		.src_hartid	 (arb_hartid),
 		.src_hready      (arb_hready),
 		.src_hready_resp (arb_hready_resp),
 		.src_hresp       (arb_hresp),
@@ -311,6 +323,8 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 		.dst_hmastlock   (dst_hmastlock[j]),
 		.dst_hwdata      (dst_hwdata[W_DATA * j +: W_DATA]),
 		.dst_hrdata      (dst_hrdata[W_DATA * j +: W_DATA]),
+		.dst_d_pc	 (dst_d_pc[W_ADDR * j   +: W_ADDR]),
+		.dst_hartid      (dst_hartid[W_DATA * j +: W_DATA]),
 		// exclusive access signaling
 		.dst_hexcl       (dst_hexcl[j]),
                 .dst_hmaster     (dst_hmaster[8 * j +: 8]),

@@ -19,6 +19,7 @@ module ahb_sync_sram #(
 	input wire clk_sdram,
 
 	input wire [W_ADDR-1:0]   d_pc,
+	input wire [W_DATA-1:0]   hartid,
         output wire w_init_done,
 
 	// AHB lite slave interface
