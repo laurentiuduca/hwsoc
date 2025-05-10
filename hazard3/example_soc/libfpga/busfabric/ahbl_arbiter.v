@@ -97,7 +97,6 @@ reg                      buf_hmastlock  [0:N_PORTS-1];
 // exclusive access signaling
 reg 			 buf_hexcl	[0:N_PORTS-1];
 reg [7:0]     		 buf_hmaster	[0:N_PORTS-1];
-reg       		 buf_hexokay	[0:N_PORTS-1];
 
 reg [N_PORTS*W_ADDR-1:0] actual_d_pc;
 reg [N_PORTS*W_DATA-1:0] actual_hartid;
@@ -111,7 +110,6 @@ reg [N_PORTS-1:0]        actual_hmastlock;
 // exclusive access signaling
 reg [N_PORTS-1:0]       actual_hexcl;
 reg [N_PORTS*8-1:0]     actual_hmaster;
-reg [N_PORTS-1:0]       actual_hexokay;
 
 always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
@@ -127,7 +125,6 @@ always @ (*) begin
 			actual_hmastlock [i]                    = buf_hmastlock [i];
 			actual_hexcl     [i]			= buf_hexcl     [i];
 			actual_hmaster   [i * 8 +: 8]		= buf_hmaster	[i];
-			actual_hexokay   [i]			= buf_hexokay   [i];
 		end else begin
 			actual_d_pc      [i * W_ADDR +: W_ADDR] = src_d_pc      [i * W_ADDR +: W_ADDR];
 			actual_hartid    [i * W_DATA +: W_DATA] = src_hartid    [i * W_DATA +: W_DATA];
@@ -140,7 +137,6 @@ always @ (*) begin
 			actual_hmastlock [i]                    = src_hmastlock [i];
                         actual_hexcl     [i]                    = src_hexcl     [i];
                         actual_hmaster   [i * 8 +: 8]           = src_hmaster   [i * 8 +: 8];
-                        actual_hexokay   [i]                    = src_hexokay   [i];			
 		end
 	end
 end
@@ -188,7 +184,6 @@ always @ (posedge clk or negedge rst_n) begin
 			buf_hmastlock[i] <= 1'b0;
 			buf_hexcl[i]     <= 1'b0;
 			buf_hmaster[i]   <= 8'd0;
-			buf_hexokay[i]   <= 1'b0;
 		end
 	end else begin
 		if (dst_hready) begin
@@ -209,7 +204,6 @@ always @ (posedge clk or negedge rst_n) begin
 				buf_hmastlock[i] <= src_hmastlock[i];
                         	buf_hexcl    [i] <= src_hexcl    [i];
                         	buf_hmaster  [i] <= src_hmaster  [i * 8 +: 8];
-                        	buf_hexokay  [i] <= src_hexokay  [i];				
 			end
 		end
 	end

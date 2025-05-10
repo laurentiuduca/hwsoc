@@ -132,7 +132,7 @@ always @ (posedge clk or negedge rst_n) begin
 			$display("ADDR_MTIMECMP+8");
 		end else if (bus_write && paddr == ADDR_MTIMECMPH+12) begin
                         mtimecmp1[63:32] <= ~pwdata;
-			$display("ADDR_MTIMECMP+c");
+			$display("ADDR_MTIMECMP+12");
 		end
 
 		timer_irq <= {cmp_diff1[64], cmp_diff0[64]};
