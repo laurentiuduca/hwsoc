@@ -195,9 +195,11 @@ hazard3_2cpu #(
 	.hartid(hartid)
 );
 
+`ifdef laur0
 always @(hartid or bridge_hartid or sram0_hartid) begin
 	$display ("hartid=%x {bridge_hartid      , sram0_hartid     }=%x", hartid, {bridge_hartid      , sram0_hartid     });
 end
+`endif
 // ----------------------------------------------------------------------------
 // Bus fabric
 
@@ -246,7 +248,7 @@ wire [7:0]         bridge_hmaster;
 wire               bridge_hexokay=1;
 
 ahbl_crossbar #(
-        .N_MASTERS(2),
+        .N_MASTERS(N_HARTS),
         .N_SLAVES(2),
         .W_ADDR(32),
         .W_DATA(32),
