@@ -57,7 +57,6 @@ module ahbl_crossbar #(
 	output wire [N_MASTERS*W_DATA-1:0] src_hrdata,
 	input  wire [N_MASTERS*W_ADDR-1:0] src_d_pc,
 	input  wire [N_MASTERS*W_DATA-1:0] src_hartid,
-
 	// exclusive access signaling
 	input  wire [N_MASTERS-1:0]        src_hexcl,
 	input  wire [N_MASTERS*8-1:0]      src_hmaster,
@@ -103,7 +102,6 @@ wire [W_DATA-1:0] xbar_hwdata      [0:N_MASTERS-1][0:N_SLAVES-1];
 wire [W_DATA-1:0] xbar_hrdata      [0:N_MASTERS-1][0:N_SLAVES-1];
 wire [W_ADDR-1:0] xbar_d_pc        [0:N_MASTERS-1][0:N_SLAVES-1];
 wire [W_DATA-1:0] xbar_hartid      [0:N_MASTERS-1][0:N_SLAVES-1];
-
 // exclusive access signaling
 wire              xbar_hexcl       [0:N_MASTERS-1][0:N_SLAVES-1];
 wire [7:0]        xbar_hmaster     [0:N_MASTERS-1][0:N_SLAVES-1];
@@ -198,7 +196,7 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 		.src_d_pc        (src_d_pc[W_ADDR * i +: W_ADDR]),
 		.src_hartid      (src_hartid[W_DATA * i +: W_DATA]),
 		.src_hready      (src_hready_resp[i]),	// HREADY_RESP tied -> HREADY at master level
-		.src_hready_resp (src_hready_resp[i]),
+		.src_hready_resp (src_hready_resp[i]), // this goes to the master
 		.src_hresp       (src_hresp[i]),
 		.src_haddr       (src_haddr[W_ADDR * i +: W_ADDR]),
 		.src_hwrite      (src_hwrite[i]),
@@ -215,7 +213,7 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 		.src_hexokay	 (src_hexokay[i]),
 
 		.dst_hready      (split_hready),
-		.dst_hready_resp (split_hready_resp),
+		.dst_hready_resp (split_hready_resp), // this is input port and comes from the arbiters via xbar
 		.dst_hresp       (split_hresp),
 		.dst_haddr       (split_haddr),
 		.dst_hwrite      (split_hwrite),
@@ -281,7 +279,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 		assign xbar_hresp[i][j]                 = arb_hresp[i];
 		assign xbar_hrdata[i][j]                = arb_hrdata[W_DATA * i +: W_DATA];
 		// exclusive access signaling
-		assign xbar_hexokay[i][j]			= arb_hexokay[i];
+		assign xbar_hexokay[i][j]		= arb_hexokay[i];
 	end
 
 	ahbl_arbiter #(
@@ -295,7 +293,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 		.src_d_pc	 (arb_d_pc),
 		.src_hartid	 (arb_hartid),
 		.src_hready      (arb_hready),
-		.src_hready_resp (arb_hready_resp),
+		.src_hready_resp (arb_hready_resp), // this is output port and goes to the splitters via xbar
 		.src_hresp       (arb_hresp),
 		.src_haddr       (arb_haddr),
 		.src_hwrite      (arb_hwrite),
@@ -312,7 +310,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 		.src_hexokay	 (arb_hexokay),
 
 		.dst_hready      (dst_hready[j]),
-		.dst_hready_resp (dst_hready_resp[j]),
+		.dst_hready_resp (dst_hready_resp[j]), // this is input port and comes from the slave.
 		.dst_hresp       (dst_hresp[j]),
 		.dst_haddr       (dst_haddr[W_ADDR * j +: W_ADDR]),
 		.dst_hwrite      (dst_hwrite[j]),
