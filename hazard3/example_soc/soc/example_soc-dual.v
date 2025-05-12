@@ -248,7 +248,7 @@ wire [7:0]         bridge_hmaster;
 wire               bridge_hexokay=1;
 
 ahbl_crossbar #(
-        .N_MASTERS(N_HARTS),
+        .N_MASTERS(1),//N_HARTS),
         .N_SLAVES(2),
         .W_ADDR(32),
         .W_DATA(32),
@@ -400,7 +400,7 @@ apb_splitter #(
 
 ahb_sync_sram #(
 	.DEPTH (SRAM_DEPTH),
-	.HAS_WRITE_BUFFER (1), // 0 does not work
+	//.HAS_WRITE_BUFFER (1), // 0 does not work
 	.PRELOAD_FILE("init_kernel.txt")
 ) sram0 (
 	.clk               (clk),
