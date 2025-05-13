@@ -41,44 +41,10 @@ localparam ADDR_MTIMECMPH = 16'h0014;
 
 // ----------------------------------------------------------------------------
 // Timer tick logic
-`ifdef laur0 
-wire tick_event;
-
-generate
-if (TICK_IS_NRZ) begin: edge_detect
-
-	wire tick_nrz_sync;
-
-	hazard3_sync_1bit tick_sync_u (
-		.clk    (clk),
-		.rst_n  (rst_n),
-		.i      (tick_nrz),
-		.o      (tick_nrz_sync)
-	);
-
-	reg tick_nrz_prev;
-	always @ (posedge clk or negedge rst_n) begin
-		if (!rst_n) begin
-			tick_nrz_prev <= 1'b0;
-		end else begin
-			tick_nrz_prev <= tick_nrz_sync;
-		end
-	end
-
-	assign tick_event = tick_nrz_sync ^ tick_nrz_sync_prev;
-
-end else begin: no_edge_detect
-
-	assign tick_event = tick;
-
-end
-endgenerate
-`endif
 wire tick_event;
 assign tick_event = tick;
 
-reg ctrl_en;
-wire tick_now = tick_event && ctrl_en && !dbg_halt;
+wire tick_now = tick_event && !dbg_halt;
 
 // ----------------------------------------------------------------------------
 // Counter registers
@@ -88,13 +54,21 @@ wire bus_read = !pwrite && psel && penable;
 
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
-		ctrl_en <= 1'b1;
+		//ctrl_en <= 1'b1;
 		soft_irq <= 0;
 	end else if (bus_write && paddr == ADDR_CTRL) begin
 		// laur - nuttx sends ipi at this addr
-		//ctrl_en <= pwdata[0];
-		soft_irq <= 0;
-	end
+		if(pwdata == 0)
+			soft_irq[0] <= 0;
+		else
+			soft_irq[0] <= 1;
+	end else if (bus_write && paddr == (ADDR_CTRL+4)) begin
+                // laur - nuttx sends ipi at this addr
+                if(pwdata == 0)
+                        soft_irq[1] <= 0;
+                else
+                        soft_irq[1] <= 1;
+        end
 end
 
 reg [63:0] mtime;
@@ -141,7 +115,8 @@ end
 
 always @ (*) begin
 	case (paddr)
-	ADDR_CTRL:      prdata = 0; //{31'h0, ctrl_en};
+	ADDR_CTRL:      prdata = {31'd0, soft_irq[0]};
+	ADDR_CTRL+4:    prdata = {31'd0, soft_irq[1]};
 	ADDR_MTIME:     prdata = mtime[31:0];
 	ADDR_MTIMEH:    prdata = mtime[63:32];
 	ADDR_MTIMECMP:  prdata = ~mtimecmp0[31:0];
