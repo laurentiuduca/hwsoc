@@ -109,7 +109,7 @@ integer i=0, j=0, k=0, l=0, m=0, lj=0;
 
     wire [6:0] w_cache_state;
     wire w_c_oe;
-    wire w_cache_mask;
+    wire [3:0] w_cache_mask;
     assign w_cache_mask = (state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask;
 
 task check_new_req;

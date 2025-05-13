@@ -248,7 +248,7 @@ wire [7:0]         bridge_hmaster;
 wire               bridge_hexokay=1;
 
 ahbl_crossbar #(
-        .N_MASTERS(1),//N_HARTS),
+        .N_MASTERS(N_HARTS),
         .N_SLAVES(2),
         .W_ADDR(32),
         .W_DATA(32),
