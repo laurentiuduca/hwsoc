@@ -193,7 +193,7 @@ always @(posedge clk) begin
 		j <= j+1;
 		obus_haddr_i <= bus_haddr_i;
 	        obus_haddr_d <= bus_haddr_d;
-		$display("%d bus_haddr_i=%x bus_haddr_d=%x x_except=%x fd_cir=%x", $time, bus_haddr_i, bus_haddr_d, x_except, fd_cir);
+		$display("%d d_pc=%x bus_haddr_i=%x bus_haddr_d=%x x_except=%x fd_cir=%x", $time, d_pc, bus_haddr_i, bus_haddr_d, x_except, fd_cir);
 	end
 end
 

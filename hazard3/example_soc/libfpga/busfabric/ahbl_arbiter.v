@@ -156,6 +156,8 @@ end
 onehot_priority #(
 	.W_INPUT(N_PORTS)
 ) arb_priority (
+	.clk(clk),
+	.rst_n(rst_n),
 	.in(mast_req_a),
 	.out(mast_gnt_a)
 );

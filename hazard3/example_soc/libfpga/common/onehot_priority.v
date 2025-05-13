@@ -21,19 +21,23 @@
 // If HIGHEST_WINS is 1, it will instead be the most-significant bit of the output.
 
 module onehot_priority #(
-	parameter W_INPUT = 8,
-	parameter HIGHEST_WINS = 0
+	parameter W_INPUT = 8
+	//parameter HIGHEST_WINS = 0
 ) (
+	input clk,
+	input rst_n,
 	input wire [W_INPUT-1:0] in,
 	output reg [W_INPUT-1:0] out
 );
 
 integer i;
 reg deny;
+reg [W_INPUT-1:0] osel;
 
 always @ (*) begin
 	deny = 1'b0;
-	if (HIGHEST_WINS) begin
+	if(osel > 1) begin
+	//if (HIGHEST_WINS) begin
 		for (i = W_INPUT - 1; i >= 0; i = i - 1) begin
 			out[i] = in[i] && !deny;
 			deny = deny || in[i];
@@ -43,6 +47,14 @@ always @ (*) begin
 			out[i] = in[i] && !deny;
 			deny = deny || in[i];
 		end
+	end
+end
+
+always @(posedge clk or negedge rst_n) begin
+	if(!rst_n)
+		osel <= 1;
+	else begin
+		osel <= 1; //out;	
 	end
 end
 
