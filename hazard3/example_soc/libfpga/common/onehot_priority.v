@@ -40,8 +40,8 @@ always @ (*) begin
 	//if (HIGHEST_WINS) begin
 		//for (i = W_INPUT - 1; i >= 0; i = i - 1) begin
 		for (i = 0; i < W_INPUT; i = i + 1) begin
-			out[W_INPUT - i] = in[W_INPUT - i] && !deny;
-			deny = deny || in[W_INPUT - i];
+			out[W_INPUT - 1 - i] = in[W_INPUT - 1 - i] && !deny;
+			deny = deny || in[W_INPUT - 1 - i];
 		end
 	end else begin
 		for (i = 0; i < W_INPUT; i = i + 1) begin

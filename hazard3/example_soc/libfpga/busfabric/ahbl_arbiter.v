@@ -162,7 +162,7 @@ onehot_priority #(
 	.out(mast_gnt_a)
 );
 
-`ifdef laur0
+//`ifdef laur0
 //always @(mast_gnt_a) begin
 reg [N_PORTS-1:0] o_mast_gnt_a=0;
 always @(posedge clk) begin
@@ -173,7 +173,7 @@ always @(posedge clk) begin
 			src_hready_resp, dst_hready_resp);
 	end
 end
-`endif
+//`endif
 
 // AHB State Machine
 
