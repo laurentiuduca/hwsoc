@@ -57,13 +57,13 @@ always @ (posedge clk or negedge rst_n) begin
 		//ctrl_en <= 1'b1;
 		soft_irq <= 0;
 	end else 
-	    if (bus_write && paddr == ADDR_IPI && !pready) begin
+	    if (bus_write && paddr == ADDR_IPI && !state) begin
 		// laur - nuttx sends ipi at this addr
 		if(pwdata == 0)
 			soft_irq[0] <= 0;
 		else
 			soft_irq[0] <= 1;
-	    end else if (bus_write && paddr == (ADDR_IPI+4) && !pready) begin
+	    end else if (bus_write && paddr == (ADDR_IPI+4) && !state) begin
                 // laur - nuttx sends ipi at this addr
 		$display("bus_write && paddr == (ADDR_IPI+4) && pwdata=%x", pwdata);
                 if(pwdata == 0)

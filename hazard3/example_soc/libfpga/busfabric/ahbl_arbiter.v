@@ -168,9 +168,9 @@ reg [N_PORTS-1:0] o_mast_gnt_a=0;
 always @(posedge clk) begin
 	if(o_mast_gnt_a != mast_gnt_a) begin
 		o_mast_gnt_a = mast_gnt_a;
-		$display("mast_gnt_a=%x pc0=%x src_haddr=%x pc1=%x src_haddr=%x dst_haddr=%x src_hready_resp=%x dst_hready_resp=%x", 
-			mast_gnt_a, src_d_pc[31:0], src_haddr[31:0], src_d_pc[63:32], src_haddr[63:32], dst_haddr,
-			src_hready_resp, dst_hready_resp);
+		$display("mast_gnt_a=%x pc0=%x src_haddr=%x pc1=%x src_haddr=%x dst_haddr=%x src_hwr=%2x dst_hwr=%1x src_hready_resp=%x dst_hready_resp=%x dh=%1x", 
+			mast_gnt_a, src_d_pc[31:0], src_haddr[31:0], src_d_pc[63:32], src_haddr[63:32], dst_haddr, src_hwrite, dst_hwrite,
+			src_hready_resp, dst_hready_resp, dst_hartid);
 	end
 end
 //`endif
