@@ -23,7 +23,7 @@ module hazard3_riscv_timer #(
 	input  wire               pwrite,
 	input  wire [31:0]        pwdata,
 	output reg  [31:0]        prdata,
-	output wire               pready,
+	output reg                pready,
 	output wire               pslverr,
 
 	input  wire               dbg_halt,
@@ -33,7 +33,7 @@ module hazard3_riscv_timer #(
 	output reg [N_HARTS-1:0]  timer_irq
 );
 
-localparam ADDR_CTRL      = 16'h0000;
+localparam ADDR_IPI      = 16'h0000;
 localparam ADDR_MTIME     = 16'h0008;
 localparam ADDR_MTIMEH    = 16'h000c;
 localparam ADDR_MTIMECMP  = 16'h0010;
@@ -56,20 +56,21 @@ always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		//ctrl_en <= 1'b1;
 		soft_irq <= 0;
-	end else if (bus_write && paddr == ADDR_CTRL) begin
+	end else 
+	    if (bus_write && paddr == ADDR_IPI && !pready) begin
 		// laur - nuttx sends ipi at this addr
 		if(pwdata == 0)
 			soft_irq[0] <= 0;
 		else
 			soft_irq[0] <= 1;
-	end else if (bus_write && paddr == (ADDR_CTRL+4)) begin
+	    end else if (bus_write && paddr == (ADDR_IPI+4) && !pready) begin
                 // laur - nuttx sends ipi at this addr
-		$display("bus_write && paddr == (ADDR_CTRL+4) && pwdata=%x", pwdata);
+		$display("bus_write && paddr == (ADDR_IPI+4) && pwdata=%x", pwdata);
                 if(pwdata == 0)
                         soft_irq[1] <= 0;
                 else
                         soft_irq[1] <= 1;
-        end
+            end
 end
 
 reg [63:0] mtime;
@@ -78,8 +79,8 @@ always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		mtime <= 64'h0;
 	end else begin
-		if (tick_now)
-			mtime <= mtime + 1'b1;
+	    if (tick_now)
+		mtime <= mtime + 1'b1;
 		if (bus_write && paddr == ADDR_MTIME)
 			mtime[31:0] <= pwdata;
 		if (bus_write && paddr == ADDR_MTIMEH)
@@ -109,15 +110,14 @@ always @ (posedge clk or negedge rst_n) begin
                         mtimecmp1[63:32] <= ~pwdata;
 			$display("ADDR_MTIMECMP+12");
 		end
-
 		timer_irq <= {cmp_diff1[64], cmp_diff0[64]};
 	end
 end
 
 always @ (*) begin
 	case (paddr)
-	ADDR_CTRL:      prdata = {31'd0, soft_irq[0]};
-	ADDR_CTRL+4:    prdata = {31'd0, soft_irq[1]};
+	ADDR_IPI:      prdata = {31'd0, soft_irq[0]};
+	ADDR_IPI+4:    prdata = {31'd0, soft_irq[1]};
 	ADDR_MTIME:     prdata = mtime[31:0];
 	ADDR_MTIMEH:    prdata = mtime[63:32];
 	ADDR_MTIMECMP:  prdata = ~mtimecmp0[31:0];
@@ -128,7 +128,30 @@ always @ (*) begin
 	endcase
 end
 
-assign pready = 1'b1;
+reg [1:0] state;
+always @ (posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+		pready <= 0;
+		state <= 0;
+	end else if(state == 0) begin
+		if(bus_read) begin
+			pready <= 1;
+			state <= 1;
+		end else if(bus_write) begin
+			pready <= 1;
+			state <= 2;
+		end
+	end else if(state == 1) begin
+		if(!bus_read) 
+			state <= 0;
+		pready <= 0;
+	end else if(state == 2) begin
+                if(!bus_write)
+                        state <= 0;
+                pready <= 0;
+        end
+end
+//assign pready = 1'b1;
 assign pslverr = 1'b0;
 
 endmodule

@@ -38,9 +38,10 @@ always @ (*) begin
 	deny = 1'b0;
 	if(osel > 1) begin
 	//if (HIGHEST_WINS) begin
-		for (i = W_INPUT - 1; i >= 0; i = i - 1) begin
-			out[i] = in[i] && !deny;
-			deny = deny || in[i];
+		//for (i = W_INPUT - 1; i >= 0; i = i - 1) begin
+		for (i = 0; i < W_INPUT; i = i + 1) begin
+			out[W_INPUT - i] = in[W_INPUT - i] && !deny;
+			deny = deny || in[W_INPUT - i];
 		end
 	end else begin
 		for (i = 0; i < W_INPUT; i = i + 1) begin

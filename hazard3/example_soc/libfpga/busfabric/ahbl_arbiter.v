@@ -162,6 +162,19 @@ onehot_priority #(
 	.out(mast_gnt_a)
 );
 
+`ifdef laur0
+//always @(mast_gnt_a) begin
+reg [N_PORTS-1:0] o_mast_gnt_a=0;
+always @(posedge clk) begin
+	if(o_mast_gnt_a != mast_gnt_a) begin
+		o_mast_gnt_a = mast_gnt_a;
+		$display("mast_gnt_a=%x pc0=%x src_haddr=%x pc1=%x src_haddr=%x dst_haddr=%x src_hready_resp=%x dst_hready_resp=%x", 
+			mast_gnt_a, src_d_pc[31:0], src_haddr[31:0], src_d_pc[63:32], src_haddr[63:32], dst_haddr,
+			src_hready_resp, dst_hready_resp);
+	end
+end
+`endif
+
 // AHB State Machine
 
 reg [N_PORTS-1:0] mast_gnt_d;
