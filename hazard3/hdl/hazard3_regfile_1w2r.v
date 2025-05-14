@@ -10,6 +10,7 @@
 
 module hazard3_regfile_1w2r #(
 	parameter RESET_REGS = 0,	// Unsupported for FAKE_DUALPORT
+	parameter MHARTID_VAL = 0,
 	parameter N_REGS = 16,
 	parameter W_DATA = 32,
 	parameter W_ADDR = $clog2(W_DATA)	// should be localparam. ISIM...
@@ -39,6 +40,7 @@ if (RESET_REGS) begin: real_dualport_reset
 			for (i = 0; i < N_REGS; i = i + 1) begin
 				mem[i] <= {W_DATA{1'b0}};
 			end
+			mem[10] <= MHARTID_VAL;
 			rdata1 <= {W_DATA{1'b0}};
 			rdata2 <= {W_DATA{1'b0}};
 		end else begin

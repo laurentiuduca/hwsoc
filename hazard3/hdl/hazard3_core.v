@@ -1410,6 +1410,7 @@ end
 
 hazard3_regfile_1w2r #(
 	.RESET_REGS (RESET_REGFILE),
+	.MHARTID_VAL (MHARTID_VAL),
 	.N_REGS     (32),
 	.W_DATA     (W_DATA)
 ) regs (

@@ -93,7 +93,7 @@ module example_soc #(
         wire [N_HARTS-1:0]          soft_irq;    // -> mip.msip
         wire [N_HARTS-1:0]          timer_irq;   // -> mip.mtip
 	wire [N_HARTS-1:0]	    hart_halted;
-	wire [N_HARTS*W_DATA-1:0]   hartid;
+	wire [N_HARTS*W_DATA-1:0]   hartids;
 
 hazard3_2cpu #(
         // These must have the values given here for you to end up with a useful SoC:
@@ -192,12 +192,12 @@ hazard3_2cpu #(
         .soft_irq(soft_irq),  // -> mip.msip
         .timer_irq(timer_irq),  // -> mip.mtip	
 	.hart_halted(hart_halted),
-	.hartid(hartid)
+	.hartids(hartids)
 );
 
 `ifdef laur0
-always @(hartid or bridge_hartid or sram0_hartid) begin
-	$display ("hartid=%x {bridge_hartid      , sram0_hartid     }=%x", hartid, {bridge_hartid      , sram0_hartid     });
+always @(hartids or bridge_hartid or sram0_hartid) begin
+	$display ("hartid=%x {bridge_hartid      , sram0_hartid     }=%x", hartids, {bridge_hartid      , sram0_hartid     });
 end
 `endif
 // ----------------------------------------------------------------------------
@@ -273,7 +273,7 @@ ahbl_crossbar #(
         .src_hwdata      ({d_hwdata, i_hwdata}),
         .src_hrdata      ({d_hrdata, i_hrdata}),
         .src_d_pc	 ({d_d_pc, i_d_pc}),
-	.src_hartid	 (hartid),
+	.src_hartid	 (hartids),
         // exclusive access signaling
 	.src_hexcl	 ({d_hexcl, i_hexcl}),
         .src_hmaster     ({d_hmaster, i_hmaster}),

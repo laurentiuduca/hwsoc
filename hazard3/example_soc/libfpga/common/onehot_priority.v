@@ -54,7 +54,7 @@ always @(posedge clk or negedge rst_n) begin
 	if(!rst_n)
 		osel <= 1;
 	else begin
-		osel <= 1; //out;	
+		osel <= out; //osel > 1 ? 1 : 2; //out;	
 	end
 end
 

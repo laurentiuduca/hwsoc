@@ -64,6 +64,7 @@ always @ (posedge clk or negedge rst_n) begin
 			soft_irq[0] <= 1;
 	end else if (bus_write && paddr == (ADDR_CTRL+4)) begin
                 // laur - nuttx sends ipi at this addr
+		$display("bus_write && paddr == (ADDR_CTRL+4) && pwdata=%x", pwdata);
                 if(pwdata == 0)
                         soft_irq[1] <= 0;
                 else
