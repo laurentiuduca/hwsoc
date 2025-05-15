@@ -213,7 +213,7 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 		.src_hexokay	 (src_hexokay[i]),
 
 		.dst_hready      (split_hready),
-		.dst_hready_resp (split_hready_resp), // this is input port and comes from the arbiters via xbar
+		.dst_hready_resp (split_hready_resp), // dst_hready_resp is input port and comes from the arbiters via xbar
 		.dst_hresp       (split_hresp),
 		.dst_haddr       (split_haddr),
 		.dst_hwrite      (split_hwrite),
@@ -293,7 +293,7 @@ for (j = 0; j < N_SLAVES; j = j + 1) begin: arb_instantiate
 		.src_d_pc	 (arb_d_pc),
 		.src_hartid	 (arb_hartid),
 		.src_hready      (arb_hready),
-		.src_hready_resp (arb_hready_resp), // this is output port and goes to the splitters via xbar
+		.src_hready_resp (arb_hready_resp), // src_hready_resp is output port and goes to the splitters via xbar
 		.src_hresp       (arb_hresp),
 		.src_haddr       (arb_haddr),
 		.src_hwrite      (arb_hwrite),
