@@ -11,8 +11,8 @@
 // hazard3_config_inst.vh to propagate the parameter through module
 // instantiations.
 
-parameter pc_trace_start = 32'h2c5c,
-parameter pc_trace_stop = 32'h2c68,
+parameter pc_trace_start = 32'h79c,
+parameter pc_trace_stop = 32'ha08,
 
 parameter N_HARTS = 2,
 

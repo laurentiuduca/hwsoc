@@ -32,16 +32,14 @@ module onehot_priority #(
 
 integer i;
 reg deny;
-reg [W_INPUT-1:0] osel;
+reg [W_INPUT-1:0] osel, sel;
 
 always @ (*) begin
 	deny = 1'b0;
-	if(osel > 1) begin
-	//if (HIGHEST_WINS) begin
-		//for (i = W_INPUT - 1; i >= 0; i = i - 1) begin
-		for (i = 0; i < W_INPUT; i = i + 1) begin
-			out[W_INPUT-1 - i] = in[W_INPUT-1 - i] && !deny;
-			deny = deny || in[W_INPUT-1 - i];
+	if(sel > 1) begin //if (HIGHEST_WINS) begin
+		for (i = W_INPUT - 1; i >= 0; i = i - 1) begin
+                        out[i] = in[i] && !deny;
+                        deny = deny || in[i];
 		end
 	end else begin
 		for (i = 0; i < W_INPUT; i = i + 1) begin
@@ -51,11 +49,19 @@ always @ (*) begin
 	end
 end
 
+reg [7:0] gntcnt;
 always @(posedge clk or negedge rst_n) begin
-	if(!rst_n)
+	if(!rst_n) begin
 		osel <= 1;
-	else begin
-		osel <= out; //osel > 1 ? 1 : 2; //out;	
+		sel <= 1;
+		gntcnt <= 0;
+	end else begin
+		if(osel == sel)
+			gntcnt <= gntcnt+1;
+		else
+			gntcnt <= 0;
+		osel <= sel;
+		sel <= out; //gntcnt < 5 ? out : (sel > 1 ? 1 : 2); //out;	
 	end
 end
 

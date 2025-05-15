@@ -131,14 +131,10 @@ wire              fifo_pop;
 wire              fifo_dbg_inject = DEBUG_SUPPORT && dbg_instr_data_vld && dbg_instr_data_rdy;
 
 always @ (*) begin: boundary_conditions
+	integer i;
 	fifo_mem[FIFO_DEPTH] = mem_data;
 	fifo_predbranch[FIFO_DEPTH] = 2'b00;
 	fifo_err[FIFO_DEPTH] = 1'b0;
-	fifo_valid_hw[FIFO_DEPTH] = 2'b00;
-end
-
-always @ (*) begin: fifo_valdidation
-        integer i;
 	for (i = 0; i < FIFO_DEPTH; i = i + 1) begin
 		fifo_valid[i] = |EXTENSION_C ? |fifo_valid_hw[i] : fifo_valid_hw[i][0];
 		// valid-to-right condition: i == 0 || fifo_valid[i - 1], but without
@@ -161,6 +157,10 @@ always @ (posedge clk or negedge rst_n) begin: fifo_update
 			fifo_err[i] <= 1'b0;
 			fifo_predbranch[i] <= 2'b00;
 		end
+		// This exists only for loop boundary conditions, but is tied off in
+		// this synchronous process to work around a Verilator scheduling
+		// issue (see issue #21)
+		fifo_valid_hw[FIFO_DEPTH] <= 2'b00;
 	end else begin
 		for (i = 0; i < FIFO_DEPTH; i = i + 1) begin
 			if (fifo_pop || (fifo_push && !fifo_valid[i])) begin
@@ -186,6 +186,7 @@ always @ (posedge clk or negedge rst_n) begin: fifo_update
 			fifo_predbranch[0] <= 2'b00;
 			fifo_valid_hw[0] <= jump_now ? 2'b00 : 2'b11;
 		end
+		fifo_valid_hw[FIFO_DEPTH] <= 2'b00;
 `ifdef HAZARD3_ASSERTIONS
 		// FIFO validity must be compact, so we can always consume from the end
 		if (!fifo_valid[0]) begin
@@ -225,20 +226,10 @@ if (BRANCH_PREDICTOR) begin: have_btb
 		end
 	end
 end else begin: no_btb
-	//always @(*) begin
-	//laur
-	always @ (posedge clk or negedge rst_n) begin
-		if(!rst_n) begin
-			btb_src_addr = {W_ADDR{1'b0}};
-			btb_target_addr = {W_ADDR{1'b0}};
-			btb_valid = 1'b0;
-			btb_src_size = 1'b0;
-		end else begin
-                        btb_src_addr = {W_ADDR{1'b0}};
-                        btb_target_addr = {W_ADDR{1'b0}};
-                        btb_valid = 1'b0;
-                        btb_src_size = 1'b0;
-		end
+	always @ (*) begin
+		btb_src_addr = {W_ADDR{1'b0}};
+		btb_target_addr = {W_ADDR{1'b0}};
+		btb_valid = 1'b0;
 	end
 end
 endgenerate
@@ -353,6 +344,17 @@ always @ (*) begin
 end
 
 assign jump_target_rdy = !mem_addr_hold;
+
+// laur
+integer tcnt=0;
+always @(posedge clk) begin
+        tcnt <= tcnt+1;
+end
+always @(mem_addr_hold or jump_target_vld or reset_holdoff or debug_mode or fetch_stall) begin
+        if(tcnt > 442822 && tcnt < 442900)
+                $display("  hid=%x {mem_addr_hold, jump_target_vld, reset_holdoff, debug_mode, !fetch_stall} = %b mem_addr_vld_r=%b",
+                        MHARTID_VAL, {mem_addr_hold, jump_target_vld, reset_holdoff, debug_mode, !fetch_stall}, mem_addr_vld_r);
+end
 
 // ----------------------------------------------------------------------------
 // Bus Pipeline Tracking

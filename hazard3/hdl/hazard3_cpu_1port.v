@@ -220,6 +220,18 @@ assign {bus_gnt_i, bus_gnt_d, bus_gnt_s} =
 	dbg_sbus_vld && !bus_active_dph_s ? 3'b001 :
 	core_aph_req_i                    ? 3'b100 :
 	                                    3'b000 ;
+// laur
+integer tcnt=0;
+always @(posedge clk) begin
+	tcnt <= tcnt+1;
+end
+always @(bus_gnt_i or bus_gnt_d or bus_gnt_s or core_aph_panic_i or core_aph_req_i) begin
+	if(tcnt > 442822 && tcnt < 442900)
+		$display("  hid=%x {bus_gnt_i, bus_gnt_d, bus_gnt_s}=%x {bus_hold_aph, core_aph_req_d, core_aph_panic_i, core_aph_req_i}=%x ", 
+			MHARTID_VAL, {bus_gnt_i, bus_gnt_d, bus_gnt_s}, {bus_hold_aph, core_aph_req_d, core_aph_panic_i, core_aph_req_i});
+end
+
+
 reg bus_active_dph_i;
 reg bus_active_dph_d;
 
