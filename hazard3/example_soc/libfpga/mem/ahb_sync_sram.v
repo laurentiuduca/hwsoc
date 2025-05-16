@@ -23,20 +23,22 @@
  // logic. The adapter will then insert one wait state on write->read pairs.
 
 module ahb_sync_sram #(
-	parameter W_DATA = 32,
-	parameter W_ADDR = 32,
+	//parameter W_DATA = 32,
+	//parameter W_ADDR = 32,
 	parameter DEPTH = 1 << 11,
 	parameter HAS_WRITE_BUFFER = 1,
 	parameter PRELOAD_FILE = "",
-	parameter W_MEMOP   = 5
+	parameter W_MEMOP   = 5,
+	`include "hazard3_config.vh"
 ) (
 	// Globals
 	input wire clk,
 	input wire rst_n,
 	input wire clk_sdram,
 
-	input wire [31:0] d_pc,
-	output wire w_init_done,
+        input wire [W_ADDR-1:0]   d_pc,
+        input wire [W_DATA-1:0]   hartid,
+        output wire w_init_done,
 
 	// AHB lite slave interface
 	output wire               ahbls_hready_resp,
@@ -51,7 +53,11 @@ module ahb_sync_sram #(
 	input  wire               ahbls_hmastlock,
 	input  wire [W_DATA-1:0]  ahbls_hwdata,
 	output wire [W_DATA-1:0]  ahbls_hrdata,
-
+        // exclusive access signaling
+        input  wire               ahbls_hexcl,
+        input wire [7:0]          ahbls_hmaster,
+        output wire               ahbls_hexokay,
+    
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -97,6 +103,8 @@ parameter  W_BYTEADDR  = $clog2(W_BYTES); // 2
 
 // ----------------------------------------------------------------------------
 // AHBL state machine and buffering
+
+assign ahbls_hexokay=1;
 
 // Need to buffer at least a write address,
 // and potentially the data too:
