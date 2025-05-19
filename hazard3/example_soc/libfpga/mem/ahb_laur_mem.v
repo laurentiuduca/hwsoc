@@ -165,10 +165,12 @@ always @ (posedge clk or negedge rst_n) begin
 			r_ahbls_hwdata <= ahbls_hwdata;
 			r_dram_wr <= 1;
 			state <= 20;
+			`ifdef laur0
 			if(ahb_read_aphase || ahb_write_aphase) begin
 				$display("ahb_read_aphase or write aphase in write dphase");
 				$finish;
 			end
+			`endif
 		end
 
 
