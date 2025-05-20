@@ -46,6 +46,7 @@ if (RESET_REGS) begin: real_dualport_reset
 		end else begin
 			if (wen) begin
 				mem[waddr] <= wdata;
+				$display("h%1x regfile write reg %d <= %x", MHARTID_VAL, waddr, wdata);
 			end
 			rdata1 <= mem[raddr1];
 			rdata2 <= mem[raddr2];
@@ -64,6 +65,7 @@ end else begin: real_dualport_noreset
 	always @ (posedge clk) begin
 		if (wen) begin
 			mem[waddr] <= wdata;
+			$display("h%1x regfile write reg %d <= %x", MHARTID_VAL, waddr, wdata);
 		end
 		rdata1 <= mem[raddr1];
 		rdata2 <= mem[raddr2];

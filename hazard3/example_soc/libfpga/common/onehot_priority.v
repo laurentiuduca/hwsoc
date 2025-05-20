@@ -61,7 +61,7 @@ always @(posedge clk or negedge rst_n) begin
 		else
 			gntcnt <= 0;
 		osel <= sel;
-		sel <= sel > 1 ? 1 : 2; //out; 
+		sel <= out; 
 	end
 end
 

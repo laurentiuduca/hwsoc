@@ -117,7 +117,7 @@ reg [31:0] cnt=0;
 always @(posedge clk) begin
 	if(cnt > 20)
 		RST_X <= 1;
-	if(cnt >= 32'hf000)
+	if(cnt >= 32'h2750)
 		`ifdef DUMP_VCD
 		$finish;
 		`else
