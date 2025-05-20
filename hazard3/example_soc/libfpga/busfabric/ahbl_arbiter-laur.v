@@ -84,74 +84,13 @@ module ahbl_arbiter #(
 
 integer i;
 
-// "actual" is a mux between the buffered signal, if valid, else the live signal on the port
-
-reg [N_PORTS-1:0]        buf_valid;
-reg [W_ADDR-1:0]         buf_d_pc       [0:N_PORTS-1];
-reg [W_DATA-1:0]         buf_hartid     [0:N_PORTS-1];
-reg [W_ADDR-1:0]         buf_haddr      [0:N_PORTS-1];
-reg                      buf_hwrite     [0:N_PORTS-1];
-reg [1:0]                buf_htrans     [0:N_PORTS-1];
-reg [2:0]                buf_hsize      [0:N_PORTS-1];
-reg [2:0]                buf_hburst     [0:N_PORTS-1];
-reg [3:0]                buf_hprot      [0:N_PORTS-1];
-reg                      buf_hmastlock  [0:N_PORTS-1];
-// exclusive access signaling
-reg 			 buf_hexcl	[0:N_PORTS-1];
-reg [7:0]     		 buf_hmaster	[0:N_PORTS-1];
-
-reg [N_PORTS*W_ADDR-1:0] actual_d_pc;
-reg [N_PORTS*W_DATA-1:0] actual_hartid;
-reg [N_PORTS*W_ADDR-1:0] actual_haddr;
-reg [N_PORTS-1:0]        actual_hwrite;
-reg [N_PORTS*2-1:0]      actual_htrans;
-reg [N_PORTS*3-1:0]      actual_hsize;
-reg [N_PORTS*3-1:0]      actual_hburst;
-reg [N_PORTS*4-1:0]      actual_hprot;
-reg [N_PORTS-1:0]        actual_hmastlock;
-// exclusive access signaling
-reg [N_PORTS-1:0]       actual_hexcl;
-reg [N_PORTS*8-1:0]     actual_hmaster;
-
-always @ (*) begin
-	for (i = 0; i < N_PORTS; i = i + 1) begin
-		if (buf_valid[i]) begin
-			actual_d_pc      [i * W_ADDR +: W_ADDR] = buf_d_pc      [i];
-			actual_hartid    [i * W_DATA +: W_DATA] = buf_hartid    [i];
-			actual_haddr     [i * W_ADDR +: W_ADDR] = buf_haddr     [i];
-			actual_hwrite    [i]                    = buf_hwrite    [i];
-			actual_htrans    [i * 2 +: 2]           = buf_htrans    [i];
-			actual_hsize     [i * 3 +: 3]           = buf_hsize     [i];
-			actual_hburst    [i * 3 +: 3]           = buf_hburst    [i];
-			actual_hprot     [i * 4 +: 4]           = buf_hprot     [i];
-			actual_hmastlock [i]                    = buf_hmastlock [i];
-			actual_hexcl     [i]			= buf_hexcl     [i];
-			actual_hmaster   [i * 8 +: 8]		= buf_hmaster	[i];
-		end else begin
-			actual_d_pc      [i * W_ADDR +: W_ADDR] = src_d_pc      [i * W_ADDR +: W_ADDR];
-			actual_hartid    [i * W_DATA +: W_DATA] = src_hartid    [i * W_DATA +: W_DATA];
-			actual_haddr     [i * W_ADDR +: W_ADDR] = src_haddr     [i * W_ADDR +: W_ADDR];
-			actual_hwrite    [i]                    = src_hwrite    [i];
-			actual_htrans    [i * 2 +: 2]           = src_htrans    [i * 2 +: 2];
-			actual_hsize     [i * 3 +: 3]           = src_hsize     [i * 3 +: 3];
-			actual_hburst    [i * 3 +: 3]           = src_hburst    [i * 3 +: 3];
-			actual_hprot     [i * 4 +: 4]           = src_hprot     [i * 4 +: 4];
-			actual_hmastlock [i]                    = src_hmastlock [i];
-                        actual_hexcl     [i]                    = src_hexcl     [i];
-                        actual_hmaster   [i * 8 +: 8]           = src_hmaster   [i * 8 +: 8];
-		end
-	end
-end
-
-// Address-phase arbitration
-
 reg  [N_PORTS-1:0] mast_req_a;
 wire [N_PORTS-1:0] mast_gnt_a;
 
 always @ (*) begin
 	for (i = 0; i < N_PORTS; i = i + 1) begin
 		// HTRANS == 2'b10, 2'b11 when active
-		mast_req_a[i] = actual_htrans[i * 2 + 1] && CONN_MASK[i];
+		mast_req_a[i] = src_htrans[i * 2 + 1] && CONN_MASK[i];
 	end
 end
 
@@ -179,11 +118,11 @@ always @(posedge clk) begin
 end
 always @(dst_haddr or dst_hwrite or dst_hartid or dst_htrans or dst_hready_resp or dst_hready) begin
 	if((tcnt > 442862 && tcnt < 442900) || (src_d_pc[63:32] >= pc_trace_start && src_d_pc[63:32] <= pc_trace_stop)) begin
-		$display("  s%1d pc=%x dpc=%x dhaddr=%x dhwr=%x dhrd=%x dh=%1x dhtrans=%x dhrdy_resp=%x dhrdy=%x shrdy=%x shrdy_resp=%x req_a=%x gnt_d=%x str=%x atr=%x btr=%x t=%8d",
-			SLAVE_ID, src_d_pc[63:32], dst_d_pc, dst_haddr, dst_hwrite, dst_hrdata, dst_hartid, dst_htrans, dst_hready_resp, dst_hready, src_hready_resp, src_hready, mast_req_a, mast_gnt_d, src_htrans, actual_htrans, buf_htrans, tcnt);
+		$display("  s%1d pc=%x dpc=%x dhaddr=%x dhwr=%x dhrd=%x dh=%1x dhtrans=%x dhrdy_resp=%x dhrdy=%x shrdy=%x shrdy_resp=%x req_a=%x gnt_d=%x shtr=%x ahtr=%x t=%8d",
+			SLAVE_ID, src_d_pc[63:32], dst_d_pc, dst_haddr, dst_hwrite, dst_hrdata, dst_hartid, dst_htrans, dst_hready_resp, dst_hready, src_hready_resp, src_hready, mast_req_a, mast_gnt_d, src_htrans, src_htrans, tcnt);
 	end
 	if(dst_hresp) begin
-		$display("dst_hresp");
+		$display("error in arbiter");
 		$finish;
 	end
 end
@@ -192,62 +131,31 @@ end
 // AHB State Machine
 
 reg [N_PORTS-1:0] mast_gnt_d;
-assign dst_hready = mast_gnt_d ? |(src_hready & mast_gnt_d) : 1'b1; //|mast_gnt_a; //1'b1;
-
-wire [N_PORTS-1:0] mast_aphase_ends = mast_req_a & src_hready;
-wire [N_PORTS-1:0] buf_wen = mast_aphase_ends & ~(mast_gnt_a & {N_PORTS{dst_hready}});
+assign dst_hready = |src_hready; 
 
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		mast_gnt_d <= {N_PORTS{1'b0}};
-		for (i = 0; i < N_PORTS; i = i + 1) begin
-			buf_valid[i]     <= 1'b0;
-			buf_htrans[i]    <= 2'h0;
-			buf_d_pc[i]	 <= {W_ADDR{1'b0}};
-			buf_hartid[i]    <= {W_DATA{1'b0}};
-			buf_haddr[i]     <= {W_ADDR{1'b0}};
-			buf_hwrite[i]    <= 1'b0;
-			buf_hsize[i]     <= 3'h0;
-			buf_hburst[i]    <= 3'h0;
-			buf_hprot[i]     <= 3'h0;
-			buf_hmastlock[i] <= 1'b0;
-			buf_hexcl[i]     <= 1'b0;
-			buf_hmaster[i]   <= 8'd0;
-		end
 	end else begin
 		if (dst_hready) begin
 			mast_gnt_d <= mast_gnt_a;
-			buf_valid <= buf_valid & ~mast_gnt_a;
-		end
-		for (i = 0; i < N_PORTS; i = i + 1) begin
-			if (buf_wen[i]) begin
-				buf_valid    [i] <= 1'b1;
-				buf_htrans   [i] <= src_htrans   [i * 2 +: 2];
-				buf_d_pc     [i] <= src_d_pc     [i * W_ADDR +: W_ADDR];
-				buf_hartid   [i] <= src_hartid   [i * W_DATA +: W_DATA];
-				buf_haddr    [i] <= src_haddr    [i * W_ADDR +: W_ADDR];
-				buf_hwrite   [i] <= src_hwrite   [i];
-				buf_hsize    [i] <= src_hsize    [i * 3 +: 3];
-				buf_hburst   [i] <= src_hburst   [i * 3 +: 3];
-				buf_hprot    [i] <= src_hprot    [i * 4 +: 4];
-				buf_hmastlock[i] <= src_hmastlock[i];
-                        	buf_hexcl    [i] <= src_hexcl    [i];
-                        	buf_hmaster  [i] <= src_hmaster  [i * 8 +: 8];
-			end
 		end
 	end
 end
 
 // Data-phase signal passthrough
 
-// Master being in dphase with arbiter is separate (looser) condition than arbiter
-// being in (that master's) dphase with slave (which is indicated by mast_gnt_d)
-wire [N_PORTS-1:0] mast_in_dphase = buf_valid | mast_gnt_d;
-
 // There are two reasons to report ready:
 // - the master is currently not in data phase with the arbiter (IDLE)
 // - the master is in data phase with both arbiter and slave, and slave is ready
-assign src_hready_resp = ~mast_in_dphase | (mast_gnt_d & {N_PORTS{dst_hready_resp}});
+reg [N_PORTS-1:0] r_src_hready_resp;
+assign src_hready_resp = r_src_hready_resp;
+always @ (*) begin
+        for (i = 0; i < N_PORTS; i = i + 1) begin 
+                r_src_hready_resp[i] = !mast_gnt_d ? dst_hready_resp : (mast_gnt_d[i] & dst_hready_resp);
+        end
+end
+
 assign src_hresp = mast_gnt_d & {N_PORTS{dst_hresp}};
 assign src_hrdata = {N_PORTS{dst_hrdata}};
 assign src_hexokay = mast_gnt_d & {N_PORTS{dst_hexokay}};
@@ -267,7 +175,7 @@ onehot_mux #(
         .W_INPUT(W_ADDR),
         .N_INPUTS(N_PORTS)
 ) mux_dst_d_pc (
-        .in(actual_d_pc),
+        .in(src_d_pc),
         .sel(mast_gnt_a),
         .out(dst_d_pc)
 );
@@ -276,7 +184,7 @@ onehot_mux #(
         .W_INPUT(W_DATA),
         .N_INPUTS(N_PORTS)
 ) mux_dst_hartid (
-        .in(actual_hartid),
+        .in(src_hartid),
         .sel(mast_gnt_a),
         .out(dst_hartid)
 );
@@ -285,7 +193,7 @@ onehot_mux #(
         .W_INPUT(1),
         .N_INPUTS(N_PORTS)
 ) mux_hexcl (
-        .in(actual_hexcl),
+        .in(src_hexcl),
         .sel(mast_gnt_a),
         .out(dst_hexcl)
 );
@@ -294,7 +202,7 @@ onehot_mux #(
         .W_INPUT(8),
         .N_INPUTS(N_PORTS)
 ) mux_hmaster (
-        .in(actual_hmaster),
+        .in(src_hmaster),
         .sel(mast_gnt_a),
         .out(dst_hmaster)
 );
@@ -303,7 +211,7 @@ onehot_mux #(
 	.W_INPUT(W_ADDR),
 	.N_INPUTS(N_PORTS)
 ) mux_haddr (
-	.in(actual_haddr),
+	.in(src_haddr),
 	.sel(mast_gnt_a),
 	.out(dst_haddr)
 );
@@ -312,7 +220,7 @@ onehot_mux #(
 	.W_INPUT(1),
 	.N_INPUTS(N_PORTS)
 ) mux_hwrite (
-	.in(actual_hwrite),
+	.in(src_hwrite),
 	.sel(mast_gnt_a),
 	.out(dst_hwrite)
 );
@@ -321,7 +229,7 @@ onehot_mux #(
 	.W_INPUT(2),
 	.N_INPUTS(N_PORTS)
 ) mux_hwtrans (
-	.in(actual_htrans),
+	.in(src_htrans),
 	.sel(mast_gnt_a),
 	.out(dst_htrans)
 );
@@ -330,7 +238,7 @@ onehot_mux #(
 	.W_INPUT(3),
 	.N_INPUTS(N_PORTS)
 ) mux_hsize (
-	.in(actual_hsize),
+	.in(src_hsize),
 	.sel(mast_gnt_a),
 	.out(dst_hsize)
 );
@@ -339,7 +247,7 @@ onehot_mux #(
 	.W_INPUT(3),
 	.N_INPUTS(N_PORTS)
 ) mux_hburst (
-	.in(actual_hburst),
+	.in(src_hburst),
 	.sel(mast_gnt_a),
 	.out(dst_hburst)
 );
@@ -348,7 +256,7 @@ onehot_mux #(
 	.W_INPUT(4),
 	.N_INPUTS(N_PORTS)
 ) mux_hprot (
-	.in(actual_hprot),
+	.in(src_hprot),
 	.sel(mast_gnt_a),
 	.out(dst_hprot)
 );
@@ -357,7 +265,7 @@ onehot_mux #(
 	.W_INPUT(1),
 	.N_INPUTS(N_PORTS)
 ) mux_hmastlock (
-	.in(actual_hmastlock),
+	.in(src_hmastlock),
 	.sel(mast_gnt_a),
 	.out(dst_hmastlock)
 );
