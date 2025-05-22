@@ -52,25 +52,32 @@ wire tick_now = tick_event && !dbg_halt;
 wire bus_write = pwrite && psel && penable;
 wire bus_read = !pwrite && psel && penable;
 
+integer tcnt=0;
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		//ctrl_en <= 1'b1;
 		soft_irq <= 0;
-	end else 
+		tcnt <= 0;
+	end else begin
 	    if (bus_write && paddr == ADDR_IPI && !state) begin
 		// laur - nuttx sends ipi at this addr
+		$display("bus_write && paddr == ADDR_IPI %x && pwdata=%x soft_irq was %x", paddr, pwdata, soft_irq);
 		if(pwdata == 0)
 			soft_irq[0] <= 0;
 		else
 			soft_irq[0] <= 1;
 	    end else if (bus_write && paddr == (ADDR_IPI+4) && !state) begin
                 // laur - nuttx sends ipi at this addr
-		$display("bus_write && paddr == (ADDR_IPI+4) && pwdata=%x", pwdata);
+		$display("bus_write && paddr == ADDR_IPI+4 %x && pwdata=%x soft_irq was %x", paddr, pwdata, soft_irq);
                 if(pwdata == 0)
                         soft_irq[1] <= 0;
                 else
                         soft_irq[1] <= 1;
             end
+	    tcnt <= tcnt + 1;
+	    //if(tcnt > 466901 && tcnt < 472900) begin
+	    //	$display("soft_irq=%x", soft_irq);
+	end
 end
 
 reg [63:0] mtime;
@@ -97,18 +104,19 @@ always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		mtimecmp0 <= 64'h0;
 		mtimecmp1 <= 64'h0;
-		timer_irq <= 1'b0;
+		timer_irq <= 2'b0;
 	end else begin
 		if (bus_write && paddr == ADDR_MTIMECMP)
 			mtimecmp0[31:0] <= ~pwdata;
 		else if (bus_write && paddr == ADDR_MTIMECMPH)
 			mtimecmp0[63:32] <= ~pwdata;
 		if (bus_write && paddr == ADDR_MTIMECMP+8) begin
+			// laur
                         mtimecmp1[31:0] <= ~pwdata;
-			$display("ADDR_MTIMECMP+8");
+			$display("ADDR_MTIMECMP+8 pwdata=%8d", pwdata);
 		end else if (bus_write && paddr == ADDR_MTIMECMPH+12) begin
                         mtimecmp1[63:32] <= ~pwdata;
-			$display("ADDR_MTIMECMP+12");
+			$display("ADDR_MTIMECMP+12 pwdata=%8d", pwdata);
 		end
 		timer_irq <= {cmp_diff1[64], cmp_diff0[64]};
 	end

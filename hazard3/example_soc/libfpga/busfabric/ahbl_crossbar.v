@@ -184,7 +184,6 @@ for (i = 0; i < N_MASTERS; i = i + 1) begin: split_instantiate
 	end
 
 	ahbl_splitter #(
-		.MASTER_ID(i),
 		.N_PORTS(N_SLAVES),
 		.W_ADDR(W_ADDR),
 		.W_DATA(W_DATA),

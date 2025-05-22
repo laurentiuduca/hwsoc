@@ -178,10 +178,15 @@ always @(posedge clk) begin
 	end
 end
 always @(dst_haddr or dst_hwrite or dst_hartid or dst_htrans or dst_hready_resp or dst_hready) begin
-	if((tcnt > 442862 && tcnt < 442900) || (src_d_pc[63:32] >= pc_trace_start && src_d_pc[63:32] <= pc_trace_stop)) begin
-		$display("  s%1d pc=%x dpc=%x dhaddr=%x dhwr=%x dhrd=%x dh=%1x dhtrans=%x dhrdy_resp=%x dhrdy=%x shrdy=%x shrdy_resp=%x req_a=%x gnt_d=%x str=%x atr=%x btr=%x t=%8d",
-			SLAVE_ID, src_d_pc[63:32], dst_d_pc, dst_haddr, dst_hwrite, dst_hrdata, dst_hartid, dst_htrans, dst_hready_resp, dst_hready, src_hready_resp, src_hready, mast_req_a, mast_gnt_d, src_htrans, actual_htrans, buf_htrans, tcnt);
+	`ifdef laur0
+	//if(src_d_pc[31:0] == 32'h9514) begin
+	//	$finish;
+	//end
+	if((src_d_pc[63:32] >= pc_trace_start && src_d_pc[63:32] <= pc_trace_stop) || (dst_haddr[31:28] >= 4)) begin
+		$display("  s%1d pc0=%x pc1=%x dpc=%x dhaddr=%x dhwr=%x dhrd=%x dh=%1x dhtrans=%x dhrdy_resp=%x dhrdy=%x shrdy=%x shrdy_resp=%x req_a=%x gnt_d=%x str=%x atr=%x btr=%x t=%8d",
+			SLAVE_ID, src_d_pc[31:0], src_d_pc[63:32], dst_d_pc, dst_haddr, dst_hwrite, dst_hrdata, dst_hartid, dst_htrans, dst_hready_resp, dst_hready, src_hready_resp, src_hready, mast_req_a, mast_gnt_d, src_htrans, actual_htrans, buf_htrans, tcnt);
 	end
+	`endif
 	if(dst_hresp) begin
 		$display("dst_hresp");
 		$finish;
@@ -192,8 +197,9 @@ end
 // AHB State Machine
 
 reg [N_PORTS-1:0] mast_gnt_d;
-assign dst_hready = mast_gnt_d ? |(src_hready & mast_gnt_d) : 1'b1; //|mast_gnt_a; //1'b1;
+assign dst_hready = mast_gnt_d ? |(src_hready & mast_gnt_d) : 1'b1;
 
+// see spliter
 wire [N_PORTS-1:0] mast_aphase_ends = mast_req_a & src_hready;
 wire [N_PORTS-1:0] buf_wen = mast_aphase_ends & ~(mast_gnt_a & {N_PORTS{dst_hready}});
 
@@ -221,6 +227,10 @@ always @ (posedge clk or negedge rst_n) begin
 		end
 		for (i = 0; i < N_PORTS; i = i + 1) begin
 			if (buf_wen[i]) begin
+				if(buf_valid[i]) begin
+					$display("buf_wen and buf_valid for i=%d", i);
+					$finish;
+				end
 				buf_valid    [i] <= 1'b1;
 				buf_htrans   [i] <= src_htrans   [i * 2 +: 2];
 				buf_d_pc     [i] <= src_d_pc     [i * W_ADDR +: W_ADDR];
