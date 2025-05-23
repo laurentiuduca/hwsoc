@@ -283,7 +283,7 @@ always @ (*) begin
 		hsize   = {1'b0, dbg_sbus_size};
 		hwrite  = dbg_sbus_write;
 		hprot   = hprot_sbus;
-		hmaster = 8'h01;
+		hmaster = 8'h10; // 8'h01
 	end else if (bus_gnt_d) begin
 		htrans  = HTRANS_NSEQ;
 		hexcl   = core_aph_excl_d;
@@ -291,7 +291,7 @@ always @ (*) begin
 		hsize   = core_hsize_d;
 		hwrite  = core_hwrite_d;
 		hprot   = hprot_data;
-		hmaster = 8'h00;
+		hmaster = MHARTID_VAL; //8'h00;
 	end else if (bus_gnt_i) begin
 		htrans  = HTRANS_NSEQ;
 		hexcl   = 1'b0;
@@ -299,7 +299,7 @@ always @ (*) begin
 		hsize   = core_hsize_i;
 		hwrite  = 1'b0;
 		hprot   = hprot_instr;
-		hmaster = 8'h00;
+		hmaster = MHARTID_VAL; //8'h00;
 	end else begin
 		htrans  = HTRANS_IDLE;
 		hexcl   = 1'b0;
@@ -307,7 +307,7 @@ always @ (*) begin
 		hsize   = 3'h0;
 		hwrite  = 1'b0;
 		hprot   = 4'h0;
-		hmaster = 8'h00;
+		hmaster = MHARTID_VAL; //8'h00;
 	end
 end
 

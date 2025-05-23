@@ -112,15 +112,41 @@ integer i=0, j=0, k=0, l=0, m=0, lj=0;
     wire [3:0] w_cache_mask;
     assign w_cache_mask = (state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask;
 
+    reg [W_ADDR:0] r_excl_addr[0:N_HARTS-1];
+    reg r_excl_addr_valid[0:N_HARTS-1];
 task check_new_req;
 			if (ahb_read_aphase) begin
                                 state <= 0;
+				//r_ahbls_haddr <= ahbls_haddr;
                                 r_mask <= wmask;
+				// exclusive transfers
+				if(ahbls_hexcl) begin
+					r_ahbls_hexokay <= 1;
+					r_excl_addr[hartid] <= ahbls_haddr;
+					r_excl_addr_valid[hartid] <= 1;
+				end
 			end else if(ahb_write_aphase) begin
-				r_ahbls_haddr <= ahbls_haddr;
-                                state <= 22;
-                                r_mask <= wmask;
-				r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
+				if(ahbls_hexcl) begin
+				        if(r_excl_addr[hartid] == ahbls_haddr && r_excl_addr_valid[hartid]) begin
+                                        	r_ahbls_hexokay <= 1;
+                                        	r_excl_addr_valid[hartid] <= 0;
+						if(r_excl_addr[1-hartid] == ahbls_haddr)
+							r_excl_addr_valid[1-hartid] <= 0;
+						r_ahbls_haddr <= ahbls_haddr;
+	                                        state <= 22;
+        	                                r_mask <= wmask;
+                	                        r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
+					end else begin
+						r_ahbls_hexokay <= 0;
+						state <= 0;
+					end
+				end else begin
+					r_ahbls_hexokay <= 0;
+					r_ahbls_haddr <= ahbls_haddr;
+        	                        state <= 22;
+                	                r_mask <= wmask;
+					r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
+				end
 			end else begin
 				state <= 0;
 			end
@@ -146,6 +172,8 @@ always @ (posedge clk or negedge rst_n) begin
 		r_ahbls_hrdata <= 0;
 		r_ahbls_hwdata <= 0;
 		r_ahbls_hexokay <= 1;
+		r_excl_addr_valid[0] <= 0;
+		r_excl_addr_valid[1] <= 0;
 	end else begin
 		r_ahbls_hexokay <= 1;
 		if(state == 0) begin
@@ -165,12 +193,10 @@ always @ (posedge clk or negedge rst_n) begin
 			r_ahbls_hwdata <= ahbls_hwdata;
 			r_dram_wr <= 1;
 			state <= 20;
-			`ifdef laur0
 			if(ahb_read_aphase || ahb_write_aphase) begin
 				$display("ahb_read_aphase or write aphase in write dphase");
 				$finish;
 			end
-			`endif
 		end
 
 
@@ -191,7 +217,7 @@ assign ahbls_hready_resp = (state == 0) ? !w_dram_busy :
 			   (state == 21) ? !w_dram_busy : 0;
 assign ahbls_hrdata = w_dram_odata;
 
-assign ahbls_hexokay = r_ahbls_hexokay;
+assign ahbls_hexokay =  r_ahbls_hexokay;  // | ((state == 21) && !w_dram_busy);
 // ----------------------------------------------------------------------------
 
     cache_ctrl #(.PRELOAD_FILE(PRELOAD_FILE), .ADDR_WIDTH(32))
