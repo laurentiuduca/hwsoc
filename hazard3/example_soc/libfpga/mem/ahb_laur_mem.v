@@ -112,7 +112,7 @@ integer i=0, j=0, k=0, l=0, m=0, lj=0;
     wire [3:0] w_cache_mask;
     assign w_cache_mask = (state == 0 || state == 22 && !w_dram_busy) ? wmask : r_mask;
 
-    reg [W_ADDR:0] r_excl_addr[0:N_HARTS-1];
+    reg [W_ADDR-1:0] r_excl_addr[0:N_HARTS-1];
     reg r_excl_addr_valid[0:N_HARTS-1];
 task check_new_req;
 			if (ahb_read_aphase) begin
@@ -124,11 +124,13 @@ task check_new_req;
 					r_ahbls_hexokay <= 1;
 					r_excl_addr[hartid] <= ahbls_haddr;
 					r_excl_addr_valid[hartid] <= 1;
+					//$display("exclusive read res at addr %x h%1x", ahbls_haddr, hartid);
 				end
 			end else if(ahb_write_aphase) begin
 				if(ahbls_hexcl) begin
 				        if(r_excl_addr[hartid] == ahbls_haddr && r_excl_addr_valid[hartid]) begin
-                                        	r_ahbls_hexokay <= 1;
+						//$display("exclusive write success at addr %x h%1x", ahbls_haddr, hartid);
+						r_ahbls_hexokay <= 1;
                                         	r_excl_addr_valid[hartid] <= 0;
 						if(r_excl_addr[1-hartid] == ahbls_haddr)
 							r_excl_addr_valid[1-hartid] <= 0;
@@ -137,6 +139,7 @@ task check_new_req;
         	                                r_mask <= wmask;
                 	                        r_ahbls_hwdata <= ahbls_hwdata; // this must also be in state 22
 					end else begin
+						$display("exclusive write fail at addr %x h%1x", ahbls_haddr, hartid);
 						r_ahbls_hexokay <= 0;
 						state <= 0;
 					end
