@@ -131,9 +131,12 @@ task check_new_req;
 				        if(r_excl_addr[hartid] == ahbls_haddr && r_excl_addr_valid[hartid]) begin
 						//$display("exclusive write success at addr %x h%1x", ahbls_haddr, hartid);
 						r_ahbls_hexokay <= 1;
-                                        	r_excl_addr_valid[hartid] <= 0;
-						if(r_excl_addr[1-hartid] == ahbls_haddr)
-							r_excl_addr_valid[1-hartid] <= 0;
+						for(i = 0; i < N_HARTS; i=i+1)
+							if(r_excl_addr[i] == ahbls_haddr)
+                                                        	r_excl_addr_valid[i] <= 0;
+                                        	//r_excl_addr_valid[hartid] <= 0;
+						//if(r_excl_addr[1-hartid] == ahbls_haddr)
+						//	r_excl_addr_valid[1-hartid] <= 0;
 						r_ahbls_haddr <= ahbls_haddr;
 	                                        state <= 22;
         	                                r_mask <= wmask;
@@ -175,8 +178,10 @@ always @ (posedge clk or negedge rst_n) begin
 		r_ahbls_hrdata <= 0;
 		r_ahbls_hwdata <= 0;
 		r_ahbls_hexokay <= 1;
-		r_excl_addr_valid[0] <= 0;
-		r_excl_addr_valid[1] <= 0;
+		//r_excl_addr_valid[0] <= 0;
+		//r_excl_addr_valid[1] <= 0;
+		for(i = 0; i < N_HARTS; i=i+1)
+                        r_excl_addr_valid[i] <= 0;
 	end else begin
 		r_ahbls_hexokay <= 1;
 		if(state == 0) begin
