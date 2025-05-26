@@ -185,9 +185,10 @@ reg [31:0] timecnt=0;
 reg [31:0] j=0, li=0;
 reg [31:0] osrc_haddr=0, odst_hrdata=0;
 reg osrc_hready=0, osrc_hwrite=0;
+reg [1:0] osrc_htrans=0;
 always @(posedge clk) begin
         if(/*j < 20 &&*/ src_hready && 
-        (osrc_haddr!= src_haddr || odst_hrdata[W_DATA-1:0] != dst_hrdata[W_DATA-1:0] || 
+        (osrc_haddr!= src_haddr || osrc_htrans != src_htrans ||//odst_hrdata[W_DATA-1:0] != dst_hrdata[W_DATA-1:0] || 
 		osrc_hready != src_hready || osrc_hwrite != src_hwrite)) begin
                 j <= j + 1;
 		if(src_d_pc >= pc_trace_start && src_d_pc <= pc_trace_stop)
@@ -196,12 +197,13 @@ always @(posedge clk) begin
 		osrc_hready <= src_hready;
                 osrc_haddr <= src_haddr;
                 odst_hrdata[W_DATA-1:0] <= dst_hrdata[W_DATA-1:0];
-		if(j < 10 || (src_d_pc >= pc_trace_start && src_d_pc <= pc_trace_stop && li < 10))
-                $display("h%1x src_d_pc=%x hartid=%1x src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x %08d", 
-			src_hartid, src_d_pc, src_hartid, src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp, $time);
+		osrc_htrans <= src_htrans;
+		if(j < 20 || (src_d_pc >= pc_trace_start && src_d_pc <= pc_trace_stop && li < 20))
+                $display("h%1x src_d_pc=%x hartid=%1x src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x,%x,excl=%x src_hready_resp=%1x,ok=%1x %08d", 
+			src_hartid, src_d_pc, src_hartid, src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hwdata, src_hexcl, src_hready_resp, src_hexokay, $time);
 		if(!closed && src_haddr > 0)
-			$fwrite(f, "src_haddr=%x,o=%x src_hready=%x,o=%x dst_hrdata=%x src_hrdata=%x src_hwrite=%x,o=%x src_hready_resp=%x\n",
-                        src_haddr, osrc_haddr, src_hready, osrc_hready, dst_hrdata[W_DATA-1:0], src_hrdata, src_hwrite, osrc_hwrite, src_hready_resp);
+			$fwrite(f, "pc=%x src_haddr=%x,o=%x src_hready=%x,o=%x src_hrdata=%x src_hwrite=%x,o=%x src_hwdata=%x src_hready_resp=%x\n",
+                        src_d_pc, src_haddr, osrc_haddr, src_hready, osrc_hready, src_hrdata, src_hwrite, osrc_hwrite, (src_hwrite|osrc_hwrite)?src_hwdata:0, src_hready_resp);
         end
 		if(timecnt > 40000000) begin
                         closed <= 1;

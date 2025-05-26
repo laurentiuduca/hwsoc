@@ -91,6 +91,7 @@ reg [W_ADDR-1:0]         buf_d_pc       [0:N_PORTS-1];
 reg [W_DATA-1:0]         buf_hartid     [0:N_PORTS-1];
 reg [W_ADDR-1:0]         buf_haddr      [0:N_PORTS-1];
 reg                      buf_hwrite     [0:N_PORTS-1];
+reg [W_DATA-1:0]         buf_hwdata     [0:N_PORTS-1];
 reg [1:0]                buf_htrans     [0:N_PORTS-1];
 reg [2:0]                buf_hsize      [0:N_PORTS-1];
 reg [2:0]                buf_hburst     [0:N_PORTS-1];
@@ -104,6 +105,7 @@ reg [N_PORTS*W_ADDR-1:0] actual_d_pc;
 reg [N_PORTS*W_DATA-1:0] actual_hartid;
 reg [N_PORTS*W_ADDR-1:0] actual_haddr;
 reg [N_PORTS-1:0]        actual_hwrite;
+reg [N_PORTS*W_DATA-1:0] actual_hwdata;
 reg [N_PORTS*2-1:0]      actual_htrans;
 reg [N_PORTS*3-1:0]      actual_hsize;
 reg [N_PORTS*3-1:0]      actual_hburst;
@@ -120,6 +122,7 @@ always @ (*) begin
 			actual_hartid    [i * W_DATA +: W_DATA] = buf_hartid    [i];
 			actual_haddr     [i * W_ADDR +: W_ADDR] = buf_haddr     [i];
 			actual_hwrite    [i]                    = buf_hwrite    [i];
+			actual_hwdata    [i * W_DATA +: W_DATA] = buf_hwdata    [i];
 			actual_htrans    [i * 2 +: 2]           = buf_htrans    [i];
 			actual_hsize     [i * 3 +: 3]           = buf_hsize     [i];
 			actual_hburst    [i * 3 +: 3]           = buf_hburst    [i];
@@ -132,6 +135,7 @@ always @ (*) begin
 			actual_hartid    [i * W_DATA +: W_DATA] = src_hartid    [i * W_DATA +: W_DATA];
 			actual_haddr     [i * W_ADDR +: W_ADDR] = src_haddr     [i * W_ADDR +: W_ADDR];
 			actual_hwrite    [i]                    = src_hwrite    [i];
+			actual_hwdata    [i * W_DATA +: W_DATA] = src_hwdata    [i * W_DATA +: W_DATA];
 			actual_htrans    [i * 2 +: 2]           = src_htrans    [i * 2 +: 2];
 			actual_hsize     [i * 3 +: 3]           = src_hsize     [i * 3 +: 3];
 			actual_hburst    [i * 3 +: 3]           = src_hburst    [i * 3 +: 3];
@@ -213,6 +217,7 @@ always @ (posedge clk or negedge rst_n) begin
 			buf_hartid[i]    <= {W_DATA{1'b0}};
 			buf_haddr[i]     <= {W_ADDR{1'b0}};
 			buf_hwrite[i]    <= 1'b0;
+			buf_hwdata[i]    <= {W_DATA{1'b0}};
 			buf_hsize[i]     <= 3'h0;
 			buf_hburst[i]    <= 3'h0;
 			buf_hprot[i]     <= 3'h0;
@@ -237,6 +242,7 @@ always @ (posedge clk or negedge rst_n) begin
 				buf_hartid   [i] <= src_hartid   [i * W_DATA +: W_DATA];
 				buf_haddr    [i] <= src_haddr    [i * W_ADDR +: W_ADDR];
 				buf_hwrite   [i] <= src_hwrite   [i];
+				buf_hwdata   [i] <= src_hwdata   [i * W_DATA +: W_DATA];
 				buf_hsize    [i] <= src_hsize    [i * 3 +: 3];
 				buf_hburst   [i] <= src_hburst   [i * 3 +: 3];
 				buf_hprot    [i] <= src_hprot    [i * 4 +: 4];
@@ -266,7 +272,7 @@ onehot_mux #(
 	.W_INPUT(W_DATA),
 	.N_INPUTS(N_PORTS)
 ) hwdata_mux (
-	.in(src_hwdata),
+	.in(actual_hwdata),
 	.sel(mast_gnt_d),
 	.out(dst_hwdata)
 );

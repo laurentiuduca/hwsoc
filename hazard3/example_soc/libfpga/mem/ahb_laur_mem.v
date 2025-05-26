@@ -205,6 +205,9 @@ always @ (posedge clk or negedge rst_n) begin
 				$display("ahb_read_aphase or write aphase in write dphase");
 				$finish;
 			end
+			//if(r_ahbls_haddr == 32'h3ae00)
+			//	$display("r_ahbls_haddr == 32'h3ae00 ahbls_hwdata=%x hartid=%d", ahbls_hwdata, hartid);
+
 		end
 
 
