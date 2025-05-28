@@ -232,7 +232,6 @@ always @ (posedge clk or negedge rst_n) begin
 		end
 		for (i = 0; i < N_PORTS; i = i + 1) begin
 			if (buf_wen[i]) begin
-				$display("buf_wen[%d]", i);
 				if(buf_valid[i]) begin
 					$display("buf_wen and buf_valid for i=%d", i);
 					$finish;
