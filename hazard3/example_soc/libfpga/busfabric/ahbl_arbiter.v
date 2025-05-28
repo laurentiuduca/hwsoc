@@ -208,8 +208,6 @@ wire [N_PORTS-1:0] mast_aphase_ends = mast_req_a & src_hready;
 wire [N_PORTS-1:0] buf_wen = mast_aphase_ends & ~(mast_gnt_a & {N_PORTS{dst_hready}});
 
 reg wrinst[N_PORTS-1:0];
-integer ncnt=0, max=0;
-integer wcnt[0:1];
 always @ (posedge clk or negedge rst_n) begin
 	if (!rst_n) begin
 		mast_gnt_d <= {N_PORTS{1'b0}};
@@ -221,7 +219,6 @@ always @ (posedge clk or negedge rst_n) begin
 			buf_haddr[i]     <= {W_ADDR{1'b0}};
 			buf_hwrite[i]    <= 1'b0;
 			wrinst[i] 	 <= 1'b0;
-			wcnt[i]   	 <= 0;
 			buf_hwdata[i]    <= {W_DATA{1'b0}};
 			buf_hsize[i]     <= 3'h0;
 			buf_hburst[i]    <= 3'h0;
@@ -230,7 +227,6 @@ always @ (posedge clk or negedge rst_n) begin
 			buf_hexcl[i]     <= 1'b0;
 			buf_hmaster[i]   <= 8'd0;
 		end
-		ncnt <= 0;
 	end else begin
 		if (dst_hready) begin
 			mast_gnt_d <= mast_gnt_a;
@@ -249,7 +245,6 @@ always @ (posedge clk or negedge rst_n) begin
 				buf_haddr    [i] <= src_haddr    [i * W_ADDR +: W_ADDR];
 				buf_hwrite   [i] <= src_hwrite   [i];
 				if(src_hwrite[i]) begin
-					wcnt[i] <= ncnt;
 					wrinst[i] <= 1;
 				end
 				buf_hwdata   [i] <= src_hwdata   [i * W_DATA +: W_DATA];
@@ -263,18 +258,12 @@ always @ (posedge clk or negedge rst_n) begin
 			if(wrinst[i]) begin
 				wrinst[i] <= 0;
 				buf_hwdata   [i] <= src_hwdata   [i * W_DATA +: W_DATA];
-				if(ncnt - wcnt[i] > max) begin
-					max = ncnt - wcnt[i];
-				end
-				if(max > 1)
-                                        $display("\n---buf wcnt max=%d---\n", max);
 				if(mast_gnt_d[i+:1]) begin
 					$display("wrinst[i] and mast_gnt_d[i+:1] for i=%d", i);
-					//$finish;
+					$finish;
 				end
 			end
 		end
-		ncnt <= ncnt + 1;
 	end
 end
 
