@@ -201,7 +201,7 @@ end
 // AHB State Machine
 
 reg [N_PORTS-1:0] mast_gnt_d;
-assign dst_hready = mast_gnt_d ? |(src_hready & mast_gnt_d) : 1'b1;
+assign dst_hready = mast_gnt_d ? |(src_hready & mast_gnt_d) : |(src_hready & mast_gnt_a); //1'b1;
 
 // see spliter
 wire [N_PORTS-1:0] mast_aphase_ends = mast_req_a & src_hready;
@@ -232,6 +232,7 @@ always @ (posedge clk or negedge rst_n) begin
 		end
 		for (i = 0; i < N_PORTS; i = i + 1) begin
 			if (buf_wen[i]) begin
+				$display("buf_wen[%d]", i);
 				if(buf_valid[i]) begin
 					$display("buf_wen and buf_valid for i=%d", i);
 					$finish;
@@ -272,7 +273,7 @@ onehot_mux #(
 	.W_INPUT(W_DATA),
 	.N_INPUTS(N_PORTS)
 ) hwdata_mux (
-	.in(actual_hwdata),
+	.in(src_hwdata),
 	.sel(mast_gnt_d),
 	.out(dst_hwdata)
 );

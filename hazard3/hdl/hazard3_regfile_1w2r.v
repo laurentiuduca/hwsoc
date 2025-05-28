@@ -65,15 +65,15 @@ end else begin: real_dualport_noreset
 	always @ (posedge clk) begin
 		if (wen) begin
 			mem[waddr] <= wdata;
-			if(waddr == 7)
-			    $display("h%1x regfile write reg %d <= %x", MHARTID_VAL, waddr, wdata);
+			//if(waddr == 7)
+			//    $display("h%1x regfile write reg %d <= %x", MHARTID_VAL, waddr, wdata);
 		end
 		rdata1 <= mem[raddr1];
 		rdata2 <= mem[raddr2];
-		if(raddr1 == 7)
-			$display("h%1x regfile read reg %d => %x", MHARTID_VAL, raddr1, mem[raddr1]);
-		if(raddr2 == 7)
-                        $display("h%1x regfile read reg %d => %x", MHARTID_VAL, raddr2, mem[raddr2]);
+		//if(raddr1 == 7)
+		//	$display("h%1x regfile read reg %d => %x", MHARTID_VAL, raddr1, mem[raddr1]);
+		//if(raddr2 == 7)
+                //        $display("h%1x regfile read reg %d => %x", MHARTID_VAL, raddr2, mem[raddr2]);
 	end
 end
 endgenerate
