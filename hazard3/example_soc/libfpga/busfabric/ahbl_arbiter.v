@@ -159,11 +159,15 @@ always @ (*) begin
 	end
 end
 
+wire canchange;
+single_pulse sp(clk, rst_n, dst_hready & dst_hready_resp, canchange);
+
 onehot_priority #(
 	.W_INPUT(N_PORTS)
 ) arb_priority (
 	.clk(clk),
 	.rst_n(rst_n),
+	.canchange(dst_hready & dst_hready_resp), //canchange),
 	.in(mast_req_a),
 	.out(mast_gnt_a)
 );
@@ -174,21 +178,18 @@ reg [N_PORTS-1:0] o_mast_gnt_a=0;
 integer tcnt=0;
 always @(posedge clk) begin
 	tcnt = tcnt + 1;
-	if(o_mast_gnt_a != mast_gnt_a) begin
+	if(o_mast_gnt_a != mast_gnt_a) begin // || mast_req_a != mast_gnt_a) begin
 		o_mast_gnt_a = mast_gnt_a;
-		$display("s%1d gnt_a=%x pc0=%x shaddr=%x pc1=%x shaddr=%x dhaddr=%x shwr=%2x dhwr=%1x shready_resp=%x dhready_resp=%x dh=%1x dpc=%x", 
-			SLAVE_ID, mast_gnt_a, src_d_pc[31:0], src_haddr[31:0], src_d_pc[63:32], src_haddr[63:32], dst_haddr, src_hwrite, dst_hwrite,
+		$display("s%1d gnt_a=%x req_a=%x pc0=%x shaddr=%x pc1=%x shaddr=%x dhaddr=%x shwr=%2x dhwr=%1x shready_resp=%x dhready_resp=%x dh=%1x dpc=%x", 
+			SLAVE_ID, mast_gnt_a, mast_req_a, src_d_pc[31:0], src_haddr[31:0], src_d_pc[63:32], src_haddr[63:32], dst_haddr, src_hwrite, dst_hwrite,
 			src_hready_resp, dst_hready_resp, dst_hartid, dst_d_pc);
 	end
 end
 always @(dst_haddr or dst_hwrite or dst_hartid or dst_htrans or dst_hready_resp or dst_hready) begin
 	`ifdef laur0
-	//if(src_d_pc[31:0] == 32'h9514) begin
-	//	$finish;
-	//end
-	if((src_d_pc[63:32] >= pc_trace_start && src_d_pc[63:32] <= pc_trace_stop) || (dst_haddr[31:28] >= 4)) begin
-		$display("  s%1d pc0=%x pc1=%x dpc=%x dhaddr=%x dhwr=%x dhrd=%x dh=%1x dhtrans=%x dhrdy_resp=%x dhrdy=%x shrdy=%x shrdy_resp=%x req_a=%x gnt_d=%x str=%x atr=%x btr=%x t=%8d",
-			SLAVE_ID, src_d_pc[31:0], src_d_pc[63:32], dst_d_pc, dst_haddr, dst_hwrite, dst_hrdata, dst_hartid, dst_htrans, dst_hready_resp, dst_hready, src_hready_resp, src_hready, mast_req_a, mast_gnt_d, src_htrans, actual_htrans, buf_htrans, tcnt);
+	if((src_d_pc[63:32] >= pc_trace_start && src_d_pc[63:32] <= pc_trace_stop)) begin
+		$display("  s%1d pc0=%x pc1=%x dpc=%x dhaddr=%x dhwr=%x dhrd=%x dh=%1x dhtrans=%x dhrdy_resp=%x dhrdy=%x shrdy=%x shrdy_resp=%x req_a=%x gnt_a=%x gnt_d=%x str=%x atr=%x btr=%x t=%8d",
+			SLAVE_ID, src_d_pc[31:0], src_d_pc[63:32], dst_d_pc, dst_haddr, dst_hwrite, dst_hrdata, dst_hartid, dst_htrans, dst_hready_resp, dst_hready, src_hready_resp, src_hready, mast_req_a, mast_gnt_a, mast_gnt_d, src_htrans, actual_htrans, buf_htrans, tcnt);
 	end
 	`endif
 	if(dst_hresp) begin
@@ -255,7 +256,7 @@ always @ (posedge clk or negedge rst_n) begin
                         	buf_hexcl    [i] <= src_hexcl    [i];
                         	buf_hmaster  [i] <= src_hmaster  [i * 8 +: 8];
 			end
-			if(wrinst[i]) begin
+			if(wrinst[i] && dst_hready) begin
 				wrinst[i] <= 0;
 				buf_hwdata   [i] <= src_hwdata   [i * W_DATA +: W_DATA];
 				if(mast_gnt_d[i+:1]) begin
@@ -285,7 +286,7 @@ onehot_mux #(
 	.W_INPUT(W_DATA),
 	.N_INPUTS(N_PORTS)
 ) hwdata_mux (
-	.in(actual_hwdata), // src_hwdata
+	.in(src_hwdata), // src_hwdata
 	.sel(mast_gnt_d),
 	.out(dst_hwdata)
 );
@@ -390,5 +391,33 @@ onehot_mux #(
 	.sel(mast_gnt_a),
 	.out(dst_hmastlock)
 );
+
+endmodule
+
+module single_pulse(input wire clk, input wire rstn, input wire in1, output wire out1);
+
+reg [2:0] state;
+assign out1 = (state == 0) && in1;
+always @(posedge clk or negedge rstn)
+begin
+	if(!rstn) begin
+		state <= 0;
+		//out1 <= 0;
+	end else begin
+		if(state == 0) begin
+			if(in1) begin
+				//out1 <= 1;
+				state <= 1;
+			end
+		end else if(state == 1) begin
+		        if(!in1)
+				state <= 0;
+			//out1 <= 0;
+		end
+	end
+
+end
+
+
 
 endmodule

@@ -26,6 +26,7 @@ module onehot_priority #(
 ) (
 	input clk,
 	input rst_n,
+	input wire canchange,
 	input wire [W_INPUT-1:0] in,
 	output reg [W_INPUT-1:0] out
 );
@@ -61,7 +62,7 @@ always @(posedge clk or negedge rst_n) begin
 		else
 			gntcnt <= 0;
 		osel <= sel;
-		sel <= out; //sel > 1 ? 1 : 2; //out; 
+		sel <= canchange ? (sel > 1 ? 1 : 2) : out; 
 	end
 end
 
