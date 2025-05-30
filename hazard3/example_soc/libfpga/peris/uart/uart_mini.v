@@ -47,7 +47,7 @@ always @(posedge clk or negedge rst_n) begin
 		r_was_write <= 0;
 	end else if(state == 0) begin	
 		if(apbs_psel && apbs_penable && apbs_pwrite) begin
-			//$write("---uart-write %x r_was_write=%x %d\n", apbs_pwdata, r_was_write, $time);
+			$write("---uart-write %x r_was_write=%x %d\n", apbs_pwdata, r_was_write, $time);
 		        if(r_was_write == 0) begin
 				if(w_tx_ready) begin
 					r_uart_data <= apbs_pwdata[7:0];

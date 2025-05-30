@@ -159,15 +159,16 @@ always @ (*) begin
 	end
 end
 
+//single_pulse sp(clk, rst_n, dst_hready & dst_hready_resp & !actual_hwrite[actual_hartid+:1], canchange);
 wire canchange;
-single_pulse sp(clk, rst_n, dst_hready & dst_hready_resp, canchange);
+assign canchange = dst_hready & dst_hready_resp & !(actual_hwrite & mast_gnt_a);
 
 onehot_priority #(
 	.W_INPUT(N_PORTS)
 ) arb_priority (
 	.clk(clk),
 	.rst_n(rst_n),
-	.canchange(dst_hready & dst_hready_resp), //canchange),
+	.canchange(canchange),
 	.in(mast_req_a),
 	.out(mast_gnt_a)
 );
