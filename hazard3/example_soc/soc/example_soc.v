@@ -413,7 +413,7 @@ wire               bridge_hmastlock;
 wire [W_DATA-1:0]  bridge_hwdata;
 wire [W_DATA-1:0]  bridge_hrdata;
 
-//`define USECROSS
+`define USECROSS
 `ifndef USECROSS
 ahbl_splitter #(
 	.N_PORTS     (2),
