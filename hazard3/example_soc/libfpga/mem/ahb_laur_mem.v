@@ -226,7 +226,7 @@ end
 
 assign ahbls_hresp = 1'b0;
 assign ahbls_hready_resp = (state == 0) ? !w_dram_busy : 
-			   (state == 22 || state == 20) ? 0 :
+			   //(state == 22 || state == 20) ? 0 :
 			   (state == 21) ? !w_dram_busy : 0;
 assign ahbls_hrdata = w_dram_odata;
 

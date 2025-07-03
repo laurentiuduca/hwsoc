@@ -161,7 +161,7 @@ end
 
 //single_pulse sp(clk, rst_n, dst_hready & dst_hready_resp & !actual_hwrite[actual_hartid+:1], canchange);
 wire canchange;
-assign canchange = dst_hready & dst_hready_resp & !(actual_hwrite & mast_gnt_a) & !|buf_wen;
+assign canchange = dst_hready_resp & !(actual_hwrite & mast_gnt_a); // & !|buf_wen;
 
 onehot_priority #(
 	.W_INPUT(N_PORTS)
@@ -203,11 +203,12 @@ end
 // AHB State Machine
 
 reg [N_PORTS-1:0] mast_gnt_d;
-assign dst_hready = mast_gnt_d ? |(src_hready & mast_gnt_d) : |(src_hready & mast_gnt_a); //1'b1;
+assign dst_hready = canchange && (mast_gnt_a != mast_gnt_d) && mast_gnt_a ? 1 :
+	mast_gnt_d ? |(src_hready & mast_gnt_d) : |(src_hready & mast_gnt_a); //1'b1;
 
 // see spliter
 wire [N_PORTS-1:0] mast_aphase_ends = mast_req_a & src_hready;
-wire [N_PORTS-1:0] buf_wen = mast_aphase_ends & ~(mast_gnt_a & {N_PORTS{dst_hready}});
+wire [N_PORTS-1:0] buf_wen = 0; //mast_aphase_ends & ~(mast_gnt_a & {N_PORTS{dst_hready}});
 
 reg wrinst[N_PORTS-1:0];
 always @ (posedge clk or negedge rst_n) begin
@@ -230,9 +231,9 @@ always @ (posedge clk or negedge rst_n) begin
 			buf_hmaster[i]   <= 8'd0;
 		end
 	end else begin
-		if (dst_hready) begin
+		if (dst_hready || !mast_gnt_d) begin
 			mast_gnt_d <= mast_gnt_a;
-			buf_valid <= buf_valid & ~mast_gnt_a;
+			buf_valid <= 0; //buf_valid & ~mast_gnt_a;
 		end
 		for (i = 0; i < N_PORTS; i = i + 1) begin
 			if (buf_wen[i]) begin
@@ -240,7 +241,7 @@ always @ (posedge clk or negedge rst_n) begin
 					$display("buf_wen and buf_valid for i=%d", i);
 					$finish;
 				end
-				buf_valid    [i] <= 1'b1;
+				//buf_valid    [i] <= 1'b1;
 				buf_htrans   [i] <= src_htrans   [i * 2 +: 2];
 				buf_d_pc     [i] <= src_d_pc     [i * W_ADDR +: W_ADDR];
 				buf_hartid   [i] <= src_hartid   [i * W_DATA +: W_DATA];
@@ -278,7 +279,8 @@ wire [N_PORTS-1:0] mast_in_dphase = buf_valid | mast_gnt_d;
 // There are two reasons to report ready:
 // - the master is currently not in data phase with the arbiter (IDLE)
 // - the master is in data phase with both arbiter and slave, and slave is ready
-assign src_hready_resp = ~mast_in_dphase | (mast_gnt_d & {N_PORTS{dst_hready_resp}});
+assign src_hready_resp = ~mast_in_dphase ? 1 : //~mast_gnt_a & {N_PORTS{dst_hready_resp}} :
+			(mast_gnt_d & {N_PORTS{dst_hready_resp}});
 assign src_hresp = mast_gnt_d & {N_PORTS{dst_hresp}};
 assign src_hrdata = {N_PORTS{dst_hrdata}};
 assign src_hexokay = mast_gnt_d & {N_PORTS{dst_hexokay}};

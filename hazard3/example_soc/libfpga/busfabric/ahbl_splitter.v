@@ -172,7 +172,6 @@ onehot_mux #(
 // both for timing closure reasons, and to avoid loops with poorly
 // behaved masters.
 // One rule to avoid this is to *only use data-phase state for muxing*
-
 assign src_hready_resp = (!slave_sel_d && (err_ph1 || !decode_err_d)) ||
 	|(slave_sel_d & dst_hready_resp);
 assign src_hresp = decode_err_d || |(slave_sel_d & dst_hresp);

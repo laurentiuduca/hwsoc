@@ -62,7 +62,9 @@ always @(posedge clk or negedge rst_n) begin
 		else
 			gntcnt <= 0;
 		osel <= sel;
+		/* verilator lint_off CMPCONST */
 		sel <= canchange ? (sel > 1 ? 1 : 2) : out; 
+		/* verilator lint_on CMPCONST */
 	end
 end
 
